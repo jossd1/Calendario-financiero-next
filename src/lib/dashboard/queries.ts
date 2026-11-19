@@ -1,3 +1,5 @@
+import { compilarPresupuestos } from "@/lib/dashboard/presupuestos";
+import { inArray } from "drizzle-orm";
 import { and, between, desc, eq, gt, ilike, or } from "drizzle-orm";
 import { db } from "@/db";
 import { transacciones } from "@/db/schema";
@@ -52,6 +54,10 @@ export function mapearTransaccion(
     fecha_fmt: formatearFechaDMY(fechaIso),
     hora_fmt: formatearHoraLima(row.creado_en),
     eliminado: Boolean(row.eliminado),
+    estado:
+      row.estado === "pendiente" || row.estado === "programado"
+        ? row.estado
+        : "pagado",
   };
 }
 
@@ -125,9 +131,13 @@ export async function compilarEstadoDashboard(
     .orderBy(desc(transacciones.fecha), desc(transacciones.id));
 
   const txGrid = filasGrid.map(mapearTransaccion);
-  const txPeriodo = txGrid.filter(
+  const txPeriodoTodos = txGrid.filter(
     (tx) => tx.fecha_iso >= inicio && tx.fecha_iso <= fin
   );
+  const txPeriodo =
+    ajustes.programadosActivos && !ajustes.sumarProgramadosEnKpi
+      ? txPeriodoTodos.filter((tx) => tx.estado === "pagado")
+      : txPeriodoTodos;
 
   const totalIngresos = txPeriodo
     .filter((tx) => tx.tipo === "ingreso")
@@ -293,6 +303,31 @@ export async function compilarEstadoDashboard(
     .orderBy(desc(transacciones.creado_en), desc(transacciones.id))
     .limit(20);
 
+  const presupuestosLista = ajustes.presupuestosActivos
+    ? await compilarPresupuestos({
+        perfilId: perfilActual.id,
+        fechaRef,
+        modoPresupuesto: ajustes.modoPresupuesto,
+        transaccionesPagadas: txPeriodo,
+        categorias: todas,
+      })
+    : [];
+
+  const filasPendientes = ajustes.programadosActivos
+    ? await db
+        .select()
+        .from(transacciones)
+        .where(
+          and(
+            eq(transacciones.perfil_id, perfilActual.id),
+            eq(transacciones.eliminado, false),
+            inArray(transacciones.estado, ["pendiente", "programado"])
+          )
+        )
+        .orderBy(desc(transacciones.fecha), desc(transacciones.id))
+        .limit(30)
+    : [];
+
   return {
     perfiles,
     perfil_actual: perfilActual,
@@ -320,6 +355,8 @@ export async function compilarEstadoDashboard(
     transacciones_historial: filasHistorial.slice(0, 30).map(mapearTransaccion),
     hay_mas_historial: filasHistorial.length > 30,
     analisis,
+    presupuestos: presupuestosLista,
+    pendientes_programados: filasPendientes.map(mapearTransaccion),
     papelera: filasPapelera.map(mapearTransaccion),
     ajustes,
     textos,

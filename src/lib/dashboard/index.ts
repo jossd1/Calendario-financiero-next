@@ -19,3 +19,4 @@ export {
 } from "@/lib/dashboard/queries";
 
 export { compilarDatosGenerales } from "@/lib/dashboard/general";
+export { compilarPresupuestos } from "@/lib/dashboard/presupuestos";

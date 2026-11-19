@@ -13,6 +13,7 @@ interface FormularioRegistroProps {
   focusPing: number;
   textos: TextosUI;
   editModeTextos: boolean;
+  programadosActivos: boolean;
   onGuardarTexto: (clave: string, valor: string) => void;
   onCambiarFechaSeleccionada: (fecha: string) => void;
   onRegistrarExito: (fechaTx: string) => Promise<void>;
@@ -29,6 +30,7 @@ export default function FormularioRegistro({
   focusPing,
   textos,
   editModeTextos,
+  programadosActivos,
   onGuardarTexto,
   onCambiarFechaSeleccionada,
   onRegistrarExito,
@@ -49,11 +51,19 @@ export default function FormularioRegistro({
   const [montoTexto, setMontoTexto] = useState("");
   const [categoria, setCategoria] = useState<string>(catInicial?.nombre ?? "");
   const [descripcion, setDescripcion] = useState("");
+  const [estadoTx, setEstadoTx] = useState<"pagado" | "pendiente" | "programado">("pagado");
   const [enviando, setEnviando] = useState(false);
+  const [estado, setEstado] = useState<"pagado" | "pendiente" | "programado">("pagado");
 
   const inputMontoRef = useRef<HTMLInputElement | null>(null);
   const inputDescRef = useRef<HTMLInputElement | null>(null);
   const ultimoCampoActivoRef = useRef<"monto" | "descripcion">("monto");
+
+  useEffect(() => {
+    if (!programadosActivos && estado === "programado") {
+      setEstado("pagado");
+    }
+  }, [programadosActivos, estado]);
 
   useEffect(() => {
     if (focusPing <= 0) return;
@@ -160,6 +170,7 @@ export default function FormularioRegistro({
           categoria: categoriaFinal,
           descripcion,
           fecha: fechaSeleccionada,
+          estado: programadosActivos ? estadoTx : "pagado",
         }),
       });
       const data = await res.json();
@@ -170,6 +181,7 @@ export default function FormularioRegistro({
 
       setMontoTexto("");
       setDescripcion("");
+      setEstadoTx("pagado");
       onNotificar("success", data.mensaje ?? "Registrado con éxito.");
       await onRegistrarExito(data.fecha_tx);
       inputMontoRef.current?.focus();
@@ -370,7 +382,25 @@ export default function FormularioRegistro({
             className="input-control"
           />
         </div>
-
+        {programadosActivos && (
+          <div className="form-field">
+            <label htmlFor="estado_tx">Estado del Movimiento</label>
+            <select
+              id="estado_tx"
+              value={estadoTx}
+              onChange={(e) =>
+                setEstadoTx(
+                  e.target.value as "pagado" | "pendiente" | "programado"
+                )
+              }
+              className="input-control"
+            >
+              <option value="pagado">Pagado / Realizado</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="programado">Programado</option>
+            </select>
+          </div>
+        )}
         <button
           type="submit"
           disabled={enviando}

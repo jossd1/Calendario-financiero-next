@@ -1,10 +1,10 @@
-import { estaAppBloqueada } from "@/lib/pin";
 import { NextResponse } from "next/server";
 import { and, desc, eq, gt } from "drizzle-orm";
 import { db } from "@/db";
 import { transacciones } from "@/db/schema";
 import { formatearHoraLima, obtenerHoyPeruISO } from "@/lib/format";
 import { obtenerPerfilActivo } from "@/lib/perfil";
+import { estaAppBloqueada } from "@/lib/pin";
 
 function escaparCsv(valor: string): string {
   const texto = String(valor ?? "");
@@ -16,8 +16,13 @@ function escaparCsv(valor: string): string {
 
 export async function GET() {
   try {
-    if (await estaAppBloqueada()) return NextResponse.json(..., { status: 401 });
-    
+    if (await estaAppBloqueada()) {
+      return NextResponse.json(
+        { ok: false, error: "Sesión bloqueada por PIN." },
+        { status: 401 }
+      );
+    }
+
     const { perfilActual } = await obtenerPerfilActivo();
 
     const filas = await db

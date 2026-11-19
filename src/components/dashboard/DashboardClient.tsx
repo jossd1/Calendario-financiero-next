@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import PanelProgramados from "@/components/PanelProgramados";
+import PanelPresupuestos from "@/components/analisis/PanelPresupuestos";
+import ModalTransferencia from "@/components/modales/ModalTransferencia";
 import FormularioRegistro from "@/components/FormularioRegistro";
 import KpiResumen from "@/components/KpiResumen";
 import TablaTransacciones from "@/components/TablaTransacciones";
@@ -16,6 +18,8 @@ import ModalEditarTx from "@/components/modales/ModalEditarTx";
 import ModalPapelera from "@/components/modales/ModalPapelera";
 import ModalPerfiles from "@/components/modales/ModalPerfiles";
 import VistaGeneral from "@/components/calendario/VistaGeneral";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useDashboardState } from "@/hooks/useDashboardState";
 import { useEditModeTextos } from "@/hooks/useEditModeTextos";
 import type { DashboardEstadoDTO, TransaccionDTO } from "@/types";
@@ -27,6 +31,7 @@ interface DashboardClientProps {
 export default function DashboardClient({
   initialEstado,
 }: DashboardClientProps) {
+  const router = useRouter();
   const ds = useDashboardState(initialEstado);
   const ed = useEditModeTextos({
     textos: ds.estado.textos,
@@ -37,6 +42,7 @@ export default function DashboardClient({
 
   const [modalCategoriasAbierto, setModalCategoriasAbierto] = useState(false);
   const [modalPerfilesAbierto, setModalPerfilesAbierto] = useState(false);
+  const [modalTransferenciaAbierto, setModalTransferenciaAbierto] = useState(false);
   const [modalPapeleraAbierto, setModalPapeleraAbierto] = useState(false);
   const [modalAjustesAbierto, setModalAjustesAbierto] = useState(false);
   const [txEditando, setTxEditando] = useState<TransaccionDTO | null>(null);
@@ -98,13 +104,13 @@ export default function DashboardClient({
 
   return (
     <div
-        className={[
-            ed.editModeTextos ? "app-edit-mode-frame" : "",
-            estado.ajustes.densidad === "compacta" ? "density-compact" : "",
-        ]
-            .filter(Boolean)
-            .join(" ") || undefined}
-        >
+      className={[
+        ed.editModeTextos ? "app-edit-mode-frame" : "",
+        estado.ajustes.densidad === "compacta" ? "density-compact" : "",
+      ]
+        .filter(Boolean)
+        .join(" ") || undefined}
+    >
       <Topbar
         perfiles={estado.perfiles}
         perfilActual={estado.perfil_actual}
@@ -121,9 +127,19 @@ export default function DashboardClient({
         onCambiarPerfil={(id) => void handleCambiarPerfil(id)}
         onAbrirCategorias={() => setModalCategoriasAbierto(true)}
         onAbrirPerfiles={() => setModalPerfilesAbierto(true)}
+        onAbrirTransferencia={() => setModalTransferenciaAbierto(true)}
         onAbrirPapelera={() => setModalPapeleraAbierto(true)}
         onAbrirAjustes={() => setModalAjustesAbierto(true)}
         onResetInicio={() => void handleResetInicio()}
+        authPinActivo={estado.ajustes.authPinActivo}
+        onBloquearPin={async () => {
+          await fetch("/api/auth/pin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "bloquear" }),
+          });
+          router.refresh();
+        }}
       />
 
       <main className="page-container">
@@ -182,18 +198,18 @@ export default function DashboardClient({
         />
 
         {estado.vista === "general" && estado.datos_general ? (
-                <VistaGeneral
-                    datos={estado.datos_general}
-                    ajustes={estado.ajustes}
-                    textos={estado.textos}
-                    editModeTextos={ed.editModeTextos}
-                    onGuardarTexto={ed.handleGuardarTexto}
-                    onToggleConsolidado={(consolidado) => {
-                    ds.setGeneralConsolidado(consolidado);
-                    void ds.refrescarEstado({ generalConsolidado: consolidado });
-                    }}
-                />
-                ) : (
+          <VistaGeneral
+            datos={estado.datos_general}
+            ajustes={estado.ajustes}
+            textos={estado.textos}
+            editModeTextos={ed.editModeTextos}
+            onGuardarTexto={ed.handleGuardarTexto}
+            onToggleConsolidado={(consolidado) => {
+              ds.setGeneralConsolidado(consolidado);
+              void ds.refrescarEstado({ generalConsolidado: consolidado });
+            }}
+          />
+        ) : (
           <section className="main-grid" id="calendario">
             <CalendarioPanel
               vista={estado.vista}
@@ -240,6 +256,7 @@ export default function DashboardClient({
               focusPing={ds.focusPing}
               textos={estado.textos}
               editModeTextos={ed.editModeTextos}
+              programadosActivos={estado.ajustes.programadosActivos}
               onGuardarTexto={ed.handleGuardarTexto}
               onCambiarFechaSeleccionada={ds.setDiaSeleccionado}
               onRegistrarExito={async (fechaTx) => {
@@ -288,6 +305,33 @@ export default function DashboardClient({
           }}
         />
 
+        {estado.ajustes.presupuestosActivos && (
+          <PanelPresupuestos
+            presupuestos={estado.presupuestos}
+            categoriasEgreso={estado.categorias_egreso}
+            fechaRef={estado.fecha_ref}
+            modoPresupuesto={estado.ajustes.modoPresupuesto}
+            modoPrivacidad={estado.ajustes.modoPrivacidad}
+            onActualizado={async () => {
+              await ds.refrescarEstado();
+            }}
+            onNotificar={ds.notificar}
+          />
+        )}
+
+        {estado.ajustes.programadosActivos && (
+          <PanelProgramados
+            items={estado.pendientes_programados}
+            sumarEnKpi={estado.ajustes.sumarProgramadosEnKpi}
+            modoPrivacidad={estado.ajustes.modoPrivacidad}
+            onActualizado={async () => {
+              await ds.refrescarEstado();
+            }}
+            onEditarTx={(tx) => setTxEditando(tx)}
+            onNotificar={ds.notificar}
+          />
+        )}
+
         <TablaTransacciones
           initialItems={estado.transacciones_historial}
           initialHasMore={estado.hay_mas_historial}
@@ -324,6 +368,7 @@ export default function DashboardClient({
         tx={txEditando}
         categoriasEgreso={estado.categorias_egreso}
         categoriasIngreso={estado.categorias_ingreso}
+        programadosActivos={estado.ajustes.programadosActivos}
         onCerrar={() => setTxEditando(null)}
         onGuardado={async () => {
           await ds.refrescarEstado();
@@ -372,6 +417,46 @@ export default function DashboardClient({
         onToggleEditModeTextos={() => ed.setEditModeTextos((v) => !v)}
         onRestablecerTextos={ed.handleRestablecerTextos}
         onActualizarConfig={ds.handleActualizarConfig}
+        onActivarPin={async (pin) => {
+          const res = await fetch("/api/auth/pin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "activar", pin }),
+          });
+          const data = await res.json();
+          if (!data.ok) return false;
+          ds.lanzarToastSutil(data.mensaje ?? "PIN activado.");
+          await ds.refrescarEstado();
+          return true;
+        }}
+        onDesactivarPin={async () => {
+          const res = await fetch("/api/auth/pin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "desactivar" }),
+          });
+          const data = await res.json();
+          if (data.ok) {
+            ds.lanzarToastSutil(data.mensaje ?? "PIN desactivado.");
+            await ds.refrescarEstado();
+          }
+        }}
+        onImportado={async () => {
+          await ds.refrescarEstado();
+        }}
+        onNotificar={ds.notificar}
+      />
+
+      <ModalTransferencia
+        abierto={modalTransferenciaAbierto}
+        perfiles={estado.perfiles}
+        perfilActual={estado.perfil_actual}
+        hoyIso={estado.hoy_iso}
+        onCerrar={() => setModalTransferenciaAbierto(false)}
+        onTransferido={async () => {
+          await ds.refrescarEstado();
+        }}
+        onNotificar={ds.notificar}
       />
     </div>
   );

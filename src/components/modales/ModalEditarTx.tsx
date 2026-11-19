@@ -7,6 +7,7 @@ interface ModalEditarTxProps {
   tx: TransaccionDTO | null;
   categoriasEgreso: CategoriaDTO[];
   categoriasIngreso: CategoriaDTO[];
+  programadosActivos: boolean;
   onCerrar: () => void;
   onGuardado: () => Promise<void>;
   onNotificar: (tipo: "success" | "error", texto: string) => void;
@@ -16,6 +17,7 @@ export default function ModalEditarTx({
   tx,
   categoriasEgreso,
   categoriasIngreso,
+  programadosActivos,
   onCerrar,
   onGuardado,
   onNotificar,
@@ -25,6 +27,7 @@ export default function ModalEditarTx({
   const [categoria, setCategoria] = useState("");
   const [fecha, setFecha] = useState("");
   const [descripcion, setDescripcion] = useState("");
+  const [estado, setEstado] = useState<"pagado" | "pendiente" | "programado">("pagado");
   const [guardando, setGuardando] = useState(false);
 
   const todasCategorias = useMemo(
@@ -39,6 +42,7 @@ export default function ModalEditarTx({
     setCategoria(tx.categoria);
     setFecha(tx.fecha_iso);
     setDescripcion(tx.descripcion);
+    setEstado(tx.estado ?? "pagado");
   }, [tx]);
 
   useEffect(() => {
@@ -67,6 +71,7 @@ export default function ModalEditarTx({
           categoria,
           fecha,
           descripcion,
+          estado: programadosActivos ? estado : tx.estado,
         }),
       });
       const data = await res.json();
@@ -213,6 +218,26 @@ export default function ModalEditarTx({
                 className="input-control"
               />
             </div>
+
+            {programadosActivos && (
+              <div className="form-field">
+                <label htmlFor="edit-estado">Estado</label>
+                <select
+                  id="edit-estado"
+                  value={estado}
+                  onChange={(e) =>
+                    setEstado(
+                      e.target.value as "pagado" | "pendiente" | "programado"
+                    )
+                  }
+                  className="input-control"
+                >
+                  <option value="pagado">Pagado</option>
+                  <option value="pendiente">Pendiente</option>
+                  <option value="programado">Programado</option>
+                </select>
+              </div>
+            )}
 
             <div
               style={{

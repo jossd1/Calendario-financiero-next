@@ -24,6 +24,11 @@ export async function PUT(
     const categoria = String(body.categoria ?? "").trim().slice(0, 60);
     const descripcion = String(body.descripcion ?? "").trim().slice(0, 240);
     const fechaStr = String(body.fecha ?? "").trim();
+    const estadoRaw = String(body.estado ?? "pagado").trim().toLowerCase();
+    const estado =
+      estadoRaw === "pendiente" || estadoRaw === "programado"
+        ? estadoRaw
+        : "pagado";
     const montoRaw = String(body.monto ?? "0").replace(",", ".");
     const montoNum = Number(montoRaw);
 
@@ -46,6 +51,7 @@ export async function PUT(
       .update(transacciones)
       .set({
         tipo,
+        estado,
         monto: montoNum.toFixed(2),
         categoria,
         descripcion,

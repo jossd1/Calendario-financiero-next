@@ -17,6 +17,7 @@ interface TopbarProps {
   onCambiarPerfil: (perfilId: number) => void;
   onAbrirCategorias: () => void;
   onAbrirPerfiles: () => void;
+  onAbrirTransferencia: () => void;
   onAbrirPapelera: () => void;
   onAbrirAjustes: () => void;
   onResetInicio: () => void;
@@ -36,6 +37,7 @@ export default function Topbar({
   onCambiarPerfil,
   onAbrirCategorias,
   onAbrirPerfiles,
+  onAbrirTransferencia,
   onAbrirPapelera,
   onAbrirAjustes,
   onResetInicio,
@@ -120,6 +122,14 @@ export default function Topbar({
             onClick={onAbrirPerfiles}
           >
             ⚙️ Perfil
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={onAbrirTransferencia}
+            title="Transferir dinero entre perfiles"
+          >
+            ⇄ Transferir
           </button>
           <button
             type="button"

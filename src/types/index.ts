@@ -1,6 +1,7 @@
 import type { DatosGeneralDTO } from "@/types/general";
 
 export type TipoMovimiento = "ingreso" | "egreso";
+export type EstadoMovimiento = "pagado" | "pendiente" | "programado";
 export type VistaCalendario = "dia" | "semana" | "mensual" | "anual" | "general";
 export type ModoCalendarioClick = "precargar" | "ver_dia" | "analizar_dia";
 export type ModoAnalisis = "auto" | "manual";
@@ -59,7 +60,19 @@ export interface TransaccionDTO {
   fecha_iso: string;
   fecha_fmt: string;
   hora_fmt: string;
+  estado: EstadoMovimiento;
   eliminado: boolean;
+}
+
+export interface PresupuestoItemDTO {
+  id: number;
+  mes_anio: string;
+  categoria: string;
+  color: string;
+  limite: number;
+  gastado: number;
+  restante: number;
+  porcentaje: number;
 }
 
 export interface CeldaCalendario {
@@ -167,6 +180,8 @@ export interface DashboardEstadoDTO {
   transacciones_historial: TransaccionDTO[];
   hay_mas_historial: boolean;
   analisis: AnalisisResultadoDTO;
+  presupuestos: PresupuestoItemDTO[];
+  pendientes_programados: TransaccionDTO[];
   papelera: TransaccionDTO[];
   ajustes: AjustesAppConfig;
   textos: TextosUI;

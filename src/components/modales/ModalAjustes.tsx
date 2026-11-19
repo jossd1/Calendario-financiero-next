@@ -26,6 +26,8 @@ interface ModalAjustesProps {
   onActualizarConfig: (parcial: Partial<AjustesAppConfig>) => Promise<void>;
   onActivarPin?: (pin: string) => Promise<boolean>;
   onDesactivarPin?: () => Promise<void>;
+  onImportado?: () => Promise<void>;
+  onNotificar?: (tipo: "success" | "error", texto: string) => void;
 }
 
 const SECCIONES: ReadonlyArray<{ id: SeccionAjustes; icono: string; label: string }> = [
@@ -47,6 +49,8 @@ export default function ModalAjustes({
   onActualizarConfig,
   onActivarPin,
   onDesactivarPin,
+  onImportado,
+  onNotificar,
 }: ModalAjustesProps) {
   const [seccion, setSeccion] = useState<SeccionAjustes>("general");
   const [confirmandoReset, setConfirmandoReset] = useState(false);
@@ -300,25 +304,24 @@ export default function ModalAjustes({
                       void onActualizarConfig({ mostrarNetoCeldas: v })
                     }
                   />
-                    <AjustesActionRow
-                                titulo="Alerta de Tope Diario (S/)"
-                                descripcion="Resalta en ámbar los días cuyo egreso supere este monto (0 = desactivado)."
-                                >
-                                <input
-                                    type="number"
-                                    min={0}
-                                    step={10}
-                                    value={ajustes.alertaTopeDiario}
-                                    onChange={(e) =>
-                                    void onActualizarConfig({
-                                        alertaTopeDiario: Math.max(0, Number(e.target.value) || 0),
-                                    })
-                                    }
-                                    className="input-control tabular-nums"
-                                    style={{ width: "110px", padding: "6px 10px", fontSize: "0.82rem" }}
-                                />
-                        </AjustesActionRow>
-
+                  <AjustesActionRow
+                    titulo="Alerta de Tope Diario (S/)"
+                    descripcion="Resalta en ámbar los días cuyo egreso supere este monto (0 = desactivado)."
+                  >
+                    <input
+                      type="number"
+                      min={0}
+                      step={10}
+                      value={ajustes.alertaTopeDiario}
+                      onChange={(e) =>
+                        void onActualizarConfig({
+                          alertaTopeDiario: Math.max(0, Number(e.target.value) || 0),
+                        })
+                      }
+                      className="input-control tabular-nums"
+                      style={{ width: "110px", padding: "6px 10px", fontSize: "0.82rem" }}
+                    />
+                  </AjustesActionRow>
                 </AjustesCard>
               )}
 
@@ -338,8 +341,7 @@ export default function ModalAjustes({
                     <AjustesToggleRow
                       titulo="Bloqueo por PIN Numérico"
                       descripcion="Solicita un PIN de 4 a 6 dígitos al abrir la app (opcional)."
-                      badge="Etapa 3"
-                      badgeTone="proximo"
+                      badge="Activo"
                       checked={ajustes.authPinActivo || panelPinAbierto}
                       onChange={(v) => void handleTogglePin(v)}
                     />
@@ -398,68 +400,97 @@ export default function ModalAjustes({
                   <AjustesToggleRow
                     titulo="Presupuestos Mensuales por Categoría"
                     descripcion="Límites de gasto mensual con barras de progreso y alertas."
-                    badge="Etapa 4"
-                    badgeTone="proximo"
+                    badge="Activo"
                     checked={ajustes.presupuestosActivos}
                     onChange={(v) =>
                       void onActualizarConfig({ presupuestosActivos: v })
                     }
                   />
+                  {ajustes.presupuestosActivos && (
+                    <AjustesActionRow
+                      titulo="Modo de Presupuestos"
+                      descripcion="Elige si los límites aplican cada mes o se configuran por mes puntual."
+                    >
+                      <select
+                        value={ajustes.modoPresupuesto}
+                        onChange={(e) =>
+                          void onActualizarConfig({
+                            modoPresupuesto: e.target.value as "base_mensual" | "por_mes",
+                          })
+                        }
+                        className="input-control"
+                        style={{ width: "160px", padding: "6px 10px", fontSize: "0.82rem" }}
+                      >
+                        <option value="base_mensual">Base mensual</option>
+                        <option value="por_mes">Por mes exacto</option>
+                      </select>
+                    </AjustesActionRow>
+                  )}
                   <AjustesToggleRow
                     titulo="Pagos Programados y Recurrentes"
                     descripcion="Control de movimientos pagados, pendientes y programados."
-                    badge="Etapa 4"
-                    badgeTone="proximo"
+                    badge="Activo"
                     checked={ajustes.programadosActivos}
                     onChange={(v) =>
                       void onActualizarConfig({ programadosActivos: v })
                     }
                   />
+                  {ajustes.programadosActivos && (
                     <AjustesToggleRow
-                                    titulo="Vista General: Ahorro y Promedios"
-                                    descripcion="Muestra Tasa de Ahorro Global y promedios mensuales en General."
-                                    badge="Activo"
-                                    checked={ajustes.generalMostrarAhorro}
-                                    onChange={(v) =>
-                                        void onActualizarConfig({ generalMostrarAhorro: v })
-                                    }
-                                    />
-                                    <AjustesToggleRow
-                                    titulo="Vista General: Gráfico de Evolución"
-                                    descripcion="Gráfico histórico de saldo acumulado y ahorro neto mes a mes."
-                                    badge="Activo"
-                                    checked={ajustes.generalMostrarEvolucion}
-                                    onChange={(v) =>
-                                        void onActualizarConfig({ generalMostrarEvolucion: v })
-                                    }
-                                    />
-                                    <AjustesToggleRow
-                                    titulo="Vista General: Récords y Top Categorías"
-                                    descripcion="Muestra mejor mes, mes con mayor gasto y Top 5 categorías históricas."
-                                    badge="Activo"
-                                    checked={ajustes.generalMostrarRecords}
-                                    onChange={(v) =>
-                                        void onActualizarConfig({ generalMostrarRecords: v })
-                                    }
-                                    />
-                                    <AjustesToggleRow
-                                    titulo="Vista General: Comparativa Año vs Año"
-                                    descripcion="Tabla resumen comparando todos tus años registrados."
-                                    badge="Activo"
-                                    checked={ajustes.generalMostrarAnual}
-                                    onChange={(v) =>
-                                        void onActualizarConfig({ generalMostrarAnual: v })
-                                    }
-                                    />
-                                    <AjustesToggleRow
-                                    titulo="Vista General: Permitir Consolidado Multi-Perfil"
-                                    descripcion="Habilita el selector para ver el total sumado de todos tus perfiles."
-                                    badge="Activo"
-                                    checked={ajustes.generalPermitirConsolidado}
-                                    onChange={(v) =>
-                                        void onActualizarConfig({ generalPermitirConsolidado: v })
-                                    }
-                            />
+                      titulo="Incluir Pendientes en KPIs"
+                      descripcion="Si se desactiva, los pendientes quedan aparte como proyectado."
+                      badge="Activo"
+                      checked={ajustes.sumarProgramadosEnKpi}
+                      onChange={(v) =>
+                        void onActualizarConfig({ sumarProgramadosEnKpi: v })
+                      }
+                    />
+                  )}
+                  <AjustesToggleRow
+                    titulo="Vista General: Ahorro y Promedios"
+                    descripcion="Muestra Tasa de Ahorro Global y promedios mensuales en General."
+                    badge="Activo"
+                    checked={ajustes.generalMostrarAhorro}
+                    onChange={(v) =>
+                      void onActualizarConfig({ generalMostrarAhorro: v })
+                    }
+                  />
+                  <AjustesToggleRow
+                    titulo="Vista General: Gráfico de Evolución"
+                    descripcion="Gráfico histórico de saldo acumulado y ahorro neto mes a mes."
+                    badge="Activo"
+                    checked={ajustes.generalMostrarEvolucion}
+                    onChange={(v) =>
+                      void onActualizarConfig({ generalMostrarEvolucion: v })
+                    }
+                  />
+                  <AjustesToggleRow
+                    titulo="Vista General: Récords y Top Categorías"
+                    descripcion="Muestra mejor mes, mes con mayor gasto y Top 5 categorías históricas."
+                    badge="Activo"
+                    checked={ajustes.generalMostrarRecords}
+                    onChange={(v) =>
+                      void onActualizarConfig({ generalMostrarRecords: v })
+                    }
+                  />
+                  <AjustesToggleRow
+                    titulo="Vista General: Comparativa Año vs Año"
+                    descripcion="Tabla resumen comparando todos tus años registrados."
+                    badge="Activo"
+                    checked={ajustes.generalMostrarAnual}
+                    onChange={(v) =>
+                      void onActualizarConfig({ generalMostrarAnual: v })
+                    }
+                  />
+                  <AjustesToggleRow
+                    titulo="Vista General: Permitir Consolidado Multi-Perfil"
+                    descripcion="Habilita el selector para ver el total sumado de todos tus perfiles."
+                    badge="Activo"
+                    checked={ajustes.generalPermitirConsolidado}
+                    onChange={(v) =>
+                      void onActualizarConfig({ generalPermitirConsolidado: v })
+                    }
+                  />
                 </AjustesCard>
               )}
 
@@ -476,13 +507,74 @@ export default function ModalAjustes({
                       ⬇ Descargar .CSV
                     </a>
                   </AjustesActionRow>
+
                   <AjustesActionRow
                     titulo="Backup Completo en JSON"
-                    descripcion="Copia de seguridad integral (disponible en Etapa 4)."
+                    descripcion="Descarga perfil, categorías, presupuestos, ajustes y movimientos."
                   >
-                    <span style={{ fontSize: "0.76rem", color: "var(--neutral-color)", fontWeight: 600 }}>
-                      Próximamente (Etapa 4)
-                    </span>
+                    <a href="/api/exportar/json" className="btn btn-secondary btn-sm">
+                      ⬇ Descargar .JSON
+                    </a>
+                  </AjustesActionRow>
+
+                  <AjustesActionRow
+                    titulo="Importar Movimientos (.CSV)"
+                    descripcion="Carga movimientos desde un archivo CSV con columnas Fecha, Tipo, Categoría, Descripción, Monto."
+                  >
+                    <label className="btn btn-primary btn-sm" style={{ cursor: "pointer" }}>
+                      ⬆ Subir .CSV
+                      <input
+                        type="file"
+                        accept=".csv,text/csv"
+                        style={{ display: "none" }}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const texto = await file.text();
+                          const res = await fetch("/api/importar/csv", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ csv: texto }),
+                          });
+                          const data = await res.json();
+                          onNotificar?.(data.ok ? "success" : "error", data.mensaje ?? data.error);
+                          if (data.ok && onImportado) await onImportado();
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                  </AjustesActionRow>
+
+                  <AjustesActionRow
+                    titulo="Restaurar Backup (.JSON)"
+                    descripcion="Restaura categorías, presupuestos y movimientos en el perfil activo."
+                  >
+                    <label className="btn btn-secondary btn-sm" style={{ cursor: "pointer" }}>
+                      ⬆ Restaurar .JSON
+                      <input
+                        type="file"
+                        accept=".json,application/json"
+                        style={{ display: "none" }}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          try {
+                            const json = JSON.parse(await file.text());
+                            const res = await fetch("/api/importar/json", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify(json),
+                            });
+                            const data = await res.json();
+                            onNotificar?.(data.ok ? "success" : "error", data.mensaje ?? data.error);
+                            if (data.ok && onImportado) await onImportado();
+                          } catch {
+                            onNotificar?.("error", "El archivo JSON no es válido.");
+                          }
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
                   </AjustesActionRow>
                 </AjustesCard>
               )}

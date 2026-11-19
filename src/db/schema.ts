@@ -56,6 +56,7 @@ export const transacciones = pgTable(
     categoria: varchar("categoria", { length: 60 }).notNull(),
     descripcion: varchar("descripcion", { length: 240 }).default(""),
     fecha: date("fecha", { mode: "string" }).notNull().defaultNow(),
+    estado: varchar("estado", { length: 15 }).notNull().default("pagado"),
     eliminado: boolean("eliminado").notNull().default(false),
     creado_en: timestamp("creado_en").defaultNow(),
   },
@@ -63,7 +64,33 @@ export const transacciones = pgTable(
     index("idx_tx_perfil_fecha").on(table.perfil_id, table.fecha),
     index("idx_tx_perfil_eliminado").on(table.perfil_id, table.eliminado),
     check("transacciones_tipo_check", sql`${table.tipo} IN ('ingreso', 'egreso')`),
+    check(
+      "transacciones_estado_check",
+      sql`${table.estado} IN ('pagado', 'pendiente', 'programado')`
+    ),
     check("transacciones_monto_check", sql`${table.monto} >= 0`),
+  ]
+);
+
+export const presupuestos = pgTable(
+  "presupuestos",
+  {
+    id: serial("id").primaryKey(),
+    perfil_id: integer("perfil_id")
+      .notNull()
+      .references(() => perfiles.id, { onDelete: "cascade" }),
+    mes_anio: varchar("mes_anio", { length: 10 }).notNull().default("BASE"),
+    categoria: varchar("categoria", { length: 60 }).notNull(),
+    limite_monto: numeric("limite_monto", { precision: 12, scale: 2 }).notNull(),
+  },
+  (table) => [
+    unique("presupuestos_perfil_mes_cat_key").on(
+      table.perfil_id,
+      table.mes_anio,
+      table.categoria
+    ),
+    index("idx_pres_perfil").on(table.perfil_id, table.mes_anio),
+    check("presupuestos_monto_check", sql`${table.limite_monto} >= 0`),
   ]
 );
 
