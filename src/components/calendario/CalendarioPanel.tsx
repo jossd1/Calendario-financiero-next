@@ -31,16 +31,17 @@ interface CalendarioPanelProps {
   transaccionesDia: TransaccionDTO[];
   categorias: CategoriaDTO[];
   hoverPreviewDia: boolean;
-  modoPrivacidad: boolean;
-  textos: TextosUI;
   mostrarNetoCeldas: boolean;
   alertaTopeDiario: number;
+  modoPrivacidad: boolean;
+  textos: TextosUI;
   editModeTextos: boolean;
   onGuardarTexto: (clave: string, valor: string) => void;
   onCambiarModoClick: (modo: ModoCalendarioClick) => void;
+  onAbrirBuscadorMagico: () => void;
   onClicDia: (fechaIso: string) => void;
+  onClicMesAnual: (anio: number, mes: number) => void;
   onVolverAlMes: () => void;
-  onAbrirMesEnAnual: (fechaIso: string) => void;
   onEditarTx: (tx: TransaccionDTO) => void;
   onEliminarTx: (txId: number) => Promise<void>;
 }
@@ -59,16 +60,17 @@ export default function CalendarioPanel({
   transaccionesDia,
   categorias,
   hoverPreviewDia,
+  mostrarNetoCeldas,
+  alertaTopeDiario,
   modoPrivacidad,
   textos,
   editModeTextos,
-  mostrarNetoCeldas,
-  alertaTopeDiario,
   onGuardarTexto,
   onCambiarModoClick,
+  onAbrirBuscadorMagico,
   onClicDia,
+  onClicMesAnual,
   onVolverAlMes,
-  onAbrirMesEnAnual,
   onEditarTx,
   onEliminarTx,
 }: CalendarioPanelProps) {
@@ -95,7 +97,7 @@ export default function CalendarioPanel({
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "10px",
+            gap: "12px",
             flexWrap: "wrap",
           }}
         >
@@ -130,7 +132,10 @@ export default function CalendarioPanel({
               />
             )}
           </h3>
-          <span className="period-badge-inline">📅 {tituloPeriodo}</span>
+          <span className="period-badge-inline">
+            <span style={{ fontSize: "1.1rem" }}>📅</span>
+            <span>{tituloPeriodo}</span>
+          </span>
         </div>
 
         <div
@@ -142,79 +147,122 @@ export default function CalendarioPanel({
           }}
         >
           {vista === "dia" ? (
-            <button
-              type="button"
-              onClick={() => {
-                if (!editModeTextos) onVolverAlMes();
-              }}
-              className="btn btn-sm btn-volver-mes"
-            >
-              <EditableText
-                clave="btnVolverAlMes"
-                textos={textos}
-                editMode={editModeTextos}
-                onGuardarTexto={onGuardarTexto}
-              />
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={onAbrirBuscadorMagico}
+                className="magic-search-btn"
+                title="Buscador rápido de fecha"
+                aria-label="Buscador rápido de fecha"
+              >
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                  <defs>
+                    <linearGradient id="magicLensDia" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#38bdf8" />
+                      <stop offset="50%" stopColor="#a855f7" />
+                      <stop offset="100%" stopColor="#10b981" />
+                    </linearGradient>
+                  </defs>
+                  <circle cx="11" cy="11" r="7" stroke="url(#magicLensDia)" strokeWidth="2.3" />
+                  <path d="M16.5 16.5L21 21" stroke="url(#magicLensDia)" strokeWidth="2.3" strokeLinecap="round" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!editModeTextos) onVolverAlMes();
+                }}
+                className="btn btn-sm btn-volver-mes"
+              >
+                <EditableText
+                  clave="btnVolverAlMes"
+                  textos={textos}
+                  editMode={editModeTextos}
+                  onGuardarTexto={onGuardarTexto}
+                />
+              </button>
+            </>
           ) : (
-            <div className="mode-pill-group" role="group" aria-label="Modo de clic">
+            <>
               <button
                 type="button"
-                onMouseDown={(e) => {
-                  if (!editModeTextos) e.preventDefault();
-                }}
-                onClick={() => {
-                  if (!editModeTextos) onCambiarModoClick("precargar");
-                }}
-                className={`mode-pill-btn ${
-                  modoClick === "precargar" ? "active-fecha" : ""
-                }`}
+                onClick={onAbrirBuscadorMagico}
+                className="magic-search-btn"
+                title="Buscador rápido de fecha"
+                aria-label="Buscador rápido de fecha"
               >
-                <EditableText
-                  clave="modoFecha"
-                  textos={textos}
-                  editMode={editModeTextos}
-                  onGuardarTexto={onGuardarTexto}
-                />
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                  <defs>
+                    <linearGradient id="magicLens" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#38bdf8" />
+                      <stop offset="50%" stopColor="#a855f7" />
+                      <stop offset="100%" stopColor="#10b981" />
+                    </linearGradient>
+                  </defs>
+                  <circle cx="11" cy="11" r="7" stroke="url(#magicLens)" strokeWidth="2.3" />
+                  <path d="M16.5 16.5L21 21" stroke="url(#magicLens)" strokeWidth="2.3" strokeLinecap="round" />
+                </svg>
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!editModeTextos) onCambiarModoClick("ver_dia");
-                }}
-                className={`mode-pill-btn ${
-                  modoClick === "ver_dia" ? "active-ver-dia" : ""
-                }`}
-              >
-                <EditableText
-                  clave="modoVerDia"
-                  textos={textos}
-                  editMode={editModeTextos}
-                  onGuardarTexto={onGuardarTexto}
-                />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!editModeTextos) onCambiarModoClick("analizar_dia");
-                }}
-                className={`mode-pill-btn ${
-                  modoClick === "analizar_dia" ? "active-analizar" : ""
-                }`}
-              >
-                <EditableText
-                  clave="modoAnalizar"
-                  textos={textos}
-                  editMode={editModeTextos}
-                  onGuardarTexto={onGuardarTexto}
-                />
-              </button>
-            </div>
+
+              <div className="mode-pill-group" role="group" aria-label="Modo de clic">
+                <button
+                  type="button"
+                  onMouseDown={(e) => {
+                    if (!editModeTextos) e.preventDefault();
+                  }}
+                  onClick={() => {
+                    if (!editModeTextos) onCambiarModoClick("precargar");
+                  }}
+                  className={`mode-pill-btn ${
+                    modoClick === "precargar" ? "active-fecha" : ""
+                  }`}
+                >
+                  <EditableText
+                    clave="modoFecha"
+                    textos={textos}
+                    editMode={editModeTextos}
+                    onGuardarTexto={onGuardarTexto}
+                  />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!editModeTextos) onCambiarModoClick("ver_dia");
+                  }}
+                  className={`mode-pill-btn ${
+                    modoClick === "ver_dia" ? "active-ver-dia" : ""
+                  }`}
+                >
+                  <EditableText
+                    clave="modoVerDia"
+                    textos={textos}
+                    editMode={editModeTextos}
+                    onGuardarTexto={onGuardarTexto}
+                  />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!editModeTextos) onCambiarModoClick("analizar_dia");
+                  }}
+                  className={`mode-pill-btn ${
+                    modoClick === "analizar_dia" ? "active-analizar" : ""
+                  }`}
+                >
+                  <EditableText
+                    clave="modoAnalizar"
+                    textos={textos}
+                    editMode={editModeTextos}
+                    onGuardarTexto={onGuardarTexto}
+                  />
+                </button>
+              </div>
+            </>
           )}
         </div>
       </div>
 
-      {(vista === "mensual" || vista === "semana") &&
+      {(vista === "mensual" || vista === "semana" || vista === "anual") &&
         modoClick === "analizar_dia" && (
           <div
             style={{
@@ -233,10 +281,10 @@ export default function CalendarioPanel({
           >
             <span>
               {!rangoDesde
-                ? "1er toque: selecciona la fecha Desde (Cian)."
+                ? "1er toque: selecciona Desde (Cian). Puedes alternar entre Mensual y Anual."
                 : !rangoHasta
-                ? `Desde: ${rangoDesde} — Ahora toca la fecha Hasta (Ámbar).`
-                : `Rango seleccionado: ${rangoMin} al ${rangoMax}. Toca otro día para iniciar un nuevo rango.`}
+                ? `Desde: ${rangoDesde} — Toca Hasta (Ámbar) en Mensual o Anual.`
+                : `Rango: ${rangoMin} al ${rangoMax}. Toca otro punto para un nuevo rango.`}
             </span>
             <div style={{ display: "flex", gap: "12px", fontWeight: 600 }}>
               <span style={{ color: "var(--neutral-color)" }}>● Desde</span>
@@ -255,11 +303,11 @@ export default function CalendarioPanel({
           rangoDesde={rangoDesde}
           rangoHasta={rangoHasta}
           hoverPreviewDia={hoverPreviewDia}
+          mostrarNetoCeldas={mostrarNetoCeldas}
+          alertaTopeDiario={alertaTopeDiario}
           colorPorCategoria={colorPorCategoria}
           modoPrivacidad={modoPrivacidad}
           onClicDia={onClicDia}
-          mostrarNetoCeldas={mostrarNetoCeldas}
-                alertaTopeDiario={alertaTopeDiario}
         />
       )}
 
@@ -293,8 +341,13 @@ export default function CalendarioPanel({
         <VistaAnual
           anioActual={anioActual}
           mesesAnual={mesesAnual}
+          modoClick={modoClick}
+          rangoMin={rangoMin}
+          rangoMax={rangoMax}
+          rangoDesde={rangoDesde}
+          rangoHasta={rangoHasta}
           modoPrivacidad={modoPrivacidad}
-          onAbrirMesEnAnual={onAbrirMesEnAnual}
+          onClicMesAnual={onClicMesAnual}
         />
       )}
     </div>

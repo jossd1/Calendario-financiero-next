@@ -1,25 +1,25 @@
 "use client";
 
-import PanelProgramados from "@/components/PanelProgramados";
-import PanelPresupuestos from "@/components/analisis/PanelPresupuestos";
-import ModalTransferencia from "@/components/modales/ModalTransferencia";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import FormularioRegistro from "@/components/FormularioRegistro";
 import KpiResumen from "@/components/KpiResumen";
+import PanelProgramados from "@/components/PanelProgramados";
 import TablaTransacciones from "@/components/TablaTransacciones";
 import Topbar from "@/components/Topbar";
 import WorkspaceToolbar from "@/components/WorkspaceToolbar";
 import PanelAnalisis from "@/components/analisis/PanelAnalisis";
+import PanelPresupuestos from "@/components/analisis/PanelPresupuestos";
 import CalendarioPanel from "@/components/calendario/CalendarioPanel";
+import VistaGeneral from "@/components/calendario/VistaGeneral";
 import EditModeFloatingBar from "@/components/dashboard/EditModeFloatingBar";
 import ToastContainer from "@/components/dashboard/ToastContainer";
 import ModalAjustes from "@/components/modales/ModalAjustes";
+import ModalBuscadorMagico from "@/components/modales/ModalBuscadorMagico";
 import ModalCategorias from "@/components/modales/ModalCategorias";
 import ModalEditarTx from "@/components/modales/ModalEditarTx";
 import ModalPapelera from "@/components/modales/ModalPapelera";
 import ModalPerfiles from "@/components/modales/ModalPerfiles";
-import VistaGeneral from "@/components/calendario/VistaGeneral";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { useDashboardState } from "@/hooks/useDashboardState";
 import { useEditModeTextos } from "@/hooks/useEditModeTextos";
 import type { DashboardEstadoDTO, TransaccionDTO } from "@/types";
@@ -42,9 +42,9 @@ export default function DashboardClient({
 
   const [modalCategoriasAbierto, setModalCategoriasAbierto] = useState(false);
   const [modalPerfilesAbierto, setModalPerfilesAbierto] = useState(false);
-  const [modalTransferenciaAbierto, setModalTransferenciaAbierto] = useState(false);
   const [modalPapeleraAbierto, setModalPapeleraAbierto] = useState(false);
   const [modalAjustesAbierto, setModalAjustesAbierto] = useState(false);
+  const [modalBuscadorAbierto, setModalBuscadorAbierto] = useState(false);
   const [txEditando, setTxEditando] = useState<TransaccionDTO | null>(null);
 
   const { estado } = ds;
@@ -86,6 +86,7 @@ export default function DashboardClient({
   const handleResetInicio = async () => {
     ds.setDiaSeleccionado(estado.hoy_iso);
     ds.setModoClick("precargar");
+    ds.setPrimerToque(null);
     ds.setRangoDesde(null);
     ds.setRangoHasta(null);
     ds.setModoAnalisis("auto");
@@ -104,18 +105,21 @@ export default function DashboardClient({
 
   return (
     <div
-      className={[
-        ed.editModeTextos ? "app-edit-mode-frame" : "",
-        estado.ajustes.densidad === "compacta" ? "density-compact" : "",
-      ]
-        .filter(Boolean)
-        .join(" ") || undefined}
+      className={
+        [
+          ed.editModeTextos ? "app-edit-mode-frame" : "",
+          estado.ajustes.densidad === "compacta" ? "density-compact" : "",
+        ]
+          .filter(Boolean)
+          .join(" ") || undefined
+      }
     >
       <Topbar
         perfiles={estado.perfiles}
         perfilActual={estado.perfil_actual}
         cantidadPapelera={estado.papelera.length}
         modoPrivacidad={estado.ajustes.modoPrivacidad}
+        authPinActivo={estado.ajustes.authPinActivo}
         textos={estado.textos}
         editModeTextos={ed.editModeTextos}
         onGuardarTexto={ed.handleGuardarTexto}
@@ -124,14 +128,6 @@ export default function DashboardClient({
             modoPrivacidad: !estado.ajustes.modoPrivacidad,
           })
         }
-        onCambiarPerfil={(id) => void handleCambiarPerfil(id)}
-        onAbrirCategorias={() => setModalCategoriasAbierto(true)}
-        onAbrirPerfiles={() => setModalPerfilesAbierto(true)}
-        onAbrirTransferencia={() => setModalTransferenciaAbierto(true)}
-        onAbrirPapelera={() => setModalPapeleraAbierto(true)}
-        onAbrirAjustes={() => setModalAjustesAbierto(true)}
-        onResetInicio={() => void handleResetInicio()}
-        authPinActivo={estado.ajustes.authPinActivo}
         onBloquearPin={async () => {
           await fetch("/api/auth/pin", {
             method: "POST",
@@ -140,6 +136,12 @@ export default function DashboardClient({
           });
           router.refresh();
         }}
+        onCambiarPerfil={(id) => void handleCambiarPerfil(id)}
+        onAbrirCategorias={() => setModalCategoriasAbierto(true)}
+        onAbrirPerfiles={() => setModalPerfilesAbierto(true)}
+        onAbrirPapelera={() => setModalPapeleraAbierto(true)}
+        onAbrirAjustes={() => setModalAjustesAbierto(true)}
+        onResetInicio={() => void handleResetInicio()}
       />
 
       <main className="page-container">
@@ -151,11 +153,7 @@ export default function DashboardClient({
                 <button
                   type="button"
                   onClick={() => ds.cerrarFlash(f.id)}
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                  }}
+                  style={{ background: "transparent", border: "none", cursor: "pointer" }}
                 >
                   ✕
                 </button>
@@ -225,23 +223,19 @@ export default function DashboardClient({
               transaccionesDia={estado.transacciones_dia}
               categorias={estado.categorias}
               hoverPreviewDia={estado.ajustes.hoverPreviewDia}
+              mostrarNetoCeldas={estado.ajustes.mostrarNetoCeldas}
+              alertaTopeDiario={estado.ajustes.alertaTopeDiario}
               modoPrivacidad={estado.ajustes.modoPrivacidad}
               textos={estado.textos}
               editModeTextos={ed.editModeTextos}
               onGuardarTexto={ed.handleGuardarTexto}
               onCambiarModoClick={ds.setModoClick}
+              onAbrirBuscadorMagico={() => setModalBuscadorAbierto(true)}
               onClicDia={(f) => void ds.handleClicDia(f)}
+              onClicMesAnual={(anio, mes) => void ds.handleClicMesAnual(anio, mes)}
               onVolverAlMes={() => {
                 ds.setModoAnalisis("auto");
                 void ds.refrescarEstado({ vista: "mensual", analisisModo: "auto" });
-              }}
-              onAbrirMesEnAnual={(f) => {
-                ds.setModoAnalisis("auto");
-                void ds.refrescarEstado({
-                  vista: "mensual",
-                  fecha: f,
-                  analisisModo: "auto",
-                });
               }}
               onEditarTx={(tx) => setTxEditando(tx)}
               onEliminarTx={handleEliminarTx}
@@ -251,12 +245,12 @@ export default function DashboardClient({
               categoriasEgreso={estado.categorias_egreso}
               categoriasIngreso={estado.categorias_ingreso}
               categoriaPredeterminada={estado.ajustes.categoriaPredeterminada}
+              programadosActivos={estado.ajustes.programadosActivos}
               fechaSeleccionada={ds.diaSeleccionado}
               hoyIso={estado.hoy_iso}
               focusPing={ds.focusPing}
               textos={estado.textos}
               editModeTextos={ed.editModeTextos}
-              programadosActivos={estado.ajustes.programadosActivos}
               onGuardarTexto={ed.handleGuardarTexto}
               onCambiarFechaSeleccionada={ds.setDiaSeleccionado}
               onRegistrarExito={async (fechaTx) => {
@@ -284,6 +278,7 @@ export default function DashboardClient({
           onAplicarManual={async (desde, hasta, tipo) => {
             const dMin = desde <= hasta ? desde : hasta;
             const dMax = desde <= hasta ? hasta : desde;
+            ds.setPrimerToque(null);
             ds.setModoAnalisis("manual");
             ds.setManualDesde(dMin);
             ds.setManualHasta(dMax);
@@ -298,6 +293,7 @@ export default function DashboardClient({
             });
           }}
           onResetearAutomatico={async () => {
+            ds.setPrimerToque(null);
             ds.setModoAnalisis("auto");
             ds.setRangoDesde(null);
             ds.setRangoHasta(null);
@@ -363,6 +359,14 @@ export default function DashboardClient({
       />
 
       <ToastContainer toasts={ds.bottomToasts} />
+
+      <ModalBuscadorMagico
+        abierto={modalBuscadorAbierto}
+        onCerrar={() => setModalBuscadorAbierto(false)}
+        onNavegar={(fechaIso, vistaDestino) =>
+          void ds.handleSaltoMagico(fechaIso, vistaDestino)
+        }
+      />
 
       <ModalEditarTx
         tx={txEditando}
@@ -442,18 +446,6 @@ export default function DashboardClient({
           }
         }}
         onImportado={async () => {
-          await ds.refrescarEstado();
-        }}
-        onNotificar={ds.notificar}
-      />
-
-      <ModalTransferencia
-        abierto={modalTransferenciaAbierto}
-        perfiles={estado.perfiles}
-        perfilActual={estado.perfil_actual}
-        hoyIso={estado.hoy_iso}
-        onCerrar={() => setModalTransferenciaAbierto(false)}
-        onTransferido={async () => {
           await ds.refrescarEstado();
         }}
         onNotificar={ds.notificar}
