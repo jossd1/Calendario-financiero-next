@@ -1,6 +1,4 @@
-import { compilarPresupuestos } from "@/lib/dashboard/presupuestos";
-import { inArray } from "drizzle-orm";
-import { and, between, desc, eq, gt, ilike, or } from "drizzle-orm";
+import { and, between, desc, eq, gt } from "drizzle-orm";
 import { db } from "@/db";
 import { transacciones } from "@/db/schema";
 import { obtenerAjustesApp } from "@/lib/ajustes";
@@ -15,17 +13,20 @@ import {
 } from "@/lib/dashboard/calendario";
 import { compilarDatosGenerales } from "@/lib/dashboard/general";
 import {
+  mapearTransaccion,
+  obtenerHistorialYPapelera,
+} from "@/lib/dashboard/historial";
+import {
   calcularNavegacionPeriodo,
   calcularRangoPeriodo,
   calcularRangoPeriodoAnterior,
 } from "@/lib/dashboard/periodos";
+import { compilarPresupuestos } from "@/lib/dashboard/presupuestos";
 import {
   addDaysISO,
   daysInMonth,
   esFechaISOValida,
   formatearFechaDMY,
-  formatearHoraLima,
-  formatoSoles,
   obtenerHoyPeruISO,
   parseIsoDateParts,
 } from "@/lib/format";
@@ -33,33 +34,8 @@ import { obtenerCategoriasPerfil, obtenerPerfilActivo } from "@/lib/perfil";
 import type {
   ComparativaKpiDTO,
   DashboardEstadoDTO,
-  TransaccionDTO,
   VistaCalendario,
 } from "@/types";
-
-export function mapearTransaccion(
-  row: typeof transacciones.$inferSelect
-): TransaccionDTO {
-  const monto = Number(row.monto);
-  const fechaIso = String(row.fecha);
-  return {
-    id: row.id,
-    perfil_id: row.perfil_id,
-    tipo: row.tipo === "ingreso" ? "ingreso" : "egreso",
-    monto,
-    monto_fmt: formatoSoles(monto),
-    categoria: row.categoria,
-    descripcion: row.descripcion ?? "",
-    fecha_iso: fechaIso,
-    fecha_fmt: formatearFechaDMY(fechaIso),
-    hora_fmt: formatearHoraLima(row.creado_en),
-    eliminado: Boolean(row.eliminado),
-    estado:
-      row.estado === "pendiente" || row.estado === "programado"
-        ? row.estado
-        : "pagado",
-  };
-}
 
 function calcularDeltaPct(actual: number, anterior: number): number | null {
   if (anterior === 0) return null;
@@ -260,49 +236,6 @@ export async function compilarEstadoDashboard(
     tituloRangoAnalisis
   );
 
-  const condicionesHistorial = [
-    eq(transacciones.perfil_id, perfilActual.id),
-    eq(transacciones.eliminado, false),
-    between(transacciones.fecha, inicio, fin),
-    gt(transacciones.monto, "0"),
-  ];
-  if (params.historialCategoria && params.historialCategoria !== "todas") {
-    condicionesHistorial.push(
-      eq(transacciones.categoria, params.historialCategoria)
-    );
-  }
-  if (params.historialTipo === "ingreso" || params.historialTipo === "egreso") {
-    condicionesHistorial.push(eq(transacciones.tipo, params.historialTipo));
-  }
-  const busqueda = (params.historialBusqueda ?? "").trim();
-  if (busqueda) {
-    const patron = `%${busqueda}%`;
-    const filtroTexto = or(
-      ilike(transacciones.descripcion, patron),
-      ilike(transacciones.categoria, patron)
-    );
-    if (filtroTexto) condicionesHistorial.push(filtroTexto);
-  }
-
-  const filasHistorial = await db
-    .select()
-    .from(transacciones)
-    .where(and(...condicionesHistorial))
-    .orderBy(desc(transacciones.fecha), desc(transacciones.id))
-    .limit(31);
-
-  const filasPapelera = await db
-    .select()
-    .from(transacciones)
-    .where(
-      and(
-        eq(transacciones.perfil_id, perfilActual.id),
-        eq(transacciones.eliminado, true)
-      )
-    )
-    .orderBy(desc(transacciones.creado_en), desc(transacciones.id))
-    .limit(20);
-
   const presupuestosLista = ajustes.presupuestosActivos
     ? await compilarPresupuestos({
         perfilId: perfilActual.id,
@@ -313,20 +246,15 @@ export async function compilarEstadoDashboard(
       })
     : [];
 
-  const filasPendientes = ajustes.programadosActivos
-    ? await db
-        .select()
-        .from(transacciones)
-        .where(
-          and(
-            eq(transacciones.perfil_id, perfilActual.id),
-            eq(transacciones.eliminado, false),
-            inArray(transacciones.estado, ["pendiente", "programado"])
-          )
-        )
-        .orderBy(desc(transacciones.fecha), desc(transacciones.id))
-        .limit(30)
-    : [];
+  const historial = await obtenerHistorialYPapelera({
+    perfilId: perfilActual.id,
+    inicio,
+    fin,
+    categoria: params.historialCategoria,
+    tipo: params.historialTipo,
+    busqueda: params.historialBusqueda,
+    incluirPendientes: ajustes.programadosActivos,
+  });
 
   return {
     perfiles,
@@ -352,12 +280,12 @@ export async function compilarEstadoDashboard(
     meses_anual: mesesAnual,
     datos_general: datosGeneral,
     transacciones_dia: vista === "dia" ? txPeriodo : [],
-    transacciones_historial: filasHistorial.slice(0, 30).map(mapearTransaccion),
-    hay_mas_historial: filasHistorial.length > 30,
+    transacciones_historial: historial.transacciones_historial,
+    hay_mas_historial: historial.hay_mas_historial,
     analisis,
     presupuestos: presupuestosLista,
-    pendientes_programados: filasPendientes.map(mapearTransaccion),
-    papelera: filasPapelera.map(mapearTransaccion),
+    pendientes_programados: historial.pendientes_programados,
+    papelera: historial.papelera,
     ajustes,
     textos,
   };

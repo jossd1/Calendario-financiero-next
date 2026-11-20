@@ -28,6 +28,7 @@ export interface AjustesAppConfig {
   sumarProgramadosEnKpi: boolean;
   authPinActivo: boolean;
   pinConfigurado: boolean;
+  defaultsVersion?: number;
 }
 
 export type TextosUI = Record<string, string>;

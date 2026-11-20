@@ -8,16 +8,15 @@ interface TopbarProps {
   perfilActual: PerfilDTO;
   cantidadPapelera: number;
   modoPrivacidad: boolean;
+  authPinActivo: boolean;
   textos: TextosUI;
   editModeTextos: boolean;
-  authPinActivo: boolean;
-  onBloquearPin: () => void;
   onGuardarTexto: (clave: string, valor: string) => void;
   onTogglePrivacidad: () => void;
+  onBloquearPin: () => void;
   onCambiarPerfil: (perfilId: number) => void;
   onAbrirCategorias: () => void;
   onAbrirPerfiles: () => void;
-  onAbrirTransferencia: () => void;
   onAbrirPapelera: () => void;
   onAbrirAjustes: () => void;
   onResetInicio: () => void;
@@ -37,7 +36,6 @@ export default function Topbar({
   onCambiarPerfil,
   onAbrirCategorias,
   onAbrirPerfiles,
-  onAbrirTransferencia,
   onAbrirPapelera,
   onAbrirAjustes,
   onResetInicio,
@@ -45,7 +43,7 @@ export default function Topbar({
   return (
     <header className="topbar">
       <div className="topbar-inner">
-        <div style={{ display: "flex", alignItems: "center", gap: "2rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
           <button
             type="button"
             onClick={() => {
@@ -118,21 +116,6 @@ export default function Topbar({
           </button>
           <button
             type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={onAbrirPerfiles}
-          >
-            ⚙️ Perfil
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={onAbrirTransferencia}
-            title="Transferir dinero entre perfiles"
-          >
-            ⇄ Transferir
-          </button>
-          <button
-            type="button"
             className="btn btn-danger btn-sm"
             onClick={onAbrirPapelera}
           >
@@ -172,7 +155,16 @@ export default function Topbar({
             .CSV
           </a>
 
-          <div className="profile-switcher-form">
+          <div className="profile-combo">
+            <button
+              type="button"
+              onClick={onAbrirPerfiles}
+              className="profile-gear-btn"
+              title="Administrar perfiles"
+              aria-label="Administrar perfiles"
+            >
+              ⚙️
+            </button>
             <select
               aria-label="Seleccionar perfil activo"
               className="profile-select"

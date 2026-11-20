@@ -590,4 +590,114 @@
   .topbar-nav {
     display: none;
   }
+
+  /* Buscador Mágico de Fechas */
+  .magic-modal-box {
+    background: radial-gradient(
+        circle at top right,
+        rgba(56, 189, 248, 0.12),
+        transparent 55%
+      ),
+      radial-gradient(
+        circle at bottom left,
+        rgba(168, 85, 247, 0.1),
+        transparent 55%
+      ),
+      #0f172a;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 24px 56px rgba(0, 0, 0, 0.8),
+      0 0 28px rgba(56, 189, 248, 0.15);
+    position: relative;
+  }
+
+  @keyframes magicPopIn {
+    0% {
+      opacity: 0;
+      transform: translateY(6px) scale(0.94);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .magic-month-preview {
+    font-family: var(--font-display);
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: var(--neutral-color);
+    text-align: center;
+    min-height: 2.2rem;
+    animation: magicPopIn 0.2s ease-out;
+  }
+
+  .magic-input-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: 12px auto;
+    max-width: 240px;
+    background-color: var(--bg-canvas);
+    border: 1.5px solid rgba(56, 189, 248, 0.45);
+    border-radius: 12px;
+    padding: 10px 16px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .magic-input-wrap:focus-within {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.22);
+  }
+
+  .magic-input-wrap.is-error {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.42),
+      0 0 18px rgba(239, 68, 68, 0.35) !important;
+  }
+
+  .magic-input-field {
+    background: transparent;
+    border: none;
+    outline: none;
+    width: 100%;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  /* Barra Manual Compacta de Análisis */
+  .manual-compact-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    background-color: rgba(15, 23, 42, 0.65);
+    border: 1px solid var(--border-hairline);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+  }
+
+  .manual-chip-btn {
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid var(--border-hairline);
+    background-color: rgba(255, 255, 255, 0.03);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .manual-chip-btn:hover {
+    border-color: var(--neutral-color);
+    color: var(--neutral-color);
+  }
 }

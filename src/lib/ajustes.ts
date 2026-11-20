@@ -4,12 +4,13 @@ import { ajustesApp } from "@/db/schema";
 import type { AjustesAppConfig, TextosUI } from "@/types";
 
 export const AJUSTES_DEFECTO: AjustesAppConfig = {
+  configVersion: 2,
   modoPrivacidad: false,
   comparativasKpi: false,
-  kpiTopEgreso: false,
+  kpiTopEgreso: true,
   vistaSemanal: false,
   vistaGeneral: true,
-  hoverPreviewDia: false,
+  hoverPreviewDia: true,
   mostrarNetoCeldas: false,
   categoriaPredeterminada: "",
   alertaTopeDiario: 0,
@@ -18,7 +19,7 @@ export const AJUSTES_DEFECTO: AjustesAppConfig = {
   generalMostrarEvolucion: true,
   generalMostrarRecords: true,
   generalMostrarAnual: true,
-  generalPermitirConsolidado: true,
+  generalPermitirConsolidado: false,
   presupuestosActivos: false,
   programadosActivos: false,
   modoPresupuesto: "base_mensual",
@@ -91,8 +92,32 @@ export async function obtenerAjustesApp(): Promise<{
     };
   }
 
+  const guardado = fila.config_json ?? ({} as Partial<AjustesAppConfig>);
+  let configFinal: AjustesAppConfig = { ...AJUSTES_DEFECTO, ...guardado };
+
+  // Aplica una sola vez los nuevos defaults v2 sobre instalaciones previas
+  if ((guardado.configVersion ?? 1) < 2) {
+    configFinal = {
+      ...configFinal,
+      configVersion: 2,
+      kpiTopEgreso: true,
+      vistaGeneral: true,
+      hoverPreviewDia: true,
+      generalMostrarAhorro: true,
+      generalMostrarEvolucion: true,
+      generalMostrarRecords: true,
+      generalMostrarAnual: true,
+      generalPermitirConsolidado: false,
+    };
+
+    await db
+      .update(ajustesApp)
+      .set({ config_json: configFinal, actualizado_en: new Date() })
+      .where(eq(ajustesApp.clave, CLAVE_GLOBAL));
+  }
+
   return {
-    config: { ...AJUSTES_DEFECTO, ...(fila.config_json ?? {}) },
+    config: configFinal,
     textos: { ...TEXTOS_UI_DEFECTO, ...(fila.textos_json ?? {}) },
   };
 }
@@ -105,7 +130,7 @@ export async function guardarAjustesApp(params: {
   const actual = await obtenerAjustesApp();
 
   const nuevoConfig: AjustesAppConfig = params.config
-    ? { ...actual.config, ...params.config }
+    ? { ...actual.config, ...params.config, configVersion: 2 }
     : actual.config;
 
   const nuevosTextos: TextosUI = params.restablecerTextos

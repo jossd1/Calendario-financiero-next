@@ -2,18 +2,20 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import EditableText from "@/components/EditableText";
+import { analizarEntradaMonto } from "@/lib/atajos";
+import { formatearFechaDMY } from "@/lib/format";
 import type { CategoriaDTO, TextosUI, TipoMovimiento } from "@/types";
 
 interface FormularioRegistroProps {
   categoriasEgreso: CategoriaDTO[];
   categoriasIngreso: CategoriaDTO[];
   categoriaPredeterminada: string;
+  programadosActivos: boolean;
   fechaSeleccionada: string;
   hoyIso: string;
   focusPing: number;
   textos: TextosUI;
   editModeTextos: boolean;
-  programadosActivos: boolean;
   onGuardarTexto: (clave: string, valor: string) => void;
   onCambiarFechaSeleccionada: (fecha: string) => void;
   onRegistrarExito: (fechaTx: string) => Promise<void>;
@@ -25,12 +27,12 @@ export default function FormularioRegistro({
   categoriasEgreso,
   categoriasIngreso,
   categoriaPredeterminada,
+  programadosActivos,
   fechaSeleccionada,
   hoyIso,
   focusPing,
   textos,
   editModeTextos,
-  programadosActivos,
   onGuardarTexto,
   onCambiarFechaSeleccionada,
   onRegistrarExito,
@@ -47,32 +49,31 @@ export default function FormularioRegistro({
     categoriasEgreso[0] ??
     categoriasIngreso[0];
 
+  const [modoSimple, setModoSimple] = useState(false);
   const [tipo, setTipo] = useState<TipoMovimiento>(catInicial?.tipo ?? "egreso");
   const [montoTexto, setMontoTexto] = useState("");
   const [categoria, setCategoria] = useState<string>(catInicial?.nombre ?? "");
   const [descripcion, setDescripcion] = useState("");
   const [estadoTx, setEstadoTx] = useState<"pagado" | "pendiente" | "programado">("pagado");
   const [enviando, setEnviando] = useState(false);
-  const [estado, setEstado] = useState<"pagado" | "pendiente" | "programado">("pagado");
 
   const inputMontoRef = useRef<HTMLInputElement | null>(null);
   const inputDescRef = useRef<HTMLInputElement | null>(null);
   const ultimoCampoActivoRef = useRef<"monto" | "descripcion">("monto");
 
   useEffect(() => {
-    if (!programadosActivos && estado === "programado") {
-      setEstado("pagado");
-    }
-  }, [programadosActivos, estado]);
+    const guardado = window.localStorage.getItem("cf_modo_simple");
+    if (guardado === "1") setModoSimple(true);
+  }, []);
 
   useEffect(() => {
     if (focusPing <= 0) return;
-    if (ultimoCampoActivoRef.current === "descripcion") {
+    if (!modoSimple && ultimoCampoActivoRef.current === "descripcion") {
       inputDescRef.current?.focus();
     } else {
       inputMontoRef.current?.focus();
     }
-  }, [focusPing]);
+  }, [focusPing, modoSimple]);
 
   useEffect(() => {
     const existe = todasCategorias.some((c) => c.nombre === categoria);
@@ -85,46 +86,27 @@ export default function FormularioRegistro({
     }
   }, [todasCategorias, categoria, tipo, categoriasEgreso, categoriasIngreso]);
 
-  const analisisEntrada = useMemo(() => {
-    const texto = montoTexto.trim();
-    if (!texto) return null;
+  const analisisEntrada = useMemo(
+    () => analizarEntradaMonto(montoTexto, todasCategorias),
+    [montoTexto, todasCategorias]
+  );
 
-    const match = texto.match(/^(\d+(?:[.,]\d{1,2})?)\s*(.*)$/);
-    if (!match) {
-      return {
-        monto: null,
-        sufijo: texto.toLowerCase(),
-        cat: null as CategoriaDTO | null,
-      };
-    }
-
-    const monto = match[1].replace(",", ".");
-    const sufijo = (match[2] ?? "").trim().toLowerCase();
-
-    if (!sufijo) {
-      return { monto, sufijo: "", cat: null as CategoriaDTO | null };
-    }
-
-    const encontrada =
-      todasCategorias.find(
-        (c) => Boolean(c.atajo) && c.atajo.trim().toLowerCase() === sufijo
-      ) ?? null;
-
-    return { monto, sufijo, cat: encontrada };
-  }, [montoTexto, todasCategorias]);
+  const toggleModoSimple = () => {
+    const siguiente = !modoSimple;
+    setModoSimple(siguiente);
+    window.localStorage.setItem("cf_modo_simple", siguiente ? "1" : "0");
+    setTimeout(() => inputMontoRef.current?.focus(), 0);
+  };
 
   const handleCambioTipo = (nuevoTipo: TipoMovimiento) => {
     setTipo(nuevoTipo);
     const lista =
       nuevoTipo === "ingreso" ? categoriasIngreso : categoriasEgreso;
-    if (lista.length > 0) {
-      setCategoria(lista[0].nombre);
-    }
+    if (lista.length > 0) setCategoria(lista[0].nombre);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!montoTexto.trim()) {
       onToastSutil("Ingresa un monto válido para registrar.");
       return;
@@ -151,7 +133,6 @@ export default function FormularioRegistro({
 
     let tipoFinal = tipo;
     let categoriaFinal = categoria;
-
     if (analisisEntrada.cat) {
       tipoFinal = analisisEntrada.cat.tipo;
       categoriaFinal = analisisEntrada.cat.nombre;
@@ -168,9 +149,9 @@ export default function FormularioRegistro({
           tipo: tipoFinal,
           monto: analisisEntrada.monto,
           categoria: categoriaFinal,
-          descripcion,
+          descripcion: modoSimple ? "" : descripcion,
           fecha: fechaSeleccionada,
-          estado: programadosActivos ? estadoTx : "pagado",
+          estado: programadosActivos && !modoSimple ? estadoTx : "pagado",
         }),
       });
       const data = await res.json();
@@ -195,14 +176,29 @@ export default function FormularioRegistro({
   return (
     <aside className="panel">
       <div className="panel-header">
-        <h3 className="panel-title">
-          <EditableText
-            clave="tituloRegistroRapido"
-            textos={textos}
-            editMode={editModeTextos}
-            onGuardarTexto={onGuardarTexto}
-          />
-        </h3>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <h3 className="panel-title">
+            <EditableText
+              clave="tituloRegistroRapido"
+              textos={textos}
+              editMode={editModeTextos}
+              onGuardarTexto={onGuardarTexto}
+            />
+          </h3>
+          <button
+            type="button"
+            onClick={toggleModoSimple}
+            className={`btn-simple-toggle ${modoSimple ? "active" : ""}`}
+            title={
+              modoSimple
+                ? "Volver a vista completa"
+                : "Ocultar campos extras (Modo Simple)"
+            }
+          >
+            {modoSimple ? "☰ Completo" : "⚡ Simple"}
+          </button>
+        </div>
+
         <span style={{ fontSize: "0.72rem", color: "var(--accent-primary)" }}>
           <EditableText
             clave="subtituloAtajos"
@@ -286,121 +282,131 @@ export default function FormularioRegistro({
               ? `⚡ Atajo literal: [${analisisEntrada.cat.atajo}] -> ${analisisEntrada.cat.nombre}`
               : analisisEntrada?.sufijo
               ? `Sin coincidencia literal para "${analisisEntrada.sufijo}"`
+              : modoSimple
+              ? `📅 ${formatearFechaDMY(fechaSeleccionada)} · ${categoria}`
               : ""}
           </small>
         </div>
 
-        <div className="form-field">
-          <label htmlFor="categoria">
-            <EditableText
-              clave="labelCategoria"
-              textos={textos}
-              editMode={editModeTextos}
-              onGuardarTexto={onGuardarTexto}
-            />
-          </label>
-          <select
-            id="categoria"
-            name="categoria"
-            value={categoria}
-            onChange={(e) => {
-              const nombre = e.target.value;
-              setCategoria(nombre);
-              const encontrada = todasCategorias.find((c) => c.nombre === nombre);
-              if (encontrada) setTipo(encontrada.tipo);
-            }}
-            className="input-control"
-            required
-          >
-            <optgroup label="Egresos">
-              {categoriasEgreso.map((cat) => (
-                <option key={cat.id} value={cat.nombre}>
-                  {cat.nombre} {cat.atajo ? `[${cat.atajo}]` : ""}
-                </option>
-              ))}
-            </optgroup>
-            <optgroup label="Ingresos">
-              {categoriasIngreso.map((cat) => (
-                <option key={cat.id} value={cat.nombre}>
-                  {cat.nombre} {cat.atajo ? `[${cat.atajo}]` : ""}
-                </option>
-              ))}
-            </optgroup>
-          </select>
-        </div>
+        {!modoSimple && (
+          <>
+            <div className="form-field">
+              <label htmlFor="categoria">
+                <EditableText
+                  clave="labelCategoria"
+                  textos={textos}
+                  editMode={editModeTextos}
+                  onGuardarTexto={onGuardarTexto}
+                />
+              </label>
+              <select
+                id="categoria"
+                name="categoria"
+                value={categoria}
+                onChange={(e) => {
+                  const nombre = e.target.value;
+                  setCategoria(nombre);
+                  const encontrada = todasCategorias.find(
+                    (c) => c.nombre === nombre
+                  );
+                  if (encontrada) setTipo(encontrada.tipo);
+                }}
+                className="input-control"
+                required
+              >
+                <optgroup label="Egresos">
+                  {categoriasEgreso.map((cat) => (
+                    <option key={cat.id} value={cat.nombre}>
+                      {cat.nombre} {cat.atajo ? `[${cat.atajo}]` : ""}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="Ingresos">
+                  {categoriasIngreso.map((cat) => (
+                    <option key={cat.id} value={cat.nombre}>
+                      {cat.nombre} {cat.atajo ? `[${cat.atajo}]` : ""}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+            </div>
 
-        <div className="form-field">
-          <label htmlFor="fecha_tx">
-            <EditableText
-              clave="labelFechaTx"
-              textos={textos}
-              editMode={editModeTextos}
-              onGuardarTexto={onGuardarTexto}
-            />
-          </label>
-          <div style={{ display: "flex", gap: "6px" }}>
-            <input
-              id="fecha_tx"
-              name="fecha"
-              type="date"
-              value={fechaSeleccionada}
-              onChange={(e) => onCambiarFechaSeleccionada(e.target.value)}
-              className="input-control tabular-nums"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => onCambiarFechaSeleccionada(hoyIso)}
-              className="btn btn-secondary btn-sm"
-            >
-              Hoy
-            </button>
-          </div>
-        </div>
+            <div className="form-field">
+              <label htmlFor="fecha_tx">
+                <EditableText
+                  clave="labelFechaTx"
+                  textos={textos}
+                  editMode={editModeTextos}
+                  onGuardarTexto={onGuardarTexto}
+                />
+              </label>
+              <div style={{ display: "flex", gap: "6px" }}>
+                <input
+                  id="fecha_tx"
+                  name="fecha"
+                  type="date"
+                  value={fechaSeleccionada}
+                  onChange={(e) => onCambiarFechaSeleccionada(e.target.value)}
+                  className="input-control tabular-nums"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => onCambiarFechaSeleccionada(hoyIso)}
+                  className="btn btn-secondary btn-sm"
+                >
+                  Hoy
+                </button>
+              </div>
+            </div>
 
-        <div className="form-field">
-          <label htmlFor="descripcion">
-            <EditableText
-              clave="labelDescripcion"
-              textos={textos}
-              editMode={editModeTextos}
-              onGuardarTexto={onGuardarTexto}
-            />
-          </label>
-          <input
-            ref={inputDescRef}
-            id="descripcion"
-            name="descripcion"
-            type="text"
-            maxLength={240}
-            placeholder="Detalle..."
-            value={descripcion}
-            onFocus={() => {
-              ultimoCampoActivoRef.current = "descripcion";
-            }}
-            onChange={(e) => setDescripcion(e.target.value)}
-            className="input-control"
-          />
-        </div>
-        {programadosActivos && (
-          <div className="form-field">
-            <label htmlFor="estado_tx">Estado del Movimiento</label>
-            <select
-              id="estado_tx"
-              value={estadoTx}
-              onChange={(e) =>
-                setEstadoTx(
-                  e.target.value as "pagado" | "pendiente" | "programado"
-                )
-              }
-              className="input-control"
-            >
-              <option value="pagado">Pagado / Realizado</option>
-              <option value="pendiente">Pendiente</option>
-              <option value="programado">Programado</option>
-            </select>
-          </div>
+            <div className="form-field">
+              <label htmlFor="descripcion">
+                <EditableText
+                  clave="labelDescripcion"
+                  textos={textos}
+                  editMode={editModeTextos}
+                  onGuardarTexto={onGuardarTexto}
+                />
+              </label>
+              <input
+                ref={inputDescRef}
+                id="descripcion"
+                name="descripcion"
+                type="text"
+                maxLength={240}
+                placeholder="Detalle..."
+                value={descripcion}
+                onFocus={() => {
+                  ultimoCampoActivoRef.current = "descripcion";
+                }}
+                onChange={(e) => setDescripcion(e.target.value)}
+                className="input-control"
+              />
+            </div>
+
+            {programadosActivos && (
+              <div className="form-field">
+                <label htmlFor="estado_tx">Estado del Movimiento</label>
+                <select
+                  id="estado_tx"
+                  value={estadoTx}
+                  onChange={(e) =>
+                    setEstadoTx(
+                      e.target.value as "pagado" | "pendiente" | "programado"
+                    )
+                  }
+                  className="input-control"
+                >
+                  <option value="pagado">Pagado / Realizado</option>
+                  <option value="pendiente">Pendiente</option>
+                  <option value="programado">Programado</option>
+                </select>
+              </div>
+            )}
+          </>
         )}
+
         <button
           type="submit"
           disabled={enviando}

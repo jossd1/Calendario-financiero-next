@@ -15,6 +15,13 @@ export interface ComparativaAnualItem {
   egresos: number;
   neto: number;
   tasa_ahorro_pct: number;
+  cantidad_movimientos: number;
+  crecimiento_neto_pct: number | null;
+  mejor_mes_etiqueta: string | null;
+  mejor_mes_neto: number | null;
+  top_categoria_nombre: string | null;
+  top_categoria_color: string | null;
+  top_categoria_monto: number | null;
 }
 
 export interface RecordCategoriaItem {

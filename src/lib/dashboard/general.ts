@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { categorias, transacciones } from "@/db/schema";
 import { MESES_ES, formatearFechaDMY, formatoSoles } from "@/lib/format";
 import type {
+  AnioDetalleItem,
   ComparativaAnualItem,
   DatosGeneralDTO,
   EvolucionMensualItem,
@@ -37,19 +38,22 @@ export async function compilarDatosGenerales(
 
   const colorMap = new Map<string, string>();
   for (const c of filasCat) {
-    if (!colorMap.has(c.nombre)) {
-      colorMap.set(c.nombre, c.color ?? "#3b82f6");
-    }
+    if (!colorMap.has(c.nombre)) colorMap.set(c.nombre, c.color ?? "#3b82f6");
   }
 
   let totalIngresos = 0;
   let totalEgresos = 0;
-
-  const porMes = new Map<
-    string,
-    { etiqueta: string; ingresos: number; egresos: number }
+  const porMes = new Map<string, { etiqueta: string; ingresos: number; egresos: number }>();
+  const porAnio = new Map<
+    number,
+    {
+      ingresos: number;
+      egresos: number;
+      cantidad: number;
+      mesesNeto: Map<string, number>;
+      catsEgreso: Map<string, number>;
+    }
   >();
-  const porAnio = new Map<number, { ingresos: number; egresos: number }>();
   const egresosPorCat = new Map<string, number>();
 
   for (const r of filasTx) {
@@ -66,20 +70,37 @@ export async function compilarDatosGenerales(
       ingresos: 0,
       egresos: 0,
     };
-    const bucketAnio = porAnio.get(anio) ?? { ingresos: 0, egresos: 0 };
+    const bucketAnio = porAnio.get(anio) ?? {
+      ingresos: 0,
+      egresos: 0,
+      cantidad: 0,
+      mesesNeto: new Map<string, number>(),
+      catsEgreso: new Map<string, number>(),
+    };
+
+    bucketAnio.cantidad += 1;
 
     if (r.tipo === "ingreso") {
       totalIngresos += monto;
       bucketMes.ingresos += monto;
       bucketAnio.ingresos += monto;
+      bucketAnio.mesesNeto.set(
+        mesEtiqueta,
+        (bucketAnio.mesesNeto.get(mesEtiqueta) ?? 0) + monto
+      );
     } else {
       totalEgresos += monto;
       bucketMes.egresos += monto;
       bucketAnio.egresos += monto;
-      egresosPorCat.set(
-        r.categoria,
-        (egresosPorCat.get(r.categoria) ?? 0) + monto
+      bucketAnio.mesesNeto.set(
+        mesEtiqueta,
+        (bucketAnio.mesesNeto.get(mesEtiqueta) ?? 0) - monto
       );
+      bucketAnio.catsEgreso.set(
+        r.categoria,
+        (bucketAnio.catsEgreso.get(r.categoria) ?? 0) + monto
+      );
+      egresosPorCat.set(r.categoria, (egresosPorCat.get(r.categoria) ?? 0) + monto);
     }
 
     porMes.set(mesKey, bucketMes);
@@ -96,7 +117,6 @@ export async function compilarDatosGenerales(
   )) {
     const neto = vals.ingresos - vals.egresos;
     acumulado += neto;
-
     evolucionMensual.push({
       mes_key: mesKey,
       etiqueta: vals.etiqueta,
@@ -117,26 +137,61 @@ export async function compilarDatosGenerales(
     }
   }
 
-  const comparativaAnual: ComparativaAnualItem[] = Array.from(
-    porAnio.entries()
-  )
-    .sort((a, b) => b[0] - a[0])
-    .map(([anio, vals]) => {
-      const neto = vals.ingresos - vals.egresos;
-      const tasa =
-        vals.ingresos > 0 ? Number(((neto / vals.ingresos) * 100).toFixed(1)) : 0;
-      return {
-        anio,
-        ingresos: Number(vals.ingresos.toFixed(2)),
-        egresos: Number(vals.egresos.toFixed(2)),
-        neto: Number(neto.toFixed(2)),
-        tasa_ahorro_pct: tasa,
-      };
-    });
+  const aniosAsc = Array.from(porAnio.entries()).sort((a, b) => a[0] - b[0]);
+  const detalleAnualesAsc: AnioDetalleItem[] = aniosAsc.map(([anio, vals], idx) => {
+    const neto = vals.ingresos - vals.egresos;
+    const tasa =
+      vals.ingresos > 0 ? Number(((neto / vals.ingresos) * 100).toFixed(1)) : 0;
 
-  const topCategorias: RecordCategoriaItem[] = Array.from(
-    egresosPorCat.entries()
-  )
+    let crecimientoPct: number | null = null;
+    if (idx > 0) {
+      const prev = aniosAsc[idx - 1][1];
+      const prevNeto = prev.ingresos - prev.egresos;
+      if (prevNeto !== 0) {
+        crecimientoPct = Number(
+          (((neto - prevNeto) / Math.abs(prevNeto)) * 100).toFixed(1)
+        );
+      }
+    }
+
+    const mejorMesAnio = Array.from(vals.mesesNeto.entries()).sort(
+      (a, b) => b[1] - a[1]
+    )[0];
+    const topCatAnio = Array.from(vals.catsEgreso.entries()).sort(
+      (a, b) => b[1] - a[1]
+    )[0];
+
+    return {
+      anio,
+      ingresos: Number(vals.ingresos.toFixed(2)),
+      egresos: Number(vals.egresos.toFixed(2)),
+      neto: Number(neto.toFixed(2)),
+      tasa_ahorro_pct: tasa,
+      cantidad_movimientos: vals.cantidad,
+      crecimiento_neto_pct: crecimientoPct,
+      mejor_mes: mejorMesAnio
+        ? { etiqueta: mejorMesAnio[0], neto: Number(mejorMesAnio[1].toFixed(2)) }
+        : null,
+      top_categoria: topCatAnio
+        ? {
+            nombre: topCatAnio[0],
+            color: colorMap.get(topCatAnio[0]) ?? "#3b82f6",
+            monto: Number(topCatAnio[1].toFixed(2)),
+          }
+        : null,
+    };
+  });
+
+  const detalleAnuales = [...detalleAnualesAsc].reverse();
+  const comparativaAnual: ComparativaAnualItem[] = detalleAnuales.map((a) => ({
+    anio: a.anio,
+    ingresos: a.ingresos,
+    egresos: a.egresos,
+    neto: a.neto,
+    tasa_ahorro_pct: a.tasa_ahorro_pct,
+  }));
+
+  const topCategorias: RecordCategoriaItem[] = Array.from(egresosPorCat.entries())
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
     .map(([categoria, monto]) => ({
@@ -144,9 +199,7 @@ export async function compilarDatosGenerales(
       color: colorMap.get(categoria) ?? "#3b82f6",
       monto: Number(monto.toFixed(2)),
       porcentaje:
-        totalEgresos > 0
-          ? Number(((monto / totalEgresos) * 100).toFixed(1))
-          : 0,
+        totalEgresos > 0 ? Number(((monto / totalEgresos) * 100).toFixed(1)) : 0,
     }));
 
   const topMovimientos: RecordMovimientoItem[] = [...filasTx]
@@ -163,14 +216,13 @@ export async function compilarDatosGenerales(
 
   const mesesActivos = Math.max(1, evolucionMensual.length);
   const netoTotal = totalIngresos - totalEgresos;
-  const tasaAhorroPct =
-    totalIngresos > 0
-      ? Number(((netoTotal / totalIngresos) * 100).toFixed(1))
-      : 0;
 
   return {
     consolidado,
-    tasa_ahorro_pct: tasaAhorroPct,
+    tasa_ahorro_pct:
+      totalIngresos > 0
+        ? Number(((netoTotal / totalIngresos) * 100).toFixed(1))
+        : 0,
     cantidad_movimientos: filasTx.length,
     meses_activos: evolucionMensual.length,
     ingreso_mensual_prom: Number((totalIngresos / mesesActivos).toFixed(2)),
@@ -180,6 +232,7 @@ export async function compilarDatosGenerales(
     mes_mayor_gasto: mesMayorGasto,
     evolucion_mensual: evolucionMensual,
     comparativa_anual: comparativaAnual,
+    detalle_anuales: detalleAnuales,
     top_categorias: topCategorias,
     top_movimientos: topMovimientos,
   };

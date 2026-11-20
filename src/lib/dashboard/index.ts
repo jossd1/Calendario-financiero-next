@@ -7,16 +7,18 @@ export {
   construirVistaAnual,
   construirVistaSemanal,
 } from "@/lib/dashboard/calendario";
+export { compilarDatosGenerales } from "@/lib/dashboard/general";
+export {
+  mapearTransaccion,
+  obtenerHistorialYPapelera,
+} from "@/lib/dashboard/historial";
 export {
   calcularNavegacionPeriodo,
   calcularRangoPeriodo,
   calcularRangoPeriodoAnterior,
 } from "@/lib/dashboard/periodos";
+export { compilarPresupuestos } from "@/lib/dashboard/presupuestos";
 export {
   compilarEstadoDashboard,
-  mapearTransaccion,
   type CompilarDashboardParams,
 } from "@/lib/dashboard/queries";
-
-export { compilarDatosGenerales } from "@/lib/dashboard/general";
-export { compilarPresupuestos } from "@/lib/dashboard/presupuestos";

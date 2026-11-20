@@ -2,13 +2,15 @@
   .period-badge-inline {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 3px 10px;
-    border-radius: 9999px;
-    font-size: 0.76rem;
-    font-weight: 600;
+    gap: 7px;
+    padding: 4px 12px;
+    border-radius: 9px;
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.25;
     background-color: rgba(59, 130, 246, 0.12);
-    border: 1px solid rgba(59, 130, 246, 0.28);
+    border: 1px solid rgba(59, 130, 246, 0.3);
     color: var(--neutral-color);
   }
 
@@ -286,5 +288,47 @@
     height: 9px;
     border-radius: 9999px;
     flex-shrink: 0;
+  }
+
+  /* Botón Lupa Mágica junto a los modos del calendario */
+  .magic-search-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    background: linear-gradient(
+      135deg,
+      rgba(56, 189, 248, 0.18),
+      rgba(168, 85, 247, 0.18)
+    );
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  }
+
+  .magic-search-btn:hover {
+    transform: translateY(-1px);
+    border-color: #38bdf8;
+    box-shadow: 0 0 14px rgba(56, 189, 248, 0.32);
+  }
+
+  /* Selección de rango Analizar en tarjetas de Vista Anual */
+  .month-card.is-in-range {
+    background-color: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.45);
+  }
+
+  .month-card.is-range-start {
+    border-color: var(--neutral-color) !important;
+    background-color: rgba(56, 189, 248, 0.14) !important;
+    box-shadow: inset 0 0 0 1px var(--neutral-color);
+  }
+
+  .month-card.is-range-end {
+    border-color: var(--range-end-color) !important;
+    background-color: rgba(245, 158, 11, 0.14) !important;
+    box-shadow: inset 0 0 0 1px var(--range-end-color);
   }
 }
