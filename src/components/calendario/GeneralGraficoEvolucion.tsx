@@ -41,6 +41,10 @@ export default function GeneralGraficoEvolucion({
   modoPrivacidad,
 }: GeneralGraficoEvolucionProps) {
   const [modoVista, setModoVista] = useState<"flujo" | "neto">("flujo");
+  const [mostrarSaldo, setMostrarSaldo] = useState(true);
+  const [mostrarIngresos, setMostrarIngresos] = useState(true);
+  const [mostrarEgresos, setMostrarEgresos] = useState(true);
+  const [mostrarNeto, setMostrarNeto] = useState(true);
 
   if (evolucion.length === 0) {
     return (
@@ -56,6 +60,7 @@ export default function GeneralGraficoEvolucion({
     type: "line" as const,
     label: "Saldo Acumulado (S/)",
     yAxisID: "ySaldo",
+    hidden: !mostrarSaldo,
     data: evolucion.map((e) => e.acumulado),
     borderColor: "rgba(148, 163, 184, 0.8)",
     backgroundColor: "rgba(148, 163, 184, 0.8)",
@@ -80,6 +85,7 @@ export default function GeneralGraficoEvolucion({
               type: "bar",
               label: "Ingresos (S/)",
               yAxisID: "y",
+              hidden: !mostrarIngresos,
               data: evolucion.map((e) => e.ingresos),
               backgroundColor: "rgba(16, 185, 129, 0.88)",
               hoverBackgroundColor: "#10b981",
@@ -93,6 +99,7 @@ export default function GeneralGraficoEvolucion({
               type: "bar",
               label: "Egresos (S/)",
               yAxisID: "y",
+              hidden: !mostrarEgresos,
               data: evolucion.map((e) => e.egresos),
               backgroundColor: "rgba(239, 68, 68, 0.88)",
               hoverBackgroundColor: "#ef4444",
@@ -112,6 +119,7 @@ export default function GeneralGraficoEvolucion({
               type: "bar",
               label: "Ahorro Neto Mensual (S/)",
               yAxisID: "y",
+              hidden: !mostrarNeto,
               data: evolucion.map((e) => e.neto),
               backgroundColor: evolucion.map((e) =>
                 e.neto >= 0
@@ -133,6 +141,9 @@ export default function GeneralGraficoEvolucion({
   const formatTick = (v: string | number) =>
     modoPrivacidad ? "S/ •••" : "S/ " + Number(v).toLocaleString("en-US");
 
+  const mostrarEjeIzq =
+    modoVista === "flujo" ? mostrarIngresos || mostrarEgresos : mostrarNeto;
+
   const options: ChartOptions<"bar" | "line"> = {
     responsive: true,
     maintainAspectRatio: false,
@@ -148,6 +159,7 @@ export default function GeneralGraficoEvolucion({
       y: {
         type: "linear",
         position: "left",
+        display: mostrarEjeIzq,
         grid: { color: "rgba(148, 163, 184, 0.1)" },
         ticks: {
           color: "#94a3b8",
@@ -158,6 +170,7 @@ export default function GeneralGraficoEvolucion({
       ySaldo: {
         type: "linear",
         position: "right",
+        display: mostrarSaldo,
         grid: { drawOnChartArea: false },
         ticks: {
           color: "#94a3b8",
@@ -168,14 +181,7 @@ export default function GeneralGraficoEvolucion({
     },
     plugins: {
       legend: {
-        position: "top",
-        align: "end",
-        labels: {
-          boxWidth: 12,
-          usePointStyle: true,
-          color: "#cbd5e1",
-          font: { family: '"DM Sans", sans-serif' },
-        },
+        display: false,
       },
       tooltip: {
         backgroundColor: "rgba(11, 17, 31, 0.96)",
@@ -215,6 +221,24 @@ export default function GeneralGraficoEvolucion({
     },
   };
 
+  const pillStyle = (activo: boolean): React.CSSProperties => ({
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "6px",
+    padding: "3px 10px",
+    borderRadius: "9999px",
+    fontSize: "0.76rem",
+    fontWeight: 600,
+    cursor: "pointer",
+    backgroundColor: activo ? "rgba(255, 255, 255, 0.045)" : "transparent",
+    border: activo
+      ? "1px solid rgba(148, 163, 184, 0.22)"
+      : "1px solid rgba(148, 163, 184, 0.08)",
+    color: activo ? "#e2e8f0" : "var(--text-muted)",
+    opacity: activo ? 1 : 0.45,
+    transition: "all 0.15s ease",
+  });
+
   return (
     <div>
       <div
@@ -223,13 +247,94 @@ export default function GeneralGraficoEvolucion({
           justifyContent: "space-between",
           alignItems: "center",
           flexWrap: "wrap",
-          gap: "10px",
-          marginBottom: "12px",
+          gap: "12px",
+          marginBottom: "14px",
         }}
       >
-        <h4 className="panel-title" style={{ fontSize: "0.95rem" }}>
-          📈 Evolución Histórica Mensual y Saldo Acumulado
-        </h4>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "12px",
+          }}
+        >
+          <h4 className="panel-title" style={{ fontSize: "0.95rem" }}>
+            📈 Evolución Histórica Mensual y Saldo Acumulado
+          </h4>
+
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "6px",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setMostrarSaldo((v) => !v)}
+              aria-pressed={mostrarSaldo}
+              style={pillStyle(mostrarSaldo)}
+              title="Mostrar u ocultar Saldo Acumulado"
+            >
+              <span
+                style={{
+                  width: "13px",
+                  height: "0",
+                  borderTop: "2px dashed #cbd5e1",
+                  display: "inline-block",
+                }}
+              />
+              <span>Saldo Acumulado</span>
+            </button>
+
+            {modoVista === "flujo" ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setMostrarIngresos((v) => !v)}
+                  aria-pressed={mostrarIngresos}
+                  style={pillStyle(mostrarIngresos)}
+                  title="Mostrar u ocultar Ingresos"
+                >
+                  <span
+                    className="cat-color-dot"
+                    style={{ backgroundColor: "#10b981" }}
+                  />
+                  <span>Ingresos</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMostrarEgresos((v) => !v)}
+                  aria-pressed={mostrarEgresos}
+                  style={pillStyle(mostrarEgresos)}
+                  title="Mostrar u ocultar Egresos"
+                >
+                  <span
+                    className="cat-color-dot"
+                    style={{ backgroundColor: "#ef4444" }}
+                  />
+                  <span>Egresos</span>
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setMostrarNeto((v) => !v)}
+                aria-pressed={mostrarNeto}
+                style={pillStyle(mostrarNeto)}
+                title="Mostrar u ocultar Ahorro Neto Mensual"
+              >
+                <span
+                  className="cat-color-dot"
+                  style={{ backgroundColor: "#10b981" }}
+                />
+                <span>Ahorro Neto</span>
+              </button>
+            )}
+          </div>
+        </div>
 
         <div className="mode-pill-group">
           <button
