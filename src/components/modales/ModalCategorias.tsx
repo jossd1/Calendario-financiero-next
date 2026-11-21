@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import CategoriaListaBox from "@/components/modales/CategoriaListaBox";
 import type { CategoriaDTO, TipoMovimiento } from "@/types";
 
 interface ModalCategoriasProps {
@@ -142,88 +143,12 @@ export default function ModalCategorias({
     }
   };
 
-  const renderLista = (titulo: string, color: string, lista: CategoriaDTO[]) => (
-    <div
-      style={{
-        background: "rgba(255, 255, 255, 0.02)",
-        padding: "0.75rem",
-        borderRadius: "8px",
-      }}
-    >
-      <h4 style={{ fontSize: "0.85rem", marginBottom: "0.5rem", color }}>
-        {titulo}
-      </h4>
-      <ul
-        style={{
-          listStyle: "none",
-          padding: 0,
-          margin: 0,
-          display: "flex",
-          flexDirection: "column",
-          gap: "0.4rem",
-        }}
-      >
-        {lista.map((cat) => (
-          <li
-            key={cat.id}
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              background: "rgba(255,255,255,0.03)",
-              padding: "4px 8px",
-              borderRadius: "4px",
-              fontSize: "0.8rem",
-            }}
-          >
-            <span
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-            >
-              <span
-                className="cat-color-dot"
-                style={{ backgroundColor: cat.color || "#3b82f6" }}
-              />
-              {cat.nombre}{" "}
-              <code style={{ color: "var(--accent-primary)" }}>
-                [{cat.atajo}]
-              </code>
-            </span>
-            <div style={{ display: "flex", gap: "4px" }}>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => {
-                  setEditandoOriginal(cat.nombre);
-                  setEditNombre(cat.nombre);
-                  setEditAtajo(cat.atajo);
-                  setEditColor(cat.color || "#3b82f6");
-                }}
-                style={{ padding: "1px 5px", fontSize: "0.7rem" }}
-                title="Editar"
-              >
-                ✏️
-              </button>
-              <button
-                type="button"
-                className={`btn btn-danger btn-sm ${
-                  armadoNombre === cat.nombre ? "btn-danger-armed" : ""
-                }`}
-                onClick={() => void handleEliminar(cat.nombre)}
-                style={{ padding: "1px 5px", fontSize: "0.7rem" }}
-                title="Eliminar"
-              >
-                {armadoNombre === cat.nombre ? "⚠️ ¿Seguro?" : "🗑️"}
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+  const iniciarEdicion = (cat: CategoriaDTO) => {
+    setEditandoOriginal(cat.nombre);
+    setEditNombre(cat.nombre);
+    setEditAtajo(cat.atajo);
+    setEditColor(cat.color || "#3b82f6");
+  };
 
   return (
     <>
@@ -258,8 +183,22 @@ export default function ModalCategorias({
               marginBottom: "1rem",
             }}
           >
-            {renderLista("Egresos", "var(--expense-color)", categoriasEgreso)}
-            {renderLista("Ingresos", "var(--income-color)", categoriasIngreso)}
+            <CategoriaListaBox
+              titulo="Egresos"
+              colorTitulo="var(--expense-color)"
+              lista={categoriasEgreso}
+              armadoNombre={armadoNombre}
+              onIniciarEdicion={iniciarEdicion}
+              onEliminar={handleEliminar}
+            />
+            <CategoriaListaBox
+              titulo="Ingresos"
+              colorTitulo="var(--income-color)"
+              lista={categoriasIngreso}
+              armadoNombre={armadoNombre}
+              onIniciarEdicion={iniciarEdicion}
+              onEliminar={handleEliminar}
+            />
           </div>
 
           {editandoOriginal && (

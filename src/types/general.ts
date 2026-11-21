@@ -15,13 +15,13 @@ export interface ComparativaAnualItem {
   egresos: number;
   neto: number;
   tasa_ahorro_pct: number;
+}
+
+export interface AnioDetalleItem extends ComparativaAnualItem {
   cantidad_movimientos: number;
   crecimiento_neto_pct: number | null;
-  mejor_mes_etiqueta: string | null;
-  mejor_mes_neto: number | null;
-  top_categoria_nombre: string | null;
-  top_categoria_color: string | null;
-  top_categoria_monto: number | null;
+  mejor_mes: { etiqueta: string; neto: number } | null;
+  top_categoria: { nombre: string; color: string; monto: number } | null;
 }
 
 export interface RecordCategoriaItem {
@@ -52,6 +52,7 @@ export interface DatosGeneralDTO {
   mes_mayor_gasto: { etiqueta: string; egresos: number } | null;
   evolucion_mensual: EvolucionMensualItem[];
   comparativa_anual: ComparativaAnualItem[];
+  detalle_anuales: AnioDetalleItem[];
   top_categorias: RecordCategoriaItem[];
   top_movimientos: RecordMovimientoItem[];
 }

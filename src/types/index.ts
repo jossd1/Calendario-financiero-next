@@ -7,6 +7,7 @@ export type ModoCalendarioClick = "precargar" | "ver_dia" | "analizar_dia";
 export type ModoAnalisis = "auto" | "manual";
 
 export interface AjustesAppConfig {
+  configVersion?: number;
   modoPrivacidad: boolean;
   comparativasKpi: boolean;
   kpiTopEgreso: boolean;
@@ -28,7 +29,6 @@ export interface AjustesAppConfig {
   sumarProgramadosEnKpi: boolean;
   authPinActivo: boolean;
   pinConfigurado: boolean;
-  defaultsVersion?: number;
 }
 
 export type TextosUI = Record<string, string>;

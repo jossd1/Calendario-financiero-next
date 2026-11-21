@@ -12,11 +12,11 @@ interface VistaMensualProps {
   rangoDesde: string | null;
   rangoHasta: string | null;
   hoverPreviewDia: boolean;
+  mostrarNetoCeldas: boolean;
+  alertaTopeDiario: number;
   colorPorCategoria: Map<string, string>;
   modoPrivacidad: boolean;
   onClicDia: (fechaIso: string) => void;
-  mostrarNetoCeldas: boolean;
-  alertaTopeDiario: number;
 }
 
 export default function VistaMensual({
@@ -28,11 +28,11 @@ export default function VistaMensual({
   rangoDesde,
   rangoHasta,
   hoverPreviewDia,
+  mostrarNetoCeldas,
+  alertaTopeDiario,
   colorPorCategoria,
   modoPrivacidad,
   onClicDia,
-  mostrarNetoCeldas,
-  alertaTopeDiario,
 }: VistaMensualProps) {
   return (
     <>
@@ -72,10 +72,9 @@ export default function VistaMensual({
             enRango ? "is-in-range" : "",
             esInicio ? "is-range-start" : "",
             esFin ? "is-range-end" : "",
-
             alertaTopeDiario > 0 && celda.egresos > alertaTopeDiario
-            ? "over-daily-limit"
-            : "",
+              ? "over-daily-limit"
+              : "",
           ]
             .filter(Boolean)
             .join(" ");
@@ -100,15 +99,18 @@ export default function VistaMensual({
               <div className="day-header">
                 <span className="day-number">{celda.dia}</span>
                 <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                {alertaTopeDiario > 0 && celda.egresos > alertaTopeDiario && (
-                  <span title={`Superó tope diario de S/ ${alertaTopeDiario}`} style={{ fontSize: "0.72rem" }}>
-                    ⚠️
-                  </span>
-                )}
-                {celda.cantidad > 0 && (
-                  <span className="day-count">{celda.cantidad} mov.</span>
-                )}
-              </div>
+                  {alertaTopeDiario > 0 && celda.egresos > alertaTopeDiario && (
+                    <span
+                      title={`Superó tope diario de S/ ${alertaTopeDiario}`}
+                      style={{ fontSize: "0.72rem" }}
+                    >
+                      ⚠️
+                    </span>
+                  )}
+                  {celda.cantidad > 0 && (
+                    <span className="day-count">{celda.cantidad} mov.</span>
+                  )}
+                </div>
               </div>
 
               <div
@@ -134,24 +136,21 @@ export default function VistaMensual({
                     )}
                   </span>
                 )}
+                {mostrarNetoCeldas &&
+                  (celda.ingresos > 0 || celda.egresos > 0) && (
+                    <span
+                      style={{
+                        color:
+                          celda.neto >= 0
+                            ? "var(--neutral-color)"
+                            : "var(--range-end-color)",
+                      }}
+                    >
+                      {mostrarMonto(formatoSoles(celda.neto), modoPrivacidad)}
+                    </span>
+                  )}
               </div>
-              
-              {mostrarNetoCeldas &&
-                (celda.ingresos > 0 || celda.egresos > 0) && (
-                  <span
-                    style={{
-                      color:
-                        celda.neto >= 0
-                          ? "var(--neutral-color)"
-                          : "var(--range-end-color)",
-                      borderTop: "1px solid var(--border-hairline)",
-                      paddingTop: "1px",
-                    }}
-                  >
-                    = {mostrarMonto(formatoSoles(celda.neto), modoPrivacidad)}
-                  </span>
-                )}              
-            
+
               {hoverPreviewDia && celda.cantidad > 0 && (
                 <div className="day-hover-popover">
                   <div

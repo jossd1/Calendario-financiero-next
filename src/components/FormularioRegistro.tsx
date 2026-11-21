@@ -2,9 +2,15 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import EditableText from "@/components/EditableText";
+import CamposCompletosRegistro from "@/components/registro/CamposCompletosRegistro";
 import { analizarEntradaMonto } from "@/lib/atajos";
 import { formatearFechaDMY } from "@/lib/format";
-import type { CategoriaDTO, TextosUI, TipoMovimiento } from "@/types";
+import type {
+  CategoriaDTO,
+  EstadoMovimiento,
+  TextosUI,
+  TipoMovimiento,
+} from "@/types";
 
 interface FormularioRegistroProps {
   categoriasEgreso: CategoriaDTO[];
@@ -54,12 +60,14 @@ export default function FormularioRegistro({
   const [montoTexto, setMontoTexto] = useState("");
   const [categoria, setCategoria] = useState<string>(catInicial?.nombre ?? "");
   const [descripcion, setDescripcion] = useState("");
-  const [estadoTx, setEstadoTx] = useState<"pagado" | "pendiente" | "programado">("pagado");
+  const [estadoTx, setEstadoTx] = useState<EstadoMovimiento>("pagado");
   const [enviando, setEnviando] = useState(false);
 
   const inputMontoRef = useRef<HTMLInputElement | null>(null);
   const inputDescRef = useRef<HTMLInputElement | null>(null);
   const ultimoCampoActivoRef = useRef<"monto" | "descripcion">("monto");
+  const modoSimpleRef = useRef(modoSimple);
+  modoSimpleRef.current = modoSimple;
 
   useEffect(() => {
     const guardado = window.localStorage.getItem("cf_modo_simple");
@@ -68,12 +76,12 @@ export default function FormularioRegistro({
 
   useEffect(() => {
     if (focusPing <= 0) return;
-    if (!modoSimple && ultimoCampoActivoRef.current === "descripcion") {
+    if (!modoSimpleRef.current && ultimoCampoActivoRef.current === "descripcion") {
       inputDescRef.current?.focus();
     } else {
       inputMontoRef.current?.focus();
     }
-  }, [focusPing, modoSimple]);
+  }, [focusPing]);
 
   useEffect(() => {
     const existe = todasCategorias.some((c) => c.nombre === categoria);
@@ -94,8 +102,13 @@ export default function FormularioRegistro({
   const toggleModoSimple = () => {
     const siguiente = !modoSimple;
     setModoSimple(siguiente);
+    if (siguiente) {
+      ultimoCampoActivoRef.current = "monto";
+    }
     window.localStorage.setItem("cf_modo_simple", siguiente ? "1" : "0");
-    setTimeout(() => inputMontoRef.current?.focus(), 0);
+    requestAnimationFrame(() => {
+      inputMontoRef.current?.focus();
+    });
   };
 
   const handleCambioTipo = (nuevoTipo: TipoMovimiento) => {
@@ -175,38 +188,28 @@ export default function FormularioRegistro({
 
   return (
     <aside className="panel">
-      <div className="panel-header">
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <h3 className="panel-title">
-            <EditableText
-              clave="tituloRegistroRapido"
-              textos={textos}
-              editMode={editModeTextos}
-              onGuardarTexto={onGuardarTexto}
-            />
-          </h3>
-          <button
-            type="button"
-            onClick={toggleModoSimple}
-            className={`btn-simple-toggle ${modoSimple ? "active" : ""}`}
-            title={
-              modoSimple
-                ? "Volver a vista completa"
-                : "Ocultar campos extras (Modo Simple)"
-            }
-          >
-            {modoSimple ? "☰ Completo" : "⚡ Simple"}
-          </button>
-        </div>
-
-        <span style={{ fontSize: "0.72rem", color: "var(--accent-primary)" }}>
+      <div className="panel-header" style={{ flexWrap: "nowrap", gap: "8px" }}>
+        <h3 className="panel-title" style={{ whiteSpace: "nowrap" }}>
           <EditableText
-            clave="subtituloAtajos"
+            clave="tituloRegistroRapido"
             textos={textos}
             editMode={editModeTextos}
             onGuardarTexto={onGuardarTexto}
           />
-        </span>
+        </h3>
+
+        <button
+          type="button"
+          onClick={toggleModoSimple}
+          className={`btn-simple-toggle ${modoSimple ? "active" : ""}`}
+          title={
+            modoSimple
+              ? "Actualmente en Modo Simple (clic para ver todo)"
+              : "Actualmente en Modo Completo (clic para simplificar)"
+          }
+        >
+          {modoSimple ? "Simple" : "Completo"}
+        </button>
       </div>
 
       <form onSubmit={handleSubmit} className="form-stack">
@@ -289,122 +292,33 @@ export default function FormularioRegistro({
         </div>
 
         {!modoSimple && (
-          <>
-            <div className="form-field">
-              <label htmlFor="categoria">
-                <EditableText
-                  clave="labelCategoria"
-                  textos={textos}
-                  editMode={editModeTextos}
-                  onGuardarTexto={onGuardarTexto}
-                />
-              </label>
-              <select
-                id="categoria"
-                name="categoria"
-                value={categoria}
-                onChange={(e) => {
-                  const nombre = e.target.value;
-                  setCategoria(nombre);
-                  const encontrada = todasCategorias.find(
-                    (c) => c.nombre === nombre
-                  );
-                  if (encontrada) setTipo(encontrada.tipo);
-                }}
-                className="input-control"
-                required
-              >
-                <optgroup label="Egresos">
-                  {categoriasEgreso.map((cat) => (
-                    <option key={cat.id} value={cat.nombre}>
-                      {cat.nombre} {cat.atajo ? `[${cat.atajo}]` : ""}
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label="Ingresos">
-                  {categoriasIngreso.map((cat) => (
-                    <option key={cat.id} value={cat.nombre}>
-                      {cat.nombre} {cat.atajo ? `[${cat.atajo}]` : ""}
-                    </option>
-                  ))}
-                </optgroup>
-              </select>
-            </div>
-
-            <div className="form-field">
-              <label htmlFor="fecha_tx">
-                <EditableText
-                  clave="labelFechaTx"
-                  textos={textos}
-                  editMode={editModeTextos}
-                  onGuardarTexto={onGuardarTexto}
-                />
-              </label>
-              <div style={{ display: "flex", gap: "6px" }}>
-                <input
-                  id="fecha_tx"
-                  name="fecha"
-                  type="date"
-                  value={fechaSeleccionada}
-                  onChange={(e) => onCambiarFechaSeleccionada(e.target.value)}
-                  className="input-control tabular-nums"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => onCambiarFechaSeleccionada(hoyIso)}
-                  className="btn btn-secondary btn-sm"
-                >
-                  Hoy
-                </button>
-              </div>
-            </div>
-
-            <div className="form-field">
-              <label htmlFor="descripcion">
-                <EditableText
-                  clave="labelDescripcion"
-                  textos={textos}
-                  editMode={editModeTextos}
-                  onGuardarTexto={onGuardarTexto}
-                />
-              </label>
-              <input
-                ref={inputDescRef}
-                id="descripcion"
-                name="descripcion"
-                type="text"
-                maxLength={240}
-                placeholder="Detalle..."
-                value={descripcion}
-                onFocus={() => {
-                  ultimoCampoActivoRef.current = "descripcion";
-                }}
-                onChange={(e) => setDescripcion(e.target.value)}
-                className="input-control"
-              />
-            </div>
-
-            {programadosActivos && (
-              <div className="form-field">
-                <label htmlFor="estado_tx">Estado del Movimiento</label>
-                <select
-                  id="estado_tx"
-                  value={estadoTx}
-                  onChange={(e) =>
-                    setEstadoTx(
-                      e.target.value as "pagado" | "pendiente" | "programado"
-                    )
-                  }
-                  className="input-control"
-                >
-                  <option value="pagado">Pagado / Realizado</option>
-                  <option value="pendiente">Pendiente</option>
-                  <option value="programado">Programado</option>
-                </select>
-              </div>
-            )}
-          </>
+          <CamposCompletosRegistro
+            categoria={categoria}
+            categoriasEgreso={categoriasEgreso}
+            categoriasIngreso={categoriasIngreso}
+            fechaSeleccionada={fechaSeleccionada}
+            hoyIso={hoyIso}
+            descripcion={descripcion}
+            estadoTx={estadoTx}
+            programadosActivos={programadosActivos}
+            inputDescRef={inputDescRef}
+            textos={textos}
+            editModeTextos={editModeTextos}
+            onGuardarTexto={onGuardarTexto}
+            onCambiarCategoria={(nombre) => {
+              setCategoria(nombre);
+              const encontrada = todasCategorias.find(
+                (c) => c.nombre === nombre
+              );
+              if (encontrada) setTipo(encontrada.tipo);
+            }}
+            onCambiarFecha={onCambiarFechaSeleccionada}
+            onCambiarDescripcion={setDescripcion}
+            onFocusDescripcion={() => {
+              ultimoCampoActivoRef.current = "descripcion";
+            }}
+            onCambiarEstadoTx={setEstadoTx}
+          />
         )}
 
         <button

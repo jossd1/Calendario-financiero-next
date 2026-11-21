@@ -12,14 +12,9 @@ import PanelAnalisis from "@/components/analisis/PanelAnalisis";
 import PanelPresupuestos from "@/components/analisis/PanelPresupuestos";
 import CalendarioPanel from "@/components/calendario/CalendarioPanel";
 import VistaGeneral from "@/components/calendario/VistaGeneral";
+import DashboardModales from "@/components/dashboard/DashboardModales";
 import EditModeFloatingBar from "@/components/dashboard/EditModeFloatingBar";
 import ToastContainer from "@/components/dashboard/ToastContainer";
-import ModalAjustes from "@/components/modales/ModalAjustes";
-import ModalBuscadorMagico from "@/components/modales/ModalBuscadorMagico";
-import ModalCategorias from "@/components/modales/ModalCategorias";
-import ModalEditarTx from "@/components/modales/ModalEditarTx";
-import ModalPapelera from "@/components/modales/ModalPapelera";
-import ModalPerfiles from "@/components/modales/ModalPerfiles";
 import { useDashboardState } from "@/hooks/useDashboardState";
 import { useEditModeTextos } from "@/hooks/useEditModeTextos";
 import type { DashboardEstadoDTO, TransaccionDTO } from "@/types";
@@ -360,95 +355,32 @@ export default function DashboardClient({
 
       <ToastContainer toasts={ds.bottomToasts} />
 
-      <ModalBuscadorMagico
-        abierto={modalBuscadorAbierto}
-        onCerrar={() => setModalBuscadorAbierto(false)}
-        onNavegar={(fechaIso, vistaDestino) =>
-          void ds.handleSaltoMagico(fechaIso, vistaDestino)
-        }
-      />
-
-      <ModalEditarTx
-        tx={txEditando}
-        categoriasEgreso={estado.categorias_egreso}
-        categoriasIngreso={estado.categorias_ingreso}
-        programadosActivos={estado.ajustes.programadosActivos}
-        onCerrar={() => setTxEditando(null)}
-        onGuardado={async () => {
-          await ds.refrescarEstado();
-        }}
-        onNotificar={ds.notificar}
-      />
-
-      <ModalCategorias
-        abierto={modalCategoriasAbierto}
-        categoriasEgreso={estado.categorias_egreso}
-        categoriasIngreso={estado.categorias_ingreso}
-        onCerrar={() => setModalCategoriasAbierto(false)}
-        onActualizado={async () => {
-          await ds.refrescarEstado();
-        }}
-        onNotificar={ds.notificar}
-      />
-
-      <ModalPerfiles
-        abierto={modalPerfilesAbierto}
-        perfiles={estado.perfiles}
-        perfilActual={estado.perfil_actual}
-        onCerrar={() => setModalPerfilesAbierto(false)}
-        onActualizado={async () => {
-          await ds.refrescarEstado();
-        }}
-        onNotificar={ds.notificar}
-      />
-
-      <ModalPapelera
-        abierto={modalPapeleraAbierto}
-        items={estado.papelera}
-        onCerrar={() => setModalPapeleraAbierto(false)}
-        onActualizado={async () => {
-          await ds.refrescarEstado();
-        }}
-        onNotificar={ds.notificar}
-      />
-
-      <ModalAjustes
-        abierto={modalAjustesAbierto}
-        ajustes={estado.ajustes}
-        categorias={estado.categorias}
+      <DashboardModales
+        estado={estado}
+        modalCategoriasAbierto={modalCategoriasAbierto}
+        modalPerfilesAbierto={modalPerfilesAbierto}
+        modalPapeleraAbierto={modalPapeleraAbierto}
+        modalAjustesAbierto={modalAjustesAbierto}
+        modalBuscadorAbierto={modalBuscadorAbierto}
+        txEditando={txEditando}
         editModeTextos={ed.editModeTextos}
-        onCerrar={() => setModalAjustesAbierto(false)}
+        onCerrarCategorias={() => setModalCategoriasAbierto(false)}
+        onCerrarPerfiles={() => setModalPerfilesAbierto(false)}
+        onCerrarPapelera={() => setModalPapeleraAbierto(false)}
+        onCerrarAjustes={() => setModalAjustesAbierto(false)}
+        onCerrarBuscador={() => setModalBuscadorAbierto(false)}
+        onCerrarEditarTx={() => setTxEditando(null)}
         onToggleEditModeTextos={() => ed.setEditModeTextos((v) => !v)}
         onRestablecerTextos={ed.handleRestablecerTextos}
         onActualizarConfig={ds.handleActualizarConfig}
-        onActivarPin={async (pin) => {
-          const res = await fetch("/api/auth/pin", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "activar", pin }),
-          });
-          const data = await res.json();
-          if (!data.ok) return false;
-          ds.lanzarToastSutil(data.mensaje ?? "PIN activado.");
-          await ds.refrescarEstado();
-          return true;
-        }}
-        onDesactivarPin={async () => {
-          const res = await fetch("/api/auth/pin", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "desactivar" }),
-          });
-          const data = await res.json();
-          if (data.ok) {
-            ds.lanzarToastSutil(data.mensaje ?? "PIN desactivado.");
-            await ds.refrescarEstado();
-          }
-        }}
-        onImportado={async () => {
+        onRefrescar={async () => {
           await ds.refrescarEstado();
         }}
+        onSaltoMagico={(fechaIso, vistaDestino) =>
+          void ds.handleSaltoMagico(fechaIso, vistaDestino)
+        }
         onNotificar={ds.notificar}
+        onToastSutil={ds.lanzarToastSutil}
       />
     </div>
   );

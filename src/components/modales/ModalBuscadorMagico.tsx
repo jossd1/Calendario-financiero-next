@@ -26,11 +26,6 @@ export default function ModalBuscadorMagico({
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    const saved = window.localStorage.getItem("cf_buscador_dia");
-    if (saved === "1") setIncluirDia(true);
-  }, []);
-
-  useEffect(() => {
     if (!abierto) return;
     const saved = window.localStorage.getItem("cf_buscador_dia") === "1";
     setIncluirDia(saved);
@@ -148,7 +143,7 @@ export default function ModalBuscadorMagico({
       <div className="modal-backdrop-blur" onClick={onCerrar} />
       <div
         className="modal-flotante"
-        style={{ maxWidth: "420px" }}
+        style={{ maxWidth: "430px" }}
         role="dialog"
         aria-modal="true"
       >
@@ -158,7 +153,7 @@ export default function ModalBuscadorMagico({
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              marginBottom: "14px",
+              marginBottom: "10px",
             }}
           >
             <label
@@ -177,14 +172,14 @@ export default function ModalBuscadorMagico({
                 onChange={(e) => toggleIncluirDia(e.target.checked)}
                 style={{ width: "14px", height: "14px", cursor: "pointer" }}
               />
-              Incluir Día
+              Día
             </label>
 
             <button
               type="button"
               onClick={onCerrar}
               className="btn btn-secondary btn-sm"
-              style={{ padding: "3px 10px", fontSize: "0.76rem" }}
+              style={{ padding: "3px 10px", fontSize: "0.75rem" }}
               title="Cancelar (Espacio / Esc)"
             >
               Cancelar
@@ -194,7 +189,7 @@ export default function ModalBuscadorMagico({
           <div key={nombreMes || paso} className="magic-month-preview">
             {nombreMes
               ? incluirDia && diaTexto
-                ? `${diaTexto} de ${nombreMes}`
+                ? `${diaTexto} · ${nombreMes}`
                 : nombreMes
               : paso === "dia"
               ? "Día"
@@ -203,18 +198,12 @@ export default function ModalBuscadorMagico({
               : "Año"}
           </div>
 
-          <div className={`magic-input-wrap ${errorCampo ? "is-error" : ""}`}>
+          <div
+            className={`magic-stage-box ${errorCampo ? "is-error" : ""}`}
+            onClick={() => inputRef.current?.focus()}
+          >
             {paso === "anio" && (
-              <span
-                className="tabular-nums"
-                style={{
-                  fontSize: "1.5rem",
-                  fontWeight: 700,
-                  color: "var(--text-secondary)",
-                }}
-              >
-                20
-              </span>
+              <span className="magic-year-prefix">20</span>
             )}
             <input
               ref={inputRef}
@@ -223,52 +212,50 @@ export default function ModalBuscadorMagico({
               value={valorActual}
               onChange={(e) => handleChange(e.target.value)}
               onKeyDown={handleInputKeyDown}
-              placeholder={paso === "dia" ? "DD" : paso === "mes" ? "MM" : "AA"}
-              className="magic-input-field"
+              placeholder={paso === "dia" ? "DD" : paso === "mes" ? "MM" : "__"}
+              className={`magic-input-field ${paso === "anio" ? "is-year" : ""}`}
               aria-label={`Ingresar ${paso}`}
             />
           </div>
 
           <div
             style={{
-              textAlign: "center",
-              fontSize: "0.78rem",
-              color: errorCampo
-                ? "#f87171"
-                : "var(--text-secondary)",
-              minHeight: "20px",
-              marginBottom: "14px",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              minHeight: "32px",
+              marginBottom: "8px",
             }}
           >
-            {errorCampo
-              ? "Valor fuera de rango o fecha inválida."
-              : paso === "dia"
-              ? "Digita el día (1–31) y presiona Enter"
-              : paso === "mes"
-              ? "Digita el mes (1–12) y presiona Enter"
-              : "Digita los 2 últimos dígitos del año y presiona Enter para Ir ↵"}
+            {errorCampo ? (
+              <span style={{ fontSize: "0.8rem", color: "#f87171", fontWeight: 600 }}>
+                Fecha o número fuera de rango
+              </span>
+            ) : paso === "anio" ? (
+              <button
+                type="button"
+                onClick={avanzarOSaltar}
+                className="magic-ir-signal"
+              >
+                <span>Enter ↵ para Ir</span>
+              </button>
+            ) : (
+              <span style={{ fontSize: "0.76rem", color: "var(--text-secondary)" }}>
+                {paso === "dia"
+                  ? "Digita el día (1–31) · Enter"
+                  : "Digita el mes (1–12) · Enter"}
+              </span>
+            )}
           </div>
 
           <div
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              fontSize: "0.72rem",
+              textAlign: "center",
+              fontSize: "0.7rem",
               color: "var(--text-muted)",
-              borderTop: "1px solid var(--border-hairline)",
-              paddingTop: "10px",
             }}
           >
-            <span>Espacio = Cancelar · Backspace = Atrás</span>
-            <button
-              type="button"
-              onClick={avanzarOSaltar}
-              className="btn btn-primary btn-sm"
-              style={{ padding: "4px 12px" }}
-            >
-              {paso === "anio" ? "Ir ↵" : "Siguiente →"}
-            </button>
+            Espacio = Cancelar · Backspace = Atrás
           </div>
         </div>
       </div>

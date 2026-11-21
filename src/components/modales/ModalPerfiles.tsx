@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import PerfilEdicionForm from "@/components/modales/PerfilEdicionForm";
 import type { PerfilDTO } from "@/types";
 
 interface ModalPerfilesProps {
@@ -249,58 +250,16 @@ export default function ModalPerfiles({
           </div>
 
           {editPerfil && (
-            <form
+            <PerfilEdicionForm
+              nombreOriginal={editPerfil.nombre}
+              nombre={editNombre}
+              descripcion={editDesc}
+              procesando={procesando}
+              onCambiarNombre={setEditNombre}
+              onCambiarDescripcion={setEditDesc}
+              onCancelar={() => setEditPerfil(null)}
               onSubmit={handleGuardarEdicion}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.6rem",
-                background: "rgba(59, 130, 246, 0.08)",
-                border: "1px solid rgba(59, 130, 246, 0.3)",
-                padding: "12px",
-                borderRadius: "8px",
-                marginBottom: "1rem",
-              }}
-            >
-              <span style={{ fontSize: "0.78rem", color: "var(--neutral-color)" }}>
-                Editando perfil: <strong>{editPerfil.nombre}</strong>
-              </span>
-              <input
-                type="text"
-                value={editNombre}
-                onChange={(e) => setEditNombre(e.target.value)}
-                className="input-control"
-                placeholder="Nombre del perfil"
-                required
-                maxLength={80}
-                style={{ padding: "6px 10px" }}
-              />
-              <input
-                type="text"
-                value={editDesc}
-                onChange={(e) => setEditDesc(e.target.value)}
-                className="input-control"
-                placeholder="Descripción"
-                maxLength={160}
-                style={{ padding: "6px 10px" }}
-              />
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
-                <button
-                  type="button"
-                  onClick={() => setEditPerfil(null)}
-                  className="btn btn-secondary btn-sm"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={procesando}
-                  className="btn btn-primary btn-sm"
-                >
-                  Guardar Cambios
-                </button>
-              </div>
-            </form>
+            />
           )}
 
           <form

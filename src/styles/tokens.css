@@ -1,12 +1,12 @@
 :root {
-  --bg-canvas: #0b0f17;
-  --bg-surface: #111827;
-  --bg-surface-elevated: #161f30;
-  --bg-surface-hover: #1b2538;
-  --border-hairline: rgba(148, 163, 184, 0.14);
-  --border-strong: rgba(148, 163, 184, 0.28);
+  --bg-canvas: #060911;
+  --bg-surface: #0d1322;
+  --bg-surface-elevated: #121b30;
+  --bg-surface-hover: #17223b;
+  --border-hairline: rgba(148, 163, 184, 0.13);
+  --border-strong: rgba(255, 255, 255, 0.2);
 
-  --text-primary: #f1f5f9;
+  --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
 
@@ -21,8 +21,8 @@
   --neutral-color: #38bdf8;
   --range-end-color: #f59e0b;
 
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-md: 9px;
+  --radius-lg: 14px;
   --font-display: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-body: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
@@ -49,7 +49,9 @@
 
   body {
     min-height: 100vh;
-    background-color: var(--bg-canvas);
+    background:
+      radial-gradient(ellipse 75% 36% at 50% -10%, rgba(59, 130, 246, 0.1), transparent),
+      var(--bg-canvas);
     color: var(--text-primary);
   }
 
@@ -71,7 +73,7 @@
   }
 
   dialog::backdrop {
-    background: rgba(5, 8, 15, 0.78);
+    background: rgba(3, 6, 12, 0.78);
     backdrop-filter: blur(4px);
   }
 }

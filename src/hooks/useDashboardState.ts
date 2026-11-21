@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { buildIsoDate, daysInMonth, formatearFechaDMY } from "@/lib/format";
+import { useAnalisisRango } from "@/hooks/useAnalisisRango";
+import { buildIsoDate } from "@/lib/format";
 import type {
   AjustesAppConfig,
   DashboardEstadoDTO,
   FlashMensaje,
   ModoAnalisis,
-  ModoCalendarioClick,
   TextosUI,
   VistaCalendario,
 } from "@/types";
@@ -30,33 +30,12 @@ export interface BottomToast {
   texto: string;
 }
 
-interface PrimerToqueRango {
-  inicio: string;
-  fin: string;
-}
-
 export function useDashboardState(initialEstado: DashboardEstadoDTO) {
   const [estado, setEstado] = useState<DashboardEstadoDTO>(initialEstado);
   const [diaSeleccionado, setDiaSeleccionado] = useState<string>(
     initialEstado.fecha_ref
   );
   const [focusPing, setFocusPing] = useState<number>(0);
-  const [modoClick, setModoClick] =
-    useState<ModoCalendarioClick>("precargar");
-
-  const [primerToque, setPrimerToque] = useState<PrimerToqueRango | null>(null);
-  const [rangoDesde, setRangoDesde] = useState<string | null>(null);
-  const [rangoHasta, setRangoHasta] = useState<string | null>(null);
-  const [modoAnalisis, setModoAnalisis] = useState<ModoAnalisis>("auto");
-  const [manualDesde, setManualDesde] = useState<string>(
-    initialEstado.analisis.desde
-  );
-  const [manualHasta, setManualHasta] = useState<string>(
-    initialEstado.analisis.hasta
-  );
-  const [manualTipo, setManualTipo] = useState<"todos" | "ingreso" | "egreso">(
-    "todos"
-  );
 
   const [filtroCategoria, setFiltroCategoria] = useState<string>("todas");
   const [filtroTipo, setFiltroTipo] = useState<"todos" | "ingreso" | "egreso">(
@@ -67,45 +46,6 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
 
   const [flashes, setFlashes] = useState<FlashMensaje[]>([]);
   const [bottomToasts, setBottomToasts] = useState<BottomToast[]>([]);
-
-  const queryRef = useRef<QueryState>({
-    vista: initialEstado.vista,
-    fecha: initialEstado.fecha_ref,
-    analisisModo: "auto",
-    analisisDesde: initialEstado.analisis.desde,
-    analisisHasta: initialEstado.analisis.hasta,
-    analisisTipo: "todos",
-    historialCategoria: "todas",
-    historialTipo: "todos",
-    historialBusqueda: "",
-    generalConsolidado: false,
-  });
-
-  useEffect(() => {
-    queryRef.current = {
-      vista: estado.vista,
-      fecha: estado.fecha_ref,
-      analisisModo: modoAnalisis,
-      analisisDesde: manualDesde,
-      analisisHasta: manualHasta,
-      analisisTipo: manualTipo,
-      historialCategoria: filtroCategoria,
-      historialTipo: filtroTipo,
-      historialBusqueda: filtroBusqueda,
-      generalConsolidado,
-    };
-  }, [
-    estado.vista,
-    estado.fecha_ref,
-    modoAnalisis,
-    manualDesde,
-    manualHasta,
-    manualTipo,
-    filtroCategoria,
-    filtroTipo,
-    filtroBusqueda,
-    generalConsolidado,
-  ]);
 
   const notificar = useCallback(
     (tipo: "success" | "error", texto: string) => {
@@ -133,6 +73,19 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
   const actualizarTextosLocal = useCallback((nuevos: TextosUI) => {
     setEstado((prev) => ({ ...prev, textos: nuevos }));
   }, []);
+
+  const queryRef = useRef<QueryState>({
+    vista: initialEstado.vista,
+    fecha: initialEstado.fecha_ref,
+    analisisModo: "auto",
+    analisisDesde: initialEstado.analisis.desde,
+    analisisHasta: initialEstado.analisis.hasta,
+    analisisTipo: "todos",
+    historialCategoria: "todas",
+    historialTipo: "todos",
+    historialBusqueda: "",
+    generalConsolidado: false,
+  });
 
   const refrescarEstado = useCallback(
     async (overrides: Partial<QueryState> = {}) => {
@@ -172,6 +125,46 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
     []
   );
 
+  const rango = useAnalisisRango({
+    initialDesde: initialEstado.analisis.desde,
+    initialHasta: initialEstado.analisis.hasta,
+    onToastSutil: lanzarToastSutil,
+    onRefrescarRango: async (dMin, dMax, tipo) => {
+      await refrescarEstado({
+        analisisModo: "manual",
+        analisisDesde: dMin,
+        analisisHasta: dMax,
+        analisisTipo: tipo,
+      });
+    },
+  });
+
+  useEffect(() => {
+    queryRef.current = {
+      vista: estado.vista,
+      fecha: estado.fecha_ref,
+      analisisModo: rango.modoAnalisis,
+      analisisDesde: rango.manualDesde,
+      analisisHasta: rango.manualHasta,
+      analisisTipo: rango.manualTipo,
+      historialCategoria: filtroCategoria,
+      historialTipo: filtroTipo,
+      historialBusqueda: filtroBusqueda,
+      generalConsolidado,
+    };
+  }, [
+    estado.vista,
+    estado.fecha_ref,
+    rango.modoAnalisis,
+    rango.manualDesde,
+    rango.manualHasta,
+    rango.manualTipo,
+    filtroCategoria,
+    filtroTipo,
+    filtroBusqueda,
+    generalConsolidado,
+  ]);
+
   const handleActualizarConfig = useCallback(
     async (parcial: Partial<AjustesAppConfig>) => {
       setEstado((prev) => ({
@@ -202,50 +195,16 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
     [lanzarToastSutil, refrescarEstado]
   );
 
-  const completarRangoAnalizar = async (inicioSel: string, finSel: string) => {
-    if (!primerToque || (rangoDesde && rangoHasta)) {
-      setPrimerToque({ inicio: inicioSel, fin: finSel });
-      setRangoDesde(inicioSel);
-      setRangoHasta(null);
-      return;
-    }
-
-    const invertido = inicioSel < primerToque.inicio;
-    const dMin = invertido ? inicioSel : primerToque.inicio;
-    const dMax = invertido ? primerToque.fin : finSel;
-
-    setPrimerToque(null);
-    setRangoDesde(dMin);
-    setRangoHasta(dMax);
-    setModoAnalisis("manual");
-    setManualDesde(dMin);
-    setManualHasta(dMax);
-
-    if (invertido) {
-      lanzarToastSutil(
-        `Orden invertido automáticamente: del ${formatearFechaDMY(dMin)} al ${formatearFechaDMY(dMax)}`
-      );
-    }
-
-    await refrescarEstado({
-      analisisModo: "manual",
-      analisisDesde: dMin,
-      analisisHasta: dMax,
-      analisisTipo: manualTipo,
-    });
-    document.getElementById("analisis")?.scrollIntoView({ behavior: "smooth" });
-  };
-
   const handleClicDia = async (fechaIso: string) => {
-    if (modoClick === "precargar") {
+    if (rango.modoClick === "precargar") {
       setDiaSeleccionado(fechaIso);
       setFocusPing((p) => p + 1);
       return;
     }
 
-    if (modoClick === "ver_dia") {
+    if (rango.modoClick === "ver_dia") {
       setDiaSeleccionado(fechaIso);
-      setModoAnalisis("auto");
+      rango.setModoAnalisis("auto");
       await refrescarEstado({
         vista: "dia",
         fecha: fechaIso,
@@ -254,22 +213,20 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
       return;
     }
 
-    await completarRangoAnalizar(fechaIso, fechaIso);
+    await rango.completarRangoAnalizar(fechaIso, fechaIso);
   };
 
   const handleClicMesAnual = async (anio: number, mes: number) => {
-    const inicioMes = buildIsoDate(anio, mes, 1);
-    if (modoClick === "analizar_dia") {
-      const ultimoDia = daysInMonth(anio, mes);
-      const finMes = buildIsoDate(anio, mes, ultimoDia);
-      await completarRangoAnalizar(inicioMes, finMes);
+    if (rango.modoClick === "analizar_dia") {
+      const { inicioMes, finMes } = rango.resolverMesAnualRango(anio, mes);
+      await rango.completarRangoAnalizar(inicioMes, finMes);
       return;
     }
 
-    setModoAnalisis("auto");
+    rango.setModoAnalisis("auto");
     await refrescarEstado({
       vista: "mensual",
-      fecha: inicioMes,
+      fecha: buildIsoDate(anio, mes, 1),
       analisisModo: "auto",
     });
   };
@@ -279,7 +236,7 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
     vistaDestino: "mensual" | "dia"
   ) => {
     setDiaSeleccionado(fechaIso);
-    setModoAnalisis("auto");
+    rango.setModoAnalisis("auto");
     await refrescarEstado({
       vista: vistaDestino,
       fecha: fechaIso,
@@ -310,28 +267,7 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
     diaSeleccionado,
     setDiaSeleccionado,
     focusPing,
-    modoClick,
-    setModoClick: (m: ModoCalendarioClick) => {
-      setModoClick(m);
-      if (m !== "analizar_dia") {
-        setPrimerToque(null);
-        setRangoDesde(null);
-        setRangoHasta(null);
-      }
-    },
-    rangoDesde,
-    rangoHasta,
-    setRangoDesde,
-    setRangoHasta,
-    setPrimerToque,
-    modoAnalisis,
-    setModoAnalisis,
-    manualDesde,
-    setManualDesde,
-    manualHasta,
-    setManualHasta,
-    manualTipo,
-    setManualTipo,
+    ...rango,
     filtroCategoria,
     setFiltroCategoria,
     filtroTipo,

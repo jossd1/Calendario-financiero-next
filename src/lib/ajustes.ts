@@ -51,7 +51,7 @@ export const TEXTOS_UI_DEFECTO: TextosUI = {
   modoAnalizar: "Analizar",
   btnVolverAlMes: "↩ Volver al Mes",
   tituloRegistroRapido: "Registrar Movimiento (S/)",
-  subtituloAtajos: "⚡ Atajos literales ej: 15al",
+  subtituloAtajos: "Atajos ej: 15al",
   labelTipoOperacion: "Tipo de Operación",
   labelMontoAtajo: "Monto (S/) o atajo (ej. 15al)",
   labelCategoria: "Categoría",
@@ -116,9 +116,14 @@ export async function obtenerAjustesApp(): Promise<{
       .where(eq(ajustesApp.clave, CLAVE_GLOBAL));
   }
 
+  const textosGuardados = { ...(fila.textos_json ?? {}) };
+  if (textosGuardados.subtituloAtajos === "⚡ Atajos literales ej: 15al") {
+    textosGuardados.subtituloAtajos = "Atajos ej: 15al";
+  }
+
   return {
     config: configFinal,
-    textos: { ...TEXTOS_UI_DEFECTO, ...(fila.textos_json ?? {}) },
+    textos: { ...TEXTOS_UI_DEFECTO, ...textosGuardados },
   };
 }
 

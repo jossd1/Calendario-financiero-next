@@ -1,8 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import EditableText from "@/components/EditableText";
-import FiltroManualAnalisis from "@/components/analisis/FiltroManualAnalisis";
 import GraficosFinancieros from "@/components/analisis/GraficosFinancieros";
 import ResumenCategoriasTabla from "@/components/analisis/ResumenCategoriasTabla";
 import type {
@@ -47,6 +46,14 @@ export default function PanelAnalisis({
   onAplicarManual,
   onResetearAutomatico,
 }: PanelAnalisisProps) {
+  const [desdeInput, setDesdeInput] = useState(manualDesde || analisis.desde);
+  const [hastaInput, setHastaInput] = useState(manualHasta || analisis.hasta);
+
+  useEffect(() => {
+    setDesdeInput(manualDesde || analisis.desde);
+    setHastaInput(manualHasta || analisis.hasta);
+  }, [manualDesde, manualHasta, analisis.desde, analisis.hasta]);
+
   const colorPorCategoria = useMemo(() => {
     const mapa = new Map<string, string>();
     for (const c of categorias) {
@@ -54,6 +61,20 @@ export default function PanelAnalisis({
     }
     return mapa;
   }, [categorias]);
+
+  const handleChangeDesde = (val: string) => {
+    setDesdeInput(val);
+    if (val && hastaInput) {
+      void onAplicarManual(val, hastaInput, manualTipo);
+    }
+  };
+
+  const handleChangeHasta = (val: string) => {
+    setHastaInput(val);
+    if (desdeInput && val) {
+      void onAplicarManual(desdeInput, val, manualTipo);
+    }
+  };
 
   return (
     <section className="panel" id="analisis">
@@ -77,38 +98,63 @@ export default function PanelAnalisis({
           </span>
         </div>
 
-        <div className="view-tabs" role="tablist" aria-label="Modo de análisis">
-          <button
-            type="button"
-            className={`view-tab ${modoAnalisis === "auto" ? "active" : ""}`}
-            onClick={() => {
-              onCambiarModoAnalisis("auto");
-              void onResetearAutomatico();
-            }}
+        <div className="analisis-controls-wrap">
+          <div
+            className={`manual-slide-drawer ${
+              modoAnalisis === "manual" ? "is-open" : ""
+            }`}
+            aria-hidden={modoAnalisis !== "manual"}
           >
-            Automático
-          </button>
-          <button
-            type="button"
-            className={`view-tab ${modoAnalisis === "manual" ? "active" : ""}`}
-            onClick={() => onCambiarModoAnalisis("manual")}
-          >
-            Manual
-          </button>
+            <label className="manual-date-pill">
+              <span style={{ color: "var(--text-secondary)", fontWeight: 600 }}>
+                Desde
+              </span>
+              <span>📅</span>
+              <input
+                type="date"
+                aria-label="Desde"
+                value={desdeInput}
+                onChange={(e) => handleChangeDesde(e.target.value)}
+                className="manual-date-input"
+              />
+            </label>
+
+            <label className="manual-date-pill">
+              <span style={{ color: "var(--text-secondary)", fontWeight: 600 }}>
+                Hasta
+              </span>
+              <span>📅</span>
+              <input
+                type="date"
+                aria-label="Hasta"
+                value={hastaInput}
+                onChange={(e) => handleChangeHasta(e.target.value)}
+                className="manual-date-input"
+              />
+            </label>
+          </div>
+
+          <div className="view-tabs" role="tablist" aria-label="Modo de análisis">
+            <button
+              type="button"
+              className={`view-tab ${modoAnalisis === "auto" ? "active" : ""}`}
+              onClick={() => {
+                onCambiarModoAnalisis("auto");
+                void onResetearAutomatico();
+              }}
+            >
+              Automático
+            </button>
+            <button
+              type="button"
+              className={`view-tab ${modoAnalisis === "manual" ? "active" : ""}`}
+              onClick={() => onCambiarModoAnalisis("manual")}
+            >
+              Manual
+            </button>
+          </div>
         </div>
       </div>
-
-      {modoAnalisis === "manual" && (
-        <FiltroManualAnalisis
-          analisis={analisis}
-          manualDesde={manualDesde}
-          manualHasta={manualHasta}
-          manualTipo={manualTipo}
-          modoPrivacidad={modoPrivacidad}
-          onAplicarManual={onAplicarManual}
-          onResetearAutomatico={onResetearAutomatico}
-        />
-      )}
 
       <GraficosFinancieros
         chartData={analisis.chart_data}
