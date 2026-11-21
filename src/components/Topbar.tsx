@@ -1,5 +1,6 @@
 "use client";
 
+import AppIcon from "@/components/AppIcon";
 import EditableText from "@/components/EditableText";
 import type { PerfilDTO, TextosUI } from "@/types";
 
@@ -7,6 +8,8 @@ interface TopbarProps {
   perfiles: PerfilDTO[];
   perfilActual: PerfilDTO;
   cantidadPapelera: number;
+  cantidadPendientes: number;
+  programadosActivos: boolean;
   modoPrivacidad: boolean;
   authPinActivo: boolean;
   textos: TextosUI;
@@ -18,6 +21,7 @@ interface TopbarProps {
   onAbrirCategorias: () => void;
   onAbrirPerfiles: () => void;
   onAbrirPapelera: () => void;
+  onAbrirProgramados: () => void;
   onAbrirAjustes: () => void;
   onResetInicio: () => void;
 }
@@ -26,6 +30,8 @@ export default function Topbar({
   perfiles,
   perfilActual,
   cantidadPapelera,
+  cantidadPendientes,
+  programadosActivos,
   modoPrivacidad,
   authPinActivo,
   textos,
@@ -37,13 +43,14 @@ export default function Topbar({
   onAbrirCategorias,
   onAbrirPerfiles,
   onAbrirPapelera,
+  onAbrirProgramados,
   onAbrirAjustes,
   onResetInicio,
 }: TopbarProps) {
   return (
     <header className="topbar">
       <div className="topbar-inner">
-        <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+        <div className="topbar-left">
           <button
             type="button"
             onClick={() => {
@@ -60,101 +67,6 @@ export default function Topbar({
             />
           </button>
 
-          <nav className="topbar-nav" aria-label="Navegación principal">
-            <a
-              href="#calendario"
-              className="topbar-link"
-              onClick={(e) => {
-                if (editModeTextos) e.preventDefault();
-              }}
-            >
-              <EditableText
-                clave="navCalendario"
-                textos={textos}
-                editMode={editModeTextos}
-                onGuardarTexto={onGuardarTexto}
-              />
-            </a>
-            <a
-              href="#analisis"
-              className="topbar-link"
-              onClick={(e) => {
-                if (editModeTextos) e.preventDefault();
-              }}
-            >
-              <EditableText
-                clave="navAnalisis"
-                textos={textos}
-                editMode={editModeTextos}
-                onGuardarTexto={onGuardarTexto}
-              />
-            </a>
-            <a
-              href="#movimientos"
-              className="topbar-link"
-              onClick={(e) => {
-                if (editModeTextos) e.preventDefault();
-              }}
-            >
-              <EditableText
-                clave="navMovimientos"
-                textos={textos}
-                editMode={editModeTextos}
-                onGuardarTexto={onGuardarTexto}
-              />
-            </a>
-          </nav>
-        </div>
-
-        <div className="topbar-actions">
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={onAbrirCategorias}
-          >
-            🏷️ Categorías
-          </button>
-          <button
-            type="button"
-            className="btn btn-danger btn-sm"
-            onClick={onAbrirPapelera}
-          >
-            🗑️ Papelera{cantidadPapelera > 0 ? ` (${cantidadPapelera})` : ""}
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={onTogglePrivacidad}
-            title={
-              modoPrivacidad
-                ? "Mostrar montos en pantalla"
-                : "Ocultar montos (S/ •••)"
-            }
-          >
-            {modoPrivacidad ? "🙈" : "👁️"}
-          </button>
-          {authPinActivo && (
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={onBloquearPin}
-              title="Bloquear aplicación con PIN"
-            >
-              🔒
-            </button>
-          )}
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={onAbrirAjustes}
-            title="Ajustes y Personalización"
-          >
-            ⚙️ Ajustes
-          </button>
-          <a href="/api/exportar/csv" className="btn btn-secondary btn-sm">
-            .CSV
-          </a>
-
           <div className="profile-combo">
             <button
               type="button"
@@ -163,7 +75,7 @@ export default function Topbar({
               title="Administrar perfiles"
               aria-label="Administrar perfiles"
             >
-              ⚙️
+              <AppIcon name="perfilEngranaje" size={17} />
             </button>
             <select
               aria-label="Seleccionar perfil activo"
@@ -178,6 +90,83 @@ export default function Topbar({
               ))}
             </select>
           </div>
+        </div>
+
+        <div className="topbar-actions">
+          <button
+            type="button"
+            className="btn btn-secondary btn-topbar-tool"
+            onClick={onAbrirCategorias}
+          >
+            <AppIcon name="categorias" size={16} />
+            <span>Categorías</span>
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-danger btn-topbar-tool"
+            onClick={onAbrirPapelera}
+          >
+            <AppIcon name="papelera" size={16} />
+            <span>
+              Papelera{cantidadPapelera > 0 ? ` (${cantidadPapelera})` : ""}
+            </span>
+          </button>
+
+          {programadosActivos && (
+            <button
+              type="button"
+              className="btn btn-secondary btn-topbar-tool btn-topbar-icon topbar-badge-btn"
+              onClick={onAbrirProgramados}
+              title="Pagos Pendientes y Programados"
+              aria-label="Pagos Pendientes y Programados"
+            >
+              <span style={{ fontSize: "1.02rem", lineHeight: 1 }}>⏳</span>
+              {cantidadPendientes > 0 && (
+                <span className="topbar-notif-badge">
+                  {cantidadPendientes > 99 ? "99+" : cantidadPendientes}
+                </span>
+              )}
+            </button>
+          )}
+
+          <button
+            type="button"
+            className="btn btn-secondary btn-topbar-tool btn-topbar-icon"
+            onClick={onTogglePrivacidad}
+            title={
+              modoPrivacidad
+                ? "Mostrar montos en pantalla"
+                : "Ocultar montos (S/ •••)"
+            }
+            aria-label="Alternar privacidad de montos"
+          >
+            <span style={{ fontSize: "1.02rem", lineHeight: 1 }}>
+              {modoPrivacidad ? "🙈" : "👁️"}
+            </span>
+          </button>
+
+          {authPinActivo && (
+            <button
+              type="button"
+              className="btn btn-secondary btn-topbar-tool btn-topbar-icon"
+              onClick={onBloquearPin}
+              title="Bloquear aplicación con PIN"
+              aria-label="Bloquear aplicación con PIN"
+            >
+              <span style={{ fontSize: "1rem", lineHeight: 1 }}>🔒</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            className="btn btn-topbar-settings"
+            onClick={onAbrirAjustes}
+            title="Ajustes y Personalización"
+          >
+            <AppIcon name="ajustes" size={16} />
+            <span>Ajustes</span>
+          </button>
         </div>
       </div>
     </header>

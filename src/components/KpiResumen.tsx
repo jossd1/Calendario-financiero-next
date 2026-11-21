@@ -34,6 +34,7 @@ export default function KpiResumen({
   onGuardarTexto,
 }: KpiResumenProps) {
   const mostrarCuartoKpi = Boolean(mostrarTopEgreso && topEgresoKpi);
+  const balanceColor = balanceNeto >= 0 ? "#38bdf8" : "#ef4444";
 
   const renderDeltaPct = (delta: number | null, invertirColores = false) => {
     if (delta === null) {
@@ -60,14 +61,30 @@ export default function KpiResumen({
   return (
     <section className={`kpi-grid ${mostrarCuartoKpi ? "kpi-grid-4" : ""}`}>
       <article className="kpi-card">
-        <span className="kpi-title">
-          <EditableText
-            clave="kpiIngresosTitulo"
-            textos={textos}
-            editMode={editModeTextos}
-            onGuardarTexto={onGuardarTexto}
-          />
-        </span>
+        <div className="kpi-card-top">
+          <span className="kpi-title">
+            <EditableText
+              clave="kpiIngresosTitulo"
+              textos={textos}
+              editMode={editModeTextos}
+              onGuardarTexto={onGuardarTexto}
+            />
+          </span>
+          <span
+            className="kpi-icon-badge"
+            style={{
+              color: "var(--income-color)",
+              backgroundColor: "rgba(16, 185, 129, 0.12)",
+              borderColor: "rgba(16, 185, 129, 0.28)",
+            }}
+            aria-hidden="true"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+              <polyline points="16 7 22 7 22 13" />
+            </svg>
+          </span>
+        </div>
         <strong
           className={`kpi-value income ${modoPrivacidad ? "privacy-dots" : ""}`}
         >
@@ -88,14 +105,30 @@ export default function KpiResumen({
       </article>
 
       <article className="kpi-card">
-        <span className="kpi-title">
-          <EditableText
-            clave="kpiEgresosTitulo"
-            textos={textos}
-            editMode={editModeTextos}
-            onGuardarTexto={onGuardarTexto}
-          />
-        </span>
+        <div className="kpi-card-top">
+          <span className="kpi-title">
+            <EditableText
+              clave="kpiEgresosTitulo"
+              textos={textos}
+              editMode={editModeTextos}
+              onGuardarTexto={onGuardarTexto}
+            />
+          </span>
+          <span
+            className="kpi-icon-badge"
+            style={{
+              color: "var(--expense-color)",
+              backgroundColor: "rgba(239, 68, 68, 0.12)",
+              borderColor: "rgba(239, 68, 68, 0.28)",
+            }}
+            aria-hidden="true"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="22 17 13.5 8.5 8.5 13.5 2 7" />
+              <polyline points="16 17 22 17 22 11" />
+            </svg>
+          </span>
+        </div>
         <strong
           className={`kpi-value expense ${modoPrivacidad ? "privacy-dots" : ""}`}
         >
@@ -116,14 +149,39 @@ export default function KpiResumen({
       </article>
 
       <article className="kpi-card">
-        <span className="kpi-title">
-          <EditableText
-            clave="kpiBalanceTitulo"
-            textos={textos}
-            editMode={editModeTextos}
-            onGuardarTexto={onGuardarTexto}
-          />
-        </span>
+        <div className="kpi-card-top">
+          <span className="kpi-title">
+            <EditableText
+              clave="kpiBalanceTitulo"
+              textos={textos}
+              editMode={editModeTextos}
+              onGuardarTexto={onGuardarTexto}
+            />
+          </span>
+          <span
+            className="kpi-icon-badge"
+            style={{
+              color: balanceColor,
+              backgroundColor:
+                balanceNeto >= 0
+                  ? "rgba(56, 189, 248, 0.12)"
+                  : "rgba(239, 68, 68, 0.12)",
+              borderColor:
+                balanceNeto >= 0
+                  ? "rgba(56, 189, 248, 0.28)"
+                  : "rgba(239, 68, 68, 0.28)",
+            }}
+            aria-hidden="true"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 3v18" />
+              <path d="M5 7h14" />
+              <path d="M5 7l-2.5 6h5L5 7z" />
+              <path d="M19 7l-2.5 6h5L19 7z" />
+              <path d="M8 21h8" />
+            </svg>
+          </span>
+        </div>
         <strong
           className={`kpi-value ${
             balanceNeto >= 0 ? "balance-pos" : "balance-neg"
@@ -159,21 +217,36 @@ export default function KpiResumen({
 
       {mostrarCuartoKpi && topEgresoKpi && (
         <article className="kpi-card">
-          <span
-            className="kpi-title"
-            style={{ display: "inline-flex", alignItems: "center", gap: "7px" }}
-          >
+          <div className="kpi-card-top">
             <span
-              className="cat-color-dot"
-              style={{ backgroundColor: topEgresoKpi.color }}
-            />
-            <EditableText
-              clave="kpiTopEgresoTitulo"
-              textos={textos}
-              editMode={editModeTextos}
-              onGuardarTexto={onGuardarTexto}
-            />
-          </span>
+              className="kpi-title"
+              style={{ display: "inline-flex", alignItems: "center", gap: "7px" }}
+            >
+              <span
+                className="cat-color-dot"
+                style={{ backgroundColor: topEgresoKpi.color }}
+              />
+              <EditableText
+                clave="kpiTopEgresoTitulo"
+                textos={textos}
+                editMode={editModeTextos}
+                onGuardarTexto={onGuardarTexto}
+              />
+            </span>
+            <span
+              className="kpi-icon-badge"
+              style={{
+                color: topEgresoKpi.color,
+                backgroundColor: `${topEgresoKpi.color}20`,
+                borderColor: `${topEgresoKpi.color}45`,
+              }}
+              aria-hidden="true"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2c.5 4-3 6-3 10a4 4 0 0 0 8 0c0-2.5-1.5-4.5-2-6-1.5 1.5-2 3-3 4 0-3 1-5.5 0-8z" />
+              </svg>
+            </span>
+          </div>
           <strong
             className="kpi-value"
             style={{

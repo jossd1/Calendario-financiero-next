@@ -6,6 +6,7 @@ import ModalCategorias from "@/components/modales/ModalCategorias";
 import ModalEditarTx from "@/components/modales/ModalEditarTx";
 import ModalPapelera from "@/components/modales/ModalPapelera";
 import ModalPerfiles from "@/components/modales/ModalPerfiles";
+import ModalProgramados from "@/components/modales/ModalProgramados";
 import type {
   AjustesAppConfig,
   DashboardEstadoDTO,
@@ -17,6 +18,7 @@ interface DashboardModalesProps {
   modalCategoriasAbierto: boolean;
   modalPerfilesAbierto: boolean;
   modalPapeleraAbierto: boolean;
+  modalProgramadosAbierto: boolean;
   modalAjustesAbierto: boolean;
   modalBuscadorAbierto: boolean;
   txEditando: TransaccionDTO | null;
@@ -24,9 +26,11 @@ interface DashboardModalesProps {
   onCerrarCategorias: () => void;
   onCerrarPerfiles: () => void;
   onCerrarPapelera: () => void;
+  onCerrarProgramados: () => void;
   onCerrarAjustes: () => void;
   onCerrarBuscador: () => void;
   onCerrarEditarTx: () => void;
+  onEditarTx: (tx: TransaccionDTO) => void;
   onToggleEditModeTextos: () => void;
   onRestablecerTextos: () => Promise<void>;
   onActualizarConfig: (parcial: Partial<AjustesAppConfig>) => Promise<void>;
@@ -41,6 +45,7 @@ export default function DashboardModales({
   modalCategoriasAbierto,
   modalPerfilesAbierto,
   modalPapeleraAbierto,
+  modalProgramadosAbierto,
   modalAjustesAbierto,
   modalBuscadorAbierto,
   txEditando,
@@ -48,9 +53,11 @@ export default function DashboardModales({
   onCerrarCategorias,
   onCerrarPerfiles,
   onCerrarPapelera,
+  onCerrarProgramados,
   onCerrarAjustes,
   onCerrarBuscador,
   onCerrarEditarTx,
+  onEditarTx,
   onToggleEditModeTextos,
   onRestablecerTextos,
   onActualizarConfig,
@@ -59,10 +66,14 @@ export default function DashboardModales({
   onNotificar,
   onToastSutil,
 }: DashboardModalesProps) {
+  const anioVista = Number(estado.fecha_ref.slice(0, 4)) || new Date().getFullYear();
+
   return (
     <>
       <ModalBuscadorMagico
         abierto={modalBuscadorAbierto}
+        anioVista={anioVista}
+        limitarAnios={estado.ajustes.limitarAniosCalendario}
         onCerrar={onCerrarBuscador}
         onNavegar={onSaltoMagico}
       />
@@ -98,8 +109,24 @@ export default function DashboardModales({
       <ModalPapelera
         abierto={modalPapeleraAbierto}
         items={estado.papelera}
+        modoPrivacidad={estado.ajustes.modoPrivacidad}
         onCerrar={onCerrarPapelera}
         onActualizado={onRefrescar}
+        onNotificar={onNotificar}
+      />
+
+      <ModalProgramados
+        abierto={modalProgramadosAbierto}
+        items={estado.pendientes_programados}
+        categoriasEgreso={estado.categorias_egreso}
+        categoriasIngreso={estado.categorias_ingreso}
+        hoyIso={estado.hoy_iso}
+        limitarAnios={estado.ajustes.limitarAniosCalendario}
+        sumarEnKpi={estado.ajustes.sumarProgramadosEnKpi}
+        modoPrivacidad={estado.ajustes.modoPrivacidad}
+        onCerrar={onCerrarProgramados}
+        onActualizado={onRefrescar}
+        onEditarTx={onEditarTx}
         onNotificar={onNotificar}
       />
 

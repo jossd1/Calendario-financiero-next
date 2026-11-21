@@ -107,7 +107,7 @@
     position: relative;
     min-height: 102px;
     background-color: rgba(6, 9, 17, 0.78);
-    border: 1px solid var(--border-hairline);
+    border: 1px solid transparent;
     border-radius: 11px;
     padding: 8px;
     display: flex;
@@ -227,7 +227,7 @@
 
   .week-col {
     background-color: rgba(6, 9, 17, 0.78);
-    border: 1px solid var(--border-hairline);
+    border: 1px solid transparent;
     border-radius: 11px;
     padding: 12px;
     display: flex;
@@ -272,7 +272,7 @@
 
   .month-card {
     background-color: rgba(6, 9, 17, 0.78);
-    border: 1px solid var(--border-hairline);
+    border: 1px solid transparent;
     border-radius: 11px;
     padding: 14px;
     display: flex;
@@ -317,15 +317,15 @@
   }
 
   .btn-volver-mes {
-    background-color: #38bdf8;
-    color: #0f172a;
+    background-color: #0284c7;
+    color: #ffffff;
     font-weight: 600;
     display: inline-flex;
     align-items: center;
     gap: 6px;
     border-radius: 7px;
     padding: 4px 10px;
-    box-shadow: 0 2px 8px rgba(56, 189, 248, 0.3);
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
     transition: transform 0.2s ease;
   }
 

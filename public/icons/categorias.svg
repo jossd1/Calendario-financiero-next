@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <defs>
+                <linearGradient id="cat-tag-gold-emoji-file-g1" x1="3" y1="4" x2="19" y2="20" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#fbbf24" />
+                  <stop offset="100%" stop-color="#d97706" />
+                </linearGradient>
+              </defs>
+              <path d="M12.5 3H5a2 2 0 0 0-2 2v7.5a2 2 0 0 0 .59 1.41l7.5 7.5a2 2 0 0 0 2.82 0l6.5-6.5a2 2 0 0 0 0-2.82l-7.5-7.5A2 2 0 0 0 12.5 3Z" fill="url(#cat-tag-gold-emoji-file-g1)" fill-opacity="0.88" stroke="#fde68a" stroke-width="1.5" stroke-linejoin="round"/>
+              <circle cx="7.5" cy="7.5" r="1.6" fill="#070b14" stroke="#fde68a" stroke-width="1.2"/>
+              <path d="M7.5 7.5C5.2 5.4 3.5 3.6 2.5 2" stroke="#f59e0b" stroke-width="1.6" stroke-linecap="round"/>
+</svg>

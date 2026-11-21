@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { transacciones } from "@/db/schema";
-import { esFechaISOValida, obtenerHoyPeruISO } from "@/lib/format";
+import { categorias, transacciones } from "@/db/schema";
+import { obtenerAjustesApp } from "@/lib/ajustes";
+import { buildIsoDate, esFechaISOValida, obtenerHoyPeruISO } from "@/lib/format";
 import { obtenerPerfilActivo } from "@/lib/perfil";
+
+const PALETA_CSV = [
+  "#3b82f6",
+  "#10b981",
+  "#f59e0b",
+  "#ec4899",
+  "#8b5cf6",
+  "#06b6d4",
+  "#f97316",
+];
 
 function parsearFilaCsv(linea: string): string[] {
   const resultado: string[] = [];
@@ -29,6 +40,30 @@ function parsearFilaCsv(linea: string): string[] {
   return resultado;
 }
 
+function normalizarFechaCsv(raw: string, limitarAnios: boolean): string {
+  const limpia = raw.trim().slice(0, 10);
+  let iso = "";
+
+  const match = limpia.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  if (match) {
+    const candidato = buildIsoDate(
+      Number(match[3]),
+      Number(match[2]),
+      Number(match[1])
+    );
+    if (esFechaISOValida(candidato)) iso = candidato;
+  } else if (esFechaISOValida(limpia)) {
+    iso = limpia;
+  }
+
+  if (!iso) return obtenerHoyPeruISO();
+  if (limitarAnios) {
+    const anio = Number(iso.slice(0, 4));
+    if (anio < 2000 || anio > 3000) return obtenerHoyPeruISO();
+  }
+  return iso;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -46,6 +81,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { perfilActual } = await obtenerPerfilActivo();
+    const { config } = await obtenerAjustesApp();
     const cabecera = parsearFilaCsv(lineas[0]).map((h) => h.toLowerCase());
 
     const idxFecha = cabecera.findIndex((h) => h.includes("fecha"));
@@ -62,19 +98,32 @@ export async function POST(request: NextRequest) {
     }
 
     let importados = 0;
+    const catsNuevas = new Map<string, "ingreso" | "egreso">();
+
     await db.transaction(async (tx) => {
       for (let i = 1; i < lineas.length; i++) {
         const cols = parsearFilaCsv(lineas[i]);
-        const montoRaw = (cols[idxMonto] ?? "0").replace(/[^0-9.,-]/g, "").replace(",", ".");
+        const montoRaw = (cols[idxMonto] ?? "0")
+          .replace(/[^0-9.,-]/g, "")
+          .replace(",", ".");
         const monto = Math.abs(Number(montoRaw));
         if (!Number.isFinite(monto) || monto <= 0) continue;
 
         const tipoTexto = (idxTipo >= 0 ? cols[idxTipo] : "egreso").toLowerCase();
         const tipo = tipoTexto.includes("ing") ? "ingreso" : "egreso";
-        const categoria = (idxCat >= 0 ? cols[idxCat] : "Otros Gastos").slice(0, 60) || "Otros Gastos";
+        const categoria =
+          (idxCat >= 0 ? cols[idxCat] : "Otros Gastos").slice(0, 60) ||
+          "Otros Gastos";
         const descripcion = (idxDesc >= 0 ? cols[idxDesc] : "").slice(0, 240);
         const fechaRaw = idxFecha >= 0 ? cols[idxFecha] : "";
-        const fecha = esFechaISOValida(fechaRaw) ? fechaRaw : obtenerHoyPeruISO();
+        const fecha = normalizarFechaCsv(
+          fechaRaw,
+          config.limitarAniosCalendario
+        );
+
+        if (!catsNuevas.has(categoria)) {
+          catsNuevas.set(categoria, tipo);
+        }
 
         await tx.insert(transacciones).values({
           perfil_id: perfilActual.id,
@@ -87,6 +136,23 @@ export async function POST(request: NextRequest) {
           eliminado: false,
         });
         importados += 1;
+      }
+
+      let colorIdx = 0;
+      for (const [nombreCat, tipoCat] of catsNuevas.entries()) {
+        await tx
+          .insert(categorias)
+          .values({
+            perfil_id: perfilActual.id,
+            nombre: nombreCat,
+            tipo: tipoCat,
+            atajo: nombreCat.slice(0, 2).toLowerCase(),
+            color: PALETA_CSV[colorIdx % PALETA_CSV.length],
+          })
+          .onConflictDoNothing({
+            target: [categorias.perfil_id, categorias.nombre],
+          });
+        colorIdx += 1;
       }
     });
 

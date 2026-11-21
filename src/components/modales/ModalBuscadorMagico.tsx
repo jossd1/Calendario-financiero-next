@@ -5,6 +5,8 @@ import { MESES_ES, buildIsoDate, esFechaISOValida } from "@/lib/format";
 
 interface ModalBuscadorMagicoProps {
   abierto: boolean;
+  anioVista: number;
+  limitarAnios: boolean;
   onCerrar: () => void;
   onNavegar: (fechaIso: string, vistaDestino: "mensual" | "dia") => void;
 }
@@ -13,10 +15,13 @@ type Paso = "dia" | "mes" | "anio";
 
 export default function ModalBuscadorMagico({
   abierto,
+  anioVista,
+  limitarAnios,
   onCerrar,
   onNavegar,
 }: ModalBuscadorMagicoProps) {
   const [incluirDia, setIncluirDia] = useState(false);
+  const [incluirAnio, setIncluirAnio] = useState(true);
   const [paso, setPaso] = useState<Paso>("mes");
   const [diaTexto, setDiaTexto] = useState("");
   const [mesTexto, setMesTexto] = useState("");
@@ -27,9 +32,13 @@ export default function ModalBuscadorMagico({
 
   useEffect(() => {
     if (!abierto) return;
-    const saved = window.localStorage.getItem("cf_buscador_dia") === "1";
-    setIncluirDia(saved);
-    setPaso(saved ? "dia" : "mes");
+    const savedDia = window.localStorage.getItem("cf_buscador_dia") === "1";
+    const savedAnioRaw = window.localStorage.getItem("cf_buscador_anio");
+    const savedAnio = savedAnioRaw !== "0";
+
+    setIncluirDia(savedDia);
+    setIncluirAnio(savedAnio);
+    setPaso(savedDia ? "dia" : "mes");
     setDiaTexto("");
     setMesTexto("");
     setAnioDosDigitos("");
@@ -68,9 +77,34 @@ export default function ModalBuscadorMagico({
     setTimeout(() => inputRef.current?.focus(), 20);
   };
 
+  const toggleIncluirAnio = (activo: boolean) => {
+    setIncluirAnio(activo);
+    window.localStorage.setItem("cf_buscador_anio", activo ? "1" : "0");
+    if (!activo && paso === "anio") {
+      setPaso("mes");
+    }
+    setAnioDosDigitos("");
+    setErrorCampo(false);
+    setTimeout(() => inputRef.current?.focus(), 20);
+  };
+
   const dispararError = () => {
     setErrorCampo(true);
     setTimeout(() => setErrorCampo(false), 900);
+  };
+
+  const ejecutarSalto = (anioFull: number, m: number, d: number) => {
+    if (limitarAnios && (anioFull < 2000 || anioFull > 3000)) {
+      dispararError();
+      return;
+    }
+    const fechaIso = buildIsoDate(anioFull, m, d);
+    if (!esFechaISOValida(fechaIso)) {
+      dispararError();
+      return;
+    }
+    onNavegar(fechaIso, incluirDia ? "dia" : "mensual");
+    onCerrar();
   };
 
   const avanzarOSaltar = () => {
@@ -93,6 +127,11 @@ export default function ModalBuscadorMagico({
         return;
       }
       setErrorCampo(false);
+      if (!incluirAnio) {
+        const d = incluirDia ? Number(diaTexto) : 1;
+        ejecutarSalto(anioVista, m, d);
+        return;
+      }
       setPaso("anio");
       setTimeout(() => inputRef.current?.focus(), 10);
       return;
@@ -106,15 +145,7 @@ export default function ModalBuscadorMagico({
     const anioFull = Number(`20${anioDosDigitos}`);
     const m = Number(mesTexto);
     const d = incluirDia ? Number(diaTexto) : 1;
-    const fechaIso = buildIsoDate(anioFull, m, d);
-
-    if (!esFechaISOValida(fechaIso)) {
-      dispararError();
-      return;
-    }
-
-    onNavegar(fechaIso, incluirDia ? "dia" : "mensual");
-    onCerrar();
+    ejecutarSalto(anioFull, m, d);
   };
 
   const valorActual =
@@ -138,6 +169,8 @@ export default function ModalBuscadorMagico({
     }
   };
 
+  const listoParaIrDirecto = paso === "mes" && !incluirAnio;
+
   return (
     <>
       <div className="modal-backdrop-blur" onClick={onCerrar} />
@@ -156,24 +189,45 @@ export default function ModalBuscadorMagico({
               marginBottom: "10px",
             }}
           >
-            <label
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                fontSize: "0.78rem",
-                color: "var(--text-secondary)",
-                cursor: "pointer",
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={incluirDia}
-                onChange={(e) => toggleIncluirDia(e.target.checked)}
-                style={{ width: "14px", height: "14px", cursor: "pointer" }}
-              />
-              Día
-            </label>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "14px" }}>
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  fontSize: "0.78rem",
+                  color: "var(--text-secondary)",
+                  cursor: "pointer",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={incluirDia}
+                  onChange={(e) => toggleIncluirDia(e.target.checked)}
+                  style={{ width: "14px", height: "14px", cursor: "pointer" }}
+                />
+                Día
+              </label>
+
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  fontSize: "0.78rem",
+                  color: "var(--text-secondary)",
+                  cursor: "pointer",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={incluirAnio}
+                  onChange={(e) => toggleIncluirAnio(e.target.checked)}
+                  style={{ width: "14px", height: "14px", cursor: "pointer" }}
+                />
+                Año {!incluirAnio ? `(${anioVista})` : ""}
+              </label>
+            </div>
 
             <button
               type="button"
@@ -189,8 +243,8 @@ export default function ModalBuscadorMagico({
           <div key={nombreMes || paso} className="magic-month-preview">
             {nombreMes
               ? incluirDia && diaTexto
-                ? `${diaTexto} · ${nombreMes}`
-                : nombreMes
+                ? `${diaTexto} · ${nombreMes}${!incluirAnio ? ` ${anioVista}` : ""}`
+                : `${nombreMes}${!incluirAnio ? ` ${anioVista}` : ""}`
               : paso === "dia"
               ? "Día"
               : paso === "mes"
@@ -231,7 +285,7 @@ export default function ModalBuscadorMagico({
               <span style={{ fontSize: "0.8rem", color: "#f87171", fontWeight: 600 }}>
                 Fecha o número fuera de rango
               </span>
-            ) : paso === "anio" ? (
+            ) : paso === "anio" || (listoParaIrDirecto && Boolean(nombreMes)) ? (
               <button
                 type="button"
                 onClick={avanzarOSaltar}
@@ -243,6 +297,8 @@ export default function ModalBuscadorMagico({
               <span style={{ fontSize: "0.76rem", color: "var(--text-secondary)" }}>
                 {paso === "dia"
                   ? "Digita el día (1–31) · Enter"
+                  : !incluirAnio
+                  ? `Digita el mes (1–12) · Enter para ir a ${anioVista}`
                   : "Digita el mes (1–12) · Enter"}
               </span>
             )}

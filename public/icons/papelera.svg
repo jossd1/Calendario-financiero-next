@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <defs>
+                <linearGradient id="papelera-variante-b-dl-body" x1="15" y1="21" x2="49" y2="58" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#cbd5e1" />
+                  <stop offset="60%" stop-color="#94a3b8" />
+                  <stop offset="100%" stop-color="#475569" />
+                </linearGradient>
+                <linearGradient id="papelera-variante-b-dl-lid" x1="11" y1="13" x2="53" y2="20" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#f1f5f9" />
+                  <stop offset="100%" stop-color="#64748b" />
+                </linearGradient>
+              </defs>
+              <path d="M15.5 21H48.5L46 54.4C45.8 56.4 44.2 58 42.2 58H21.8C19.8 58 18.2 56.4 18 54.4L15.5 21Z" fill="url(#papelera-variante-b-dl-body)" stroke="#334155" stroke-width="2" />
+              <line x1="23.5" y1="27.5" x2="24.7" y2="53.5" stroke="#334155" stroke-width="2.4" stroke-linecap="round" />
+              <line x1="32" y1="27.5" x2="32" y2="53.5" stroke="#334155" stroke-width="2.4" stroke-linecap="round" />
+              <line x1="40.5" y1="27.5" x2="39.3" y2="53.5" stroke="#334155" stroke-width="2.4" stroke-linecap="round" />
+              <g transform="rotate(-3.5 32 16)">
+                <path d="M25.5 13.5V10.2C25.5 8.2 27.1 6.5 29.1 6.5H34.9C36.9 6.5 38.5 8.2 38.5 10.2V13.5" fill="none" stroke="#e2e8f0" stroke-width="3.2" stroke-linecap="round" />
+                <rect x="11.5" y="13.2" width="41" height="6" rx="3" fill="url(#papelera-variante-b-dl-lid)" stroke="#1e293b" stroke-width="2" />
+                <line x1="15" y1="15" x2="49" y2="15" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" stroke-opacity="0.75" />
+              </g>
+</svg>

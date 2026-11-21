@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   AjustesActionRow,
   AjustesCard,
@@ -16,6 +17,20 @@ export default function SeccionApariencia({
   ajustes,
   onActualizarConfig,
 }: SeccionAparienciaProps) {
+  const [topeLocal, setTopeLocal] = useState(String(ajustes.alertaTopeDiario));
+
+  useEffect(() => {
+    setTopeLocal(String(ajustes.alertaTopeDiario));
+  }, [ajustes.alertaTopeDiario]);
+
+  const confirmarTope = () => {
+    const nuevo = Math.max(0, Number(topeLocal) || 0);
+    setTopeLocal(String(nuevo));
+    if (nuevo !== ajustes.alertaTopeDiario) {
+      void onActualizarConfig({ alertaTopeDiario: nuevo });
+    }
+  };
+
   return (
     <AjustesCard titulo="Vistas y Tarjetas KPI">
       <AjustesToggleRow
@@ -60,6 +75,15 @@ export default function SeccionApariencia({
         checked={ajustes.mostrarNetoCeldas}
         onChange={(v) => void onActualizarConfig({ mostrarNetoCeldas: v })}
       />
+      <AjustesToggleRow
+        titulo="Limitar Años del Calendario (2000–3000)"
+        descripcion="Evita saltar a años fuera del rango 2000–3000. Desactívalo si necesitas fechas fuera de ese rango."
+        badge="Activo"
+        checked={ajustes.limitarAniosCalendario}
+        onChange={(v) =>
+          void onActualizarConfig({ limitarAniosCalendario: v })
+        }
+      />
       <AjustesActionRow
         titulo="Alerta de Tope Diario (S/)"
         descripcion="Resalta en ámbar los días cuyo egreso supere este monto (0 = desactivado)."
@@ -68,12 +92,14 @@ export default function SeccionApariencia({
           type="number"
           min={0}
           step={10}
-          value={ajustes.alertaTopeDiario}
-          onChange={(e) =>
-            void onActualizarConfig({
-              alertaTopeDiario: Math.max(0, Number(e.target.value) || 0),
-            })
-          }
+          value={topeLocal}
+          onChange={(e) => setTopeLocal(e.target.value)}
+          onBlur={confirmarTope}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.currentTarget.blur();
+            }
+          }}
           className="input-control tabular-nums"
           style={{ width: "110px", padding: "6px 10px", fontSize: "0.82rem" }}
         />

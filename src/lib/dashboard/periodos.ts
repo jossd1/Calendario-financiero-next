@@ -10,6 +10,21 @@ import {
 } from "@/lib/format";
 import type { VistaCalendario } from "@/types";
 
+export const MIN_ANIO_CALENDARIO = 2000;
+export const MAX_ANIO_CALENDARIO = 3000;
+
+export function limitarFechaAnios(iso: string, limitar: boolean): string {
+  if (!limitar) return iso;
+  const { year } = parseIsoDateParts(iso);
+  if (year < MIN_ANIO_CALENDARIO) {
+    return buildIsoDate(MIN_ANIO_CALENDARIO, 1, 1);
+  }
+  if (year > MAX_ANIO_CALENDARIO) {
+    return buildIsoDate(MAX_ANIO_CALENDARIO, 12, 31);
+  }
+  return iso;
+}
+
 export function calcularRangoPeriodo(
   vista: VistaCalendario,
   fechaRef: string
@@ -61,35 +76,38 @@ export function calcularRangoPeriodo(
 
 export function calcularNavegacionPeriodo(
   vista: VistaCalendario,
-  fechaRef: string
+  fechaRef: string,
+  limitarAnios = false
 ): { fechaAnterior: string; fechaSiguiente: string } {
-  const { year } = parseIsoDateParts(fechaRef);
+  const { year, month } = parseIsoDateParts(fechaRef);
+  let fechaAnterior: string;
+  let fechaSiguiente: string;
 
   if (vista === "anual") {
-    return {
-      fechaAnterior: buildIsoDate(year - 1, 1, 1),
-      fechaSiguiente: buildIsoDate(year + 1, 1, 1),
-    };
+    const antY = limitarAnios ? Math.max(MIN_ANIO_CALENDARIO, year - 1) : year - 1;
+    const sigY = limitarAnios ? Math.min(MAX_ANIO_CALENDARIO, year + 1) : year + 1;
+    fechaAnterior = buildIsoDate(antY, 1, 1);
+    fechaSiguiente = buildIsoDate(sigY, 1, 1);
+  } else if (vista === "semana") {
+    fechaAnterior = limitarFechaAnios(addDaysISO(fechaRef, -7), limitarAnios);
+    fechaSiguiente = limitarFechaAnios(addDaysISO(fechaRef, 7), limitarAnios);
+  } else if (vista === "dia") {
+    fechaAnterior = limitarFechaAnios(addDaysISO(fechaRef, -1), limitarAnios);
+    fechaSiguiente = limitarFechaAnios(addDaysISO(fechaRef, 1), limitarAnios);
+  } else {
+    const antRaw = addMonthsISO(fechaRef, -1);
+    const sigRaw = addMonthsISO(fechaRef, 1);
+    fechaAnterior =
+      limitarAnios && year <= MIN_ANIO_CALENDARIO && month === 1
+        ? buildIsoDate(MIN_ANIO_CALENDARIO, 1, 1)
+        : limitarFechaAnios(antRaw, limitarAnios);
+    fechaSiguiente =
+      limitarAnios && year >= MAX_ANIO_CALENDARIO && month === 12
+        ? buildIsoDate(MAX_ANIO_CALENDARIO, 12, 1)
+        : limitarFechaAnios(sigRaw, limitarAnios);
   }
 
-  if (vista === "semana") {
-    return {
-      fechaAnterior: addDaysISO(fechaRef, -7),
-      fechaSiguiente: addDaysISO(fechaRef, 7),
-    };
-  }
-
-  if (vista === "dia") {
-    return {
-      fechaAnterior: addDaysISO(fechaRef, -1),
-      fechaSiguiente: addDaysISO(fechaRef, 1),
-    };
-  }
-
-  return {
-    fechaAnterior: addMonthsISO(fechaRef, -1),
-    fechaSiguiente: addMonthsISO(fechaRef, 1),
-  };
+  return { fechaAnterior, fechaSiguiente };
 }
 
 export function calcularRangoPeriodoAnterior(

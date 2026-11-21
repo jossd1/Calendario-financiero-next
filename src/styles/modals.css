@@ -19,7 +19,7 @@
 
   .input-control {
     background-color: rgba(6, 9, 17, 0.88);
-    border: 1px solid var(--border-hairline);
+    border: 1px solid transparent;
     border-radius: 10px;
     padding: 9px 12px;
     font-size: 0.89rem;
@@ -72,6 +72,41 @@
     border-color: var(--expense-color);
     background-color: var(--expense-soft);
     color: var(--expense-color);
+  }
+
+  .type-toggle-unified {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 11px;
+    background-color: rgba(6, 9, 17, 0.88);
+    border: 1px solid transparent;
+  }
+
+  .type-toggle-unified .type-radio span {
+    padding: 7px 10px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background-color: transparent;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: all 0.15s ease;
+  }
+
+  .type-toggle-unified .type-radio input[value="ingreso"]:checked + span {
+    border-color: rgba(16, 185, 129, 0.55);
+    background-color: rgba(16, 185, 129, 0.16);
+    color: #34d399;
+    text-shadow: 0 0 10px rgba(52, 211, 153, 0.38);
+  }
+
+  .type-toggle-unified .type-radio input[value="egreso"]:checked + span {
+    border-color: rgba(239, 68, 68, 0.55);
+    background-color: rgba(239, 68, 68, 0.16);
+    color: #fb7185;
+    text-shadow: 0 0 10px rgba(251, 113, 133, 0.38);
   }
 
   .charts-grid {
@@ -288,6 +323,49 @@
     font-size: 0.84rem;
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
     backdrop-filter: blur(8px);
+  }
+
+  .flash-floating-stack {
+    position: fixed;
+    top: 68px;
+    right: 24px;
+    z-index: 96;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 380px;
+    width: calc(100vw - 32px);
+    pointer-events: none;
+  }
+
+  .flash-floating-stack .flash-item {
+    pointer-events: auto;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.65);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  .flash-floating-stack .flash-item.is-latest {
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.72),
+      0 0 0 1px rgba(56, 189, 248, 0.25);
+  }
+
+  .flash-floating-stack .flash-item.is-previous {
+    opacity: 0.76;
+    transform: scale(0.98);
+  }
+
+  .flash-recent-pill {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 1px 6px;
+    border-radius: 9999px;
+    background-color: rgba(56, 189, 248, 0.16);
+    color: var(--neutral-color);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    flex-shrink: 0;
   }
 }
 

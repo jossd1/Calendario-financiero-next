@@ -1,5 +1,6 @@
 "use client";
 
+import AppIcon from "@/components/AppIcon";
 import type { CategoriaDTO } from "@/types";
 
 interface CategoriaListaBoxProps {
@@ -94,7 +95,11 @@ export default function CategoriaListaBox({
                 style={{ padding: "1px 5px", fontSize: "0.7rem" }}
                 title="Eliminar"
               >
-                {armadoNombre === cat.nombre ? "⚠️ ¿Seguro?" : "🗑️"}
+                {armadoNombre === cat.nombre ? (
+                  "⚠️ ¿Seguro?"
+                ) : (
+                  <AppIcon name="eliminar" size={13} />
+                )}
               </button>
             </div>
           </li>

@@ -148,9 +148,6 @@ export default function VistaGeneral({
                 marginBottom: "20px",
               }}
             >
-              <h4 className="panel-title" style={{ marginBottom: "12px", fontSize: "0.95rem" }}>
-                📈 Evolución Histórica Mensual y Saldo Acumulado
-              </h4>
               <GeneralGraficoEvolucion
                 evolucion={datos.evolucion_mensual}
                 modoPrivacidad={ajustes.modoPrivacidad}
@@ -275,6 +272,68 @@ export default function VistaGeneral({
               </div>
             )}
           </div>
+
+          {ajustes.generalMostrarRecords && datos.top_movimientos.length > 0 && (
+            <div
+              style={{
+                marginTop: "16px",
+                background: "rgba(0,0,0,0.18)",
+                border: "1px solid var(--border-hairline)",
+                borderRadius: "10px",
+                padding: "16px",
+              }}
+            >
+              <h4 className="panel-title" style={{ fontSize: "0.95rem", marginBottom: "10px" }}>
+                💎 Top 5 Movimientos Históricos
+              </h4>
+              <div className="table-scroll">
+                <table className="tx-table">
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Tipo</th>
+                      <th>Categoría</th>
+                      <th>Descripción</th>
+                      <th className="num">Monto (S/)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {datos.top_movimientos.map((m) => (
+                      <tr key={m.id}>
+                        <td className="tabular-nums" style={{ fontSize: "0.82rem" }}>
+                          {m.fecha_fmt}
+                        </td>
+                        <td>
+                          <span
+                            className={m.tipo === "ingreso" ? "amt-in" : "amt-out"}
+                            style={{ fontWeight: 600 }}
+                          >
+                            {m.tipo === "ingreso" ? "Ingreso" : "Egreso"}
+                          </span>
+                        </td>
+                        <td>{m.categoria}</td>
+                        <td style={{ color: "var(--text-secondary)" }}>
+                          {m.descripcion || "—"}
+                        </td>
+                        <td
+                          className={`num tabular-nums ${
+                            m.tipo === "ingreso" ? "amt-in" : "amt-out"
+                          } ${maskClass}`}
+                          style={{ fontWeight: 700 }}
+                        >
+                          {mostrarMonto(
+                            m.monto_fmt,
+                            ajustes.modoPrivacidad,
+                            m.tipo === "ingreso" ? "+" : "-"
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </>
       )}
     </section>

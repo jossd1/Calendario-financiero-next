@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import AppIcon from "@/components/AppIcon";
 import EditableText from "@/components/EditableText";
 import { mostrarMonto } from "@/lib/format";
 import type { CategoriaDTO, TextosUI, TransaccionDTO } from "@/types";
@@ -303,7 +304,11 @@ export default function TablaTransacciones({
                         style={{ padding: "2px 6px", fontSize: "0.75rem" }}
                         title="Eliminar"
                       >
-                        {armadoTxId === tx.id ? "⚠️ ¿Seguro?" : "🗑️"}
+                        {armadoTxId === tx.id ? (
+                          "⚠️ ¿Seguro?"
+                        ) : (
+                          <AppIcon name="eliminar" size={14} />
+                        )}
                       </button>
                     </div>
                   </td>

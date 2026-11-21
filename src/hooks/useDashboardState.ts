@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAnalisisRango } from "@/hooks/useAnalisisRango";
-import { buildIsoDate } from "@/lib/format";
+import { MAX_ANIO_CALENDARIO, MIN_ANIO_CALENDARIO } from "@/lib/dashboard/periodos";
+import { addDaysISO, buildIsoDate } from "@/lib/format";
 import type {
   AjustesAppConfig,
   DashboardEstadoDTO,
@@ -50,7 +51,7 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
   const notificar = useCallback(
     (tipo: "success" | "error", texto: string) => {
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-      setFlashes((prev) => [...prev, { id, tipo, texto }]);
+      setFlashes((prev) => [{ id, tipo, texto }, ...prev].slice(0, 2));
       setTimeout(() => {
         setFlashes((prev) => prev.filter((item) => item.id !== id));
       }, 4500);
@@ -88,7 +89,9 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
   });
 
   const refrescarEstado = useCallback(
-    async (overrides: Partial<QueryState> = {}) => {
+    async (
+      overrides: Partial<QueryState> = {}
+    ): Promise<DashboardEstadoDTO | null> => {
       const next: QueryState = { ...queryRef.current, ...overrides };
       queryRef.current = next;
 
@@ -111,16 +114,19 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
         });
         const data = await res.json();
         if (data.ok && data.estado) {
-          setEstado(data.estado as DashboardEstadoDTO);
+          const nuevoEstado = data.estado as DashboardEstadoDTO;
+          setEstado(nuevoEstado);
           const urlParams = new URLSearchParams({
             vista: next.vista,
             fecha: next.fecha,
           });
           window.history.replaceState(null, "", `/?${urlParams.toString()}`);
+          return nuevoEstado;
         }
       } catch (error) {
         console.error("Error al refrescar dashboard:", error);
       }
+      return null;
     },
     []
   );
@@ -216,6 +222,39 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
     await rango.completarRangoAnalizar(fechaIso, fechaIso);
   };
 
+  const handleMoverDiaFlecha = useCallback(
+    (deltaDias: number) => {
+      let nuevaFecha = addDaysISO(diaSeleccionado, deltaDias);
+      if (estado.ajustes.limitarAniosCalendario) {
+        const minIso = buildIsoDate(MIN_ANIO_CALENDARIO, 1, 1);
+        const maxIso = buildIsoDate(MAX_ANIO_CALENDARIO, 12, 31);
+        if (nuevaFecha < minIso) nuevaFecha = minIso;
+        if (nuevaFecha > maxIso) nuevaFecha = maxIso;
+      }
+
+      setDiaSeleccionado(nuevaFecha);
+
+      const cambioMes = nuevaFecha.slice(0, 7) !== estado.fecha_ref.slice(0, 7);
+      const enDiaOSemana =
+        estado.vista === "dia" ||
+        (estado.vista === "semana" &&
+          (nuevaFecha < estado.inicio_periodo || nuevaFecha > estado.fin_periodo));
+
+      if (cambioMes || enDiaOSemana) {
+        void refrescarEstado({ fecha: nuevaFecha });
+      }
+    },
+    [
+      diaSeleccionado,
+      estado.ajustes.limitarAniosCalendario,
+      estado.fecha_ref,
+      estado.vista,
+      estado.inicio_periodo,
+      estado.fin_periodo,
+      refrescarEstado,
+    ]
+  );
+
   const handleClicMesAnual = async (anio: number, mes: number) => {
     if (rango.modoClick === "analizar_dia") {
       const { inicioMes, finMes } = rango.resolverMesAnualRango(anio, mes);
@@ -285,6 +324,7 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
     refrescarEstado,
     handleActualizarConfig,
     handleClicDia,
+    handleMoverDiaFlecha,
     handleClicMesAnual,
     handleSaltoMagico,
     handleCambiarFiltrosHistorial,

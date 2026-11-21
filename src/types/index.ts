@@ -15,6 +15,7 @@ export interface AjustesAppConfig {
   vistaGeneral: boolean;
   hoverPreviewDia: boolean;
   mostrarNetoCeldas: boolean;
+  limitarAniosCalendario: boolean;
   categoriaPredeterminada: string;
   alertaTopeDiario: number;
   densidad: "comoda" | "compacta";

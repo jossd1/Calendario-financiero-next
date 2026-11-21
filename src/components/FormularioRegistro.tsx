@@ -5,18 +5,13 @@ import EditableText from "@/components/EditableText";
 import CamposCompletosRegistro from "@/components/registro/CamposCompletosRegistro";
 import { analizarEntradaMonto } from "@/lib/atajos";
 import { formatearFechaDMY } from "@/lib/format";
-import type {
-  CategoriaDTO,
-  EstadoMovimiento,
-  TextosUI,
-  TipoMovimiento,
-} from "@/types";
+import type { CategoriaDTO, TextosUI, TipoMovimiento } from "@/types";
 
 interface FormularioRegistroProps {
   categoriasEgreso: CategoriaDTO[];
   categoriasIngreso: CategoriaDTO[];
   categoriaPredeterminada: string;
-  programadosActivos: boolean;
+  limitarAnios: boolean;
   fechaSeleccionada: string;
   hoyIso: string;
   focusPing: number;
@@ -24,6 +19,7 @@ interface FormularioRegistroProps {
   editModeTextos: boolean;
   onGuardarTexto: (clave: string, valor: string) => void;
   onCambiarFechaSeleccionada: (fecha: string) => void;
+  onMoverDiaFlecha: (deltaDias: number) => void;
   onRegistrarExito: (fechaTx: string) => Promise<void>;
   onNotificar: (tipo: "success" | "error", texto: string) => void;
   onToastSutil: (texto: string) => void;
@@ -33,7 +29,7 @@ export default function FormularioRegistro({
   categoriasEgreso,
   categoriasIngreso,
   categoriaPredeterminada,
-  programadosActivos,
+  limitarAnios,
   fechaSeleccionada,
   hoyIso,
   focusPing,
@@ -41,6 +37,7 @@ export default function FormularioRegistro({
   editModeTextos,
   onGuardarTexto,
   onCambiarFechaSeleccionada,
+  onMoverDiaFlecha,
   onRegistrarExito,
   onNotificar,
   onToastSutil,
@@ -60,7 +57,6 @@ export default function FormularioRegistro({
   const [montoTexto, setMontoTexto] = useState("");
   const [categoria, setCategoria] = useState<string>(catInicial?.nombre ?? "");
   const [descripcion, setDescripcion] = useState("");
-  const [estadoTx, setEstadoTx] = useState<EstadoMovimiento>("pagado");
   const [enviando, setEnviando] = useState(false);
 
   const inputMontoRef = useRef<HTMLInputElement | null>(null);
@@ -129,6 +125,23 @@ export default function FormularioRegistro({
     if (lista.length > 0) setCategoria(lista[0].nombre);
   };
 
+  const handleMontoKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (montoTexto.trim() !== "") return;
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      onMoverDiaFlecha(-1);
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      onMoverDiaFlecha(1);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      onMoverDiaFlecha(-7);
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      onMoverDiaFlecha(7);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!montoTexto.trim()) {
@@ -175,7 +188,7 @@ export default function FormularioRegistro({
           categoria: categoriaFinal,
           descripcion: modoSimple ? "" : descripcion,
           fecha: fechaSeleccionada,
-          estado: programadosActivos && !modoSimple ? estadoTx : "pagado",
+          estado: "pagado",
         }),
       });
       const data = await res.json();
@@ -186,7 +199,6 @@ export default function FormularioRegistro({
 
       setMontoTexto("");
       setDescripcion("");
-      setEstadoTx("pagado");
       onNotificar("success", data.mensaje ?? "Registrado con éxito.");
       await onRegistrarExito(data.fecha_tx);
       inputMontoRef.current?.focus();
@@ -224,94 +236,118 @@ export default function FormularioRegistro({
       </div>
 
       <form onSubmit={handleSubmit} className="form-stack">
-        <div className="form-field">
-          <label>
-            <EditableText
-              clave="labelTipoOperacion"
-              textos={textos}
-              editMode={editModeTextos}
-              onGuardarTexto={onGuardarTexto}
+        <div className="type-toggle-unified">
+          <label className="type-radio">
+            <input
+              type="radio"
+              name="tipo"
+              value="ingreso"
+              checked={tipo === "ingreso"}
+              onChange={() => handleCambioTipo("ingreso")}
             />
+            <span>Ingreso(+)</span>
           </label>
-          <div className="type-toggle">
-            <label className="type-radio">
-              <input
-                type="radio"
-                name="tipo"
-                value="ingreso"
-                checked={tipo === "ingreso"}
-                onChange={() => handleCambioTipo("ingreso")}
-              />
-              <span>Ingreso (+)</span>
-            </label>
-            <label className="type-radio">
-              <input
-                type="radio"
-                name="tipo"
-                value="egreso"
-                checked={tipo === "egreso"}
-                onChange={() => handleCambioTipo("egreso")}
-              />
-              <span>Egreso (-)</span>
-            </label>
-          </div>
+          <label className="type-radio">
+            <input
+              type="radio"
+              name="tipo"
+              value="egreso"
+              checked={tipo === "egreso"}
+              onChange={() => handleCambioTipo("egreso")}
+            />
+            <span>Egreso(-)</span>
+          </label>
         </div>
 
-        <div className="form-field">
-          <label htmlFor="monto">
-            <EditableText
-              clave="labelMontoAtajo"
-              textos={textos}
-              editMode={editModeTextos}
-              onGuardarTexto={onGuardarTexto}
+        <div className={!modoSimple ? "form-row-2col" : undefined}>
+          <div className="form-field">
+            <label htmlFor="monto">
+              <EditableText
+                clave="labelMontoAtajo"
+                textos={textos}
+                editMode={editModeTextos}
+                onGuardarTexto={onGuardarTexto}
+              />
+            </label>
+            <input
+              ref={inputMontoRef}
+              id="monto"
+              name="monto"
+              type="text"
+              autoComplete="off"
+              placeholder="0.00 o 15al"
+              value={montoTexto}
+              onFocus={() => {
+                ultimoCampoActivoRef.current = "monto";
+              }}
+              onKeyDown={handleMontoKeyDown}
+              onChange={(e) => setMontoTexto(e.target.value)}
+              className="input-control tabular-nums"
+              required
             />
-          </label>
-          <input
-            ref={inputMontoRef}
-            id="monto"
-            name="monto"
-            type="text"
-            autoComplete="off"
-            placeholder="0.00 o 15al"
-            value={montoTexto}
-            onFocus={() => {
-              ultimoCampoActivoRef.current = "monto";
-            }}
-            onChange={(e) => setMontoTexto(e.target.value)}
-            className="input-control tabular-nums"
-            required
-          />
+          </div>
+
+          {!modoSimple && (
+            <div className="form-field">
+              <label htmlFor="fecha_tx">
+                <EditableText
+                  clave="labelFechaTx"
+                  textos={textos}
+                  editMode={editModeTextos}
+                  onGuardarTexto={onGuardarTexto}
+                />
+              </label>
+              <div style={{ display: "flex", gap: "6px" }}>
+                <input
+                  id="fecha_tx"
+                  name="fecha"
+                  type="date"
+                  min={limitarAnios ? "2000-01-01" : undefined}
+                  max={limitarAnios ? "3000-12-31" : undefined}
+                  value={fechaSeleccionada}
+                  onChange={(e) => onCambiarFechaSeleccionada(e.target.value)}
+                  className="input-control tabular-nums"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => onCambiarFechaSeleccionada(hoyIso)}
+                  className="btn btn-secondary btn-sm"
+                  title="Ir a hoy"
+                >
+                  Hoy
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {(analisisEntrada?.cat || analisisEntrada?.sufijo || modoSimple) && (
           <small
             style={{
               fontSize: "0.72rem",
+              marginTop: "-6px",
               color: analisisEntrada?.cat
                 ? "var(--accent-primary)"
                 : analisisEntrada?.sufijo
                 ? "var(--range-end-color)"
                 : "var(--text-secondary)",
-              minHeight: "16px",
             }}
           >
             {analisisEntrada?.cat
               ? `⚡ Atajo literal: [${analisisEntrada.cat.atajo}] -> ${analisisEntrada.cat.nombre}`
               : analisisEntrada?.sufijo
               ? `Sin coincidencia literal para "${analisisEntrada.sufijo}"`
-              : modoSimple
-              ? `📅 ${formatearFechaDMY(fechaSeleccionada)} · ${categoria}`
-              : ""}
+              : `📅 ${formatearFechaDMY(fechaSeleccionada)} · ${categoria}`}
           </small>
-        </div>
+        )}
 
         {!modoSimple && (
           <CamposCompletosRegistro
             categoria={categoria}
             categoriasEgreso={categoriasEgreso}
             categoriasIngreso={categoriasIngreso}
-            fechaSeleccionada={fechaSeleccionada}
-            hoyIso={hoyIso}
             descripcion={descripcion}
-            estadoTx={estadoTx}
-            programadosActivos={programadosActivos}
             inputDescRef={inputDescRef}
             textos={textos}
             editModeTextos={editModeTextos}
@@ -323,12 +359,10 @@ export default function FormularioRegistro({
               );
               if (encontrada) setTipo(encontrada.tipo);
             }}
-            onCambiarFecha={onCambiarFechaSeleccionada}
             onCambiarDescripcion={setDescripcion}
             onFocusDescripcion={() => {
               ultimoCampoActivoRef.current = "descripcion";
             }}
-            onCambiarEstadoTx={setEstadoTx}
           />
         )}
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { categorias, transacciones } from "@/db/schema";
+import { categorias, presupuestos, transacciones } from "@/db/schema";
 import { obtenerPerfilActivo } from "@/lib/perfil";
 
 function validarColorHex(valor: unknown, fallback = "#3b82f6"): string {
@@ -99,6 +99,16 @@ export async function PUT(request: NextRequest) {
           and(
             eq(transacciones.perfil_id, perfilActual.id),
             eq(transacciones.categoria, nombreAntiguo)
+          )
+        );
+
+      await tx
+        .update(presupuestos)
+        .set({ categoria: nombreNuevo })
+        .where(
+          and(
+            eq(presupuestos.perfil_id, perfilActual.id),
+            eq(presupuestos.categoria, nombreAntiguo)
           )
         );
     });

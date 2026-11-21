@@ -239,7 +239,7 @@ export default function GraficosFinancieros({
 
   return (
     <div className="charts-grid" style={{ marginTop: "16px" }}>
-      <article className="panel" style={{ background: "rgba(255,255,255,0.01)" }}>
+      <article className="analysis-subcard">
         <div className="panel-header">
           <h3 className="panel-title">
             <EditableText
@@ -259,40 +259,44 @@ export default function GraficosFinancieros({
         )}
       </article>
 
-      <article className="panel" style={{ background: "rgba(255,255,255,0.01)" }}>
+      <article className="analysis-subcard">
         <div className="panel-header">
-        <h3 className="panel-title">
-          <EditableText
-            clave="tituloGraficoBarras"
-            textos={textos}
-            editMode={editModeTextos}
-            onGuardarTexto={onGuardarTexto}
-          />
-        </h3>
-        <div className="mode-pill-group">
-          <button
-            type="button"
-            onClick={() => setModoFlujo("barras")}
-            className={`mode-pill-btn ${modoFlujo === "barras" ? "active-fecha" : ""}`}
-          >
-            Barras
-          </button>
-          <button
-            type="button"
-            onClick={() => setModoFlujo("acumulado")}
-            className={`mode-pill-btn ${modoFlujo === "acumulado" ? "active-ver-dia" : ""}`}
-          >
-            Acumulado
-          </button>
+          <h3 className="panel-title">
+            <EditableText
+              clave="tituloGraficoBarras"
+              textos={textos}
+              editMode={editModeTextos}
+              onGuardarTexto={onGuardarTexto}
+            />
+          </h3>
+          <div className="mode-pill-group">
+            <button
+              type="button"
+              onClick={() => setModoFlujo("barras")}
+              className={`mode-pill-btn ${
+                modoFlujo === "barras" ? "active-ver-dia" : ""
+              }`}
+            >
+              Barras
+            </button>
+            <button
+              type="button"
+              onClick={() => setModoFlujo("acumulado")}
+              className={`mode-pill-btn ${
+                modoFlujo === "acumulado" ? "active-ver-dia" : ""
+              }`}
+            >
+              Acumulado
+            </button>
+          </div>
         </div>
-      </div>
-      <div className="chart-wrapper">
-        {modoFlujo === "barras" ? (
-          <Bar data={barData} options={barOptions} />
-        ) : (
-          <Line data={lineData} options={barOptions as ChartOptions<"line">} />
-        )}
-      </div>
+        <div className="chart-wrapper">
+          {modoFlujo === "barras" ? (
+            <Bar data={barData} options={barOptions} />
+          ) : (
+            <Line data={lineData} options={lineOptions} />
+          )}
+        </div>
       </article>
     </div>
   );

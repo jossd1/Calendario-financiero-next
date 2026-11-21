@@ -34,15 +34,7 @@ export default function ResumenCategoriasTabla({
   onGuardarTexto,
 }: ResumenCategoriasTablaProps) {
   return (
-    <div
-      style={{
-        marginTop: "24px",
-        background: "rgba(0,0,0,0.15)",
-        padding: "16px",
-        borderRadius: "8px",
-        border: "1px solid var(--border-hairline)",
-      }}
-    >
+    <div className="analysis-subcard" style={{ marginTop: "20px" }}>
       <h4
         style={{
           fontSize: "0.95rem",

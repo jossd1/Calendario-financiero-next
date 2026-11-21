@@ -20,6 +20,7 @@ import {
   calcularNavegacionPeriodo,
   calcularRangoPeriodo,
   calcularRangoPeriodoAnterior,
+  limitarFechaAnios,
 } from "@/lib/dashboard/periodos";
 import { compilarPresupuestos } from "@/lib/dashboard/presupuestos";
 import {
@@ -66,7 +67,8 @@ export async function compilarEstadoDashboard(
   else if (params.vista === "semana" && ajustes.vistaSemanal) vista = "semana";
   else if (params.vista === "general" && ajustes.vistaGeneral) vista = "general";
 
-  const fechaRef = esFechaISOValida(params.fecha) ? params.fecha : hoyIso;
+  const rawFechaRef = esFechaISOValida(params.fecha) ? params.fecha : hoyIso;
+  const fechaRef = limitarFechaAnios(rawFechaRef, ajustes.limitarAniosCalendario);
   const { perfiles, perfilActual } = await obtenerPerfilActivo();
   const { todas, egresos, ingresos } = await obtenerCategoriasPerfil(
     perfilActual.id
@@ -75,7 +77,8 @@ export async function compilarEstadoDashboard(
   const { inicio, fin, tituloPeriodo } = calcularRangoPeriodo(vista, fechaRef);
   const { fechaAnterior, fechaSiguiente } = calcularNavegacionPeriodo(
     vista,
-    fechaRef
+    fechaRef,
+    ajustes.limitarAniosCalendario
   );
 
   const partsRef = parseIsoDateParts(fechaRef);
@@ -203,8 +206,14 @@ export async function compilarEstadoDashboard(
   }
 
   if (modoManualActivo) {
-    const rawDesde = params.analisisDesde!;
-    const rawHasta = params.analisisHasta!;
+    const rawDesde = limitarFechaAnios(
+      params.analisisDesde!,
+      ajustes.limitarAniosCalendario
+    );
+    const rawHasta = limitarFechaAnios(
+      params.analisisHasta!,
+      ajustes.limitarAniosCalendario
+    );
     analisisDesde = rawDesde <= rawHasta ? rawDesde : rawHasta;
     analisisHasta = rawDesde <= rawHasta ? rawHasta : rawDesde;
     tituloRangoAnalisis = `Manual: ${formatearFechaDMY(analisisDesde)} al ${formatearFechaDMY(analisisHasta)}`;

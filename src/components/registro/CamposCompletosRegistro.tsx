@@ -2,46 +2,34 @@
 
 import type { RefObject } from "react";
 import EditableText from "@/components/EditableText";
-import type { CategoriaDTO, EstadoMovimiento, TextosUI } from "@/types";
+import type { CategoriaDTO, TextosUI } from "@/types";
 
 interface CamposCompletosRegistroProps {
   categoria: string;
   categoriasEgreso: CategoriaDTO[];
   categoriasIngreso: CategoriaDTO[];
-  fechaSeleccionada: string;
-  hoyIso: string;
   descripcion: string;
-  estadoTx: EstadoMovimiento;
-  programadosActivos: boolean;
   inputDescRef: RefObject<HTMLInputElement | null>;
   textos: TextosUI;
   editModeTextos: boolean;
   onGuardarTexto: (clave: string, valor: string) => void;
   onCambiarCategoria: (nombre: string) => void;
-  onCambiarFecha: (fecha: string) => void;
   onCambiarDescripcion: (desc: string) => void;
   onFocusDescripcion: () => void;
-  onCambiarEstadoTx: (estado: EstadoMovimiento) => void;
 }
 
 export default function CamposCompletosRegistro({
   categoria,
   categoriasEgreso,
   categoriasIngreso,
-  fechaSeleccionada,
-  hoyIso,
   descripcion,
-  estadoTx,
-  programadosActivos,
   inputDescRef,
   textos,
   editModeTextos,
   onGuardarTexto,
   onCambiarCategoria,
-  onCambiarFecha,
   onCambiarDescripcion,
   onFocusDescripcion,
-  onCambiarEstadoTx,
 }: CamposCompletosRegistroProps) {
   return (
     <>
@@ -80,35 +68,6 @@ export default function CamposCompletosRegistro({
       </div>
 
       <div className="form-field">
-        <label htmlFor="fecha_tx">
-          <EditableText
-            clave="labelFechaTx"
-            textos={textos}
-            editMode={editModeTextos}
-            onGuardarTexto={onGuardarTexto}
-          />
-        </label>
-        <div style={{ display: "flex", gap: "6px" }}>
-          <input
-            id="fecha_tx"
-            name="fecha"
-            type="date"
-            value={fechaSeleccionada}
-            onChange={(e) => onCambiarFecha(e.target.value)}
-            className="input-control tabular-nums"
-            required
-          />
-          <button
-            type="button"
-            onClick={() => onCambiarFecha(hoyIso)}
-            className="btn btn-secondary btn-sm"
-          >
-            Hoy
-          </button>
-        </div>
-      </div>
-
-      <div className="form-field">
         <label htmlFor="descripcion">
           <EditableText
             clave="labelDescripcion"
@@ -130,24 +89,6 @@ export default function CamposCompletosRegistro({
           className="input-control"
         />
       </div>
-
-      {programadosActivos && (
-        <div className="form-field">
-          <label htmlFor="estado_tx">Estado del Movimiento</label>
-          <select
-            id="estado_tx"
-            value={estadoTx}
-            onChange={(e) =>
-              onCambiarEstadoTx(e.target.value as EstadoMovimiento)
-            }
-            className="input-control"
-          >
-            <option value="pagado">Pagado / Realizado</option>
-            <option value="pendiente">Pendiente</option>
-            <option value="programado">Programado</option>
-          </select>
-        </div>
-      )}
     </>
   );
 }

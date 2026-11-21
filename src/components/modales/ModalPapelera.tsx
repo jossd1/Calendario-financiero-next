@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import AppIcon from "@/components/AppIcon";
+import { mostrarMonto } from "@/lib/format";
 import type { TransaccionDTO } from "@/types";
 
 interface ModalPapeleraProps {
   abierto: boolean;
   items: TransaccionDTO[];
+  modoPrivacidad: boolean;
   onCerrar: () => void;
   onActualizado: () => Promise<void>;
   onNotificar: (tipo: "success" | "error", texto: string) => void;
@@ -14,6 +17,7 @@ interface ModalPapeleraProps {
 export default function ModalPapelera({
   abierto,
   items,
+  modoPrivacidad,
   onCerrar,
   onActualizado,
   onNotificar,
@@ -172,9 +176,9 @@ export default function ModalPapelera({
                     <span
                       className={`tabular-nums ${
                         p.tipo === "ingreso" ? "amt-in" : "amt-out"
-                      }`}
+                      } ${modoPrivacidad ? "privacy-dots" : ""}`}
                     >
-                      {p.monto_fmt}
+                      {mostrarMonto(p.monto_fmt, modoPrivacidad)}
                     </span>
                     <div
                       style={{
@@ -204,7 +208,11 @@ export default function ModalPapelera({
                       onClick={() => void handleEliminarPermanente(p.id)}
                       title="Eliminar definitivamente"
                     >
-                      {armadoEliminarId === p.id ? "⚠️ ¿Seguro?" : "🗑️"}
+                      {armadoEliminarId === p.id ? (
+                        "⚠️ ¿Seguro?"
+                      ) : (
+                        <AppIcon name="eliminar" size={14} />
+                      )}
                     </button>
                   </div>
                 </div>

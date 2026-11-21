@@ -4,7 +4,7 @@ import { ajustesApp } from "@/db/schema";
 import type { AjustesAppConfig, TextosUI } from "@/types";
 
 export const AJUSTES_DEFECTO: AjustesAppConfig = {
-  configVersion: 2,
+  configVersion: 3,
   modoPrivacidad: false,
   comparativasKpi: false,
   kpiTopEgreso: true,
@@ -12,6 +12,7 @@ export const AJUSTES_DEFECTO: AjustesAppConfig = {
   vistaGeneral: true,
   hoverPreviewDia: true,
   mostrarNetoCeldas: false,
+  limitarAniosCalendario: true,
   categoriaPredeterminada: "",
   alertaTopeDiario: 0,
   densidad: "comoda",
@@ -21,7 +22,7 @@ export const AJUSTES_DEFECTO: AjustesAppConfig = {
   generalMostrarAnual: true,
   generalPermitirConsolidado: false,
   presupuestosActivos: false,
-  programadosActivos: false,
+  programadosActivos: true,
   modoPresupuesto: "base_mensual",
   sumarProgramadosEnKpi: false,
   authPinActivo: false,
@@ -53,9 +54,9 @@ export const TEXTOS_UI_DEFECTO: TextosUI = {
   tituloRegistroRapido: "Registrar Movimiento (S/)",
   subtituloAtajos: "Atajos ej: 15al",
   labelTipoOperacion: "Tipo de Operación",
-  labelMontoAtajo: "Monto (S/) o atajo (ej. 15al)",
+  labelMontoAtajo: "Monto (S/)",
   labelCategoria: "Categoría",
-  labelFechaTx: "Fecha (Persistente)",
+  labelFechaTx: "Fecha",
   labelDescripcion: "Descripción (Opcional)",
   btnGuardarMovimiento: "Guardar Movimiento (Enter)",
   tituloAnalisis: "Análisis y Gráficos Financieros",
@@ -94,20 +95,27 @@ export async function obtenerAjustesApp(): Promise<{
 
   const guardado = fila.config_json ?? ({} as Partial<AjustesAppConfig>);
   let configFinal: AjustesAppConfig = { ...AJUSTES_DEFECTO, ...guardado };
+  const versionGuardada = guardado.configVersion ?? 1;
 
-  // Aplica una sola vez los nuevos defaults v2 sobre instalaciones previas
-  if ((guardado.configVersion ?? 1) < 2) {
+  if (versionGuardada < 3) {
     configFinal = {
       ...configFinal,
-      configVersion: 2,
-      kpiTopEgreso: true,
-      vistaGeneral: true,
-      hoverPreviewDia: true,
-      generalMostrarAhorro: true,
-      generalMostrarEvolucion: true,
-      generalMostrarRecords: true,
-      generalMostrarAnual: true,
-      generalPermitirConsolidado: false,
+      configVersion: 3,
+      kpiTopEgreso: versionGuardada < 2 ? true : configFinal.kpiTopEgreso,
+      vistaGeneral: versionGuardada < 2 ? true : configFinal.vistaGeneral,
+      hoverPreviewDia: versionGuardada < 2 ? true : configFinal.hoverPreviewDia,
+      generalMostrarAhorro:
+        versionGuardada < 2 ? true : configFinal.generalMostrarAhorro,
+      generalMostrarEvolucion:
+        versionGuardada < 2 ? true : configFinal.generalMostrarEvolucion,
+      generalMostrarRecords:
+        versionGuardada < 2 ? true : configFinal.generalMostrarRecords,
+      generalMostrarAnual:
+        versionGuardada < 2 ? true : configFinal.generalMostrarAnual,
+      generalPermitirConsolidado:
+        versionGuardada < 2 ? false : configFinal.generalPermitirConsolidado,
+      limitarAniosCalendario: true,
+      programadosActivos: true,
     };
 
     await db
@@ -117,8 +125,26 @@ export async function obtenerAjustesApp(): Promise<{
   }
 
   const textosGuardados = { ...(fila.textos_json ?? {}) };
+  let textosCambiados = false;
+
   if (textosGuardados.subtituloAtajos === "⚡ Atajos literales ej: 15al") {
     textosGuardados.subtituloAtajos = "Atajos ej: 15al";
+    textosCambiados = true;
+  }
+  if (textosGuardados.labelMontoAtajo === "Monto (S/) o atajo (ej. 15al)") {
+    textosGuardados.labelMontoAtajo = "Monto (S/)";
+    textosCambiados = true;
+  }
+  if (textosGuardados.labelFechaTx === "Fecha (Persistente)") {
+    textosGuardados.labelFechaTx = "Fecha";
+    textosCambiados = true;
+  }
+
+  if (textosCambiados) {
+    await db
+      .update(ajustesApp)
+      .set({ textos_json: textosGuardados, actualizado_en: new Date() })
+      .where(eq(ajustesApp.clave, CLAVE_GLOBAL));
   }
 
   return {
@@ -135,7 +161,7 @@ export async function guardarAjustesApp(params: {
   const actual = await obtenerAjustesApp();
 
   const nuevoConfig: AjustesAppConfig = params.config
-    ? { ...actual.config, ...params.config, configVersion: 2 }
+    ? { ...actual.config, ...params.config, configVersion: 3 }
     : actual.config;
 
   const nuevosTextos: TextosUI = params.restablecerTextos

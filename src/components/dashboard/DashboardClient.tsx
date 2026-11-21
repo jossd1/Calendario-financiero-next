@@ -1,12 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import FormularioRegistro from "@/components/FormularioRegistro";
 import KpiResumen from "@/components/KpiResumen";
-import PanelProgramados from "@/components/PanelProgramados";
 import TablaTransacciones from "@/components/TablaTransacciones";
 import Topbar from "@/components/Topbar";
+import MovimientosRecientes from "@/components/MovimientosRecientes";
 import WorkspaceToolbar from "@/components/WorkspaceToolbar";
 import PanelAnalisis from "@/components/analisis/PanelAnalisis";
 import PanelPresupuestos from "@/components/analisis/PanelPresupuestos";
@@ -15,8 +13,11 @@ import VistaGeneral from "@/components/calendario/VistaGeneral";
 import DashboardModales from "@/components/dashboard/DashboardModales";
 import EditModeFloatingBar from "@/components/dashboard/EditModeFloatingBar";
 import ToastContainer from "@/components/dashboard/ToastContainer";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useDashboardState } from "@/hooks/useDashboardState";
 import { useEditModeTextos } from "@/hooks/useEditModeTextos";
+import { formatearFechaDMY, formatoSoles } from "@/lib/format";
 import type { DashboardEstadoDTO, TransaccionDTO } from "@/types";
 
 interface DashboardClientProps {
@@ -38,6 +39,7 @@ export default function DashboardClient({
   const [modalCategoriasAbierto, setModalCategoriasAbierto] = useState(false);
   const [modalPerfilesAbierto, setModalPerfilesAbierto] = useState(false);
   const [modalPapeleraAbierto, setModalPapeleraAbierto] = useState(false);
+  const [modalProgramadosAbierto, setModalProgramadosAbierto] = useState(false);
   const [modalAjustesAbierto, setModalAjustesAbierto] = useState(false);
   const [modalBuscadorAbierto, setModalBuscadorAbierto] = useState(false);
   const [txEditando, setTxEditando] = useState<TransaccionDTO | null>(null);
@@ -98,6 +100,38 @@ export default function DashboardClient({
     });
   };
 
+  const verificarAlertaTope = (
+    nuevoEstado: DashboardEstadoDTO | null,
+    fechaTx: string
+  ) => {
+    if (!nuevoEstado) return;
+    const tope = nuevoEstado.ajustes.alertaTopeDiario;
+    if (tope <= 0) return;
+
+    let gastoDia = 0;
+    if (nuevoEstado.semanas_calendario) {
+      const celda = nuevoEstado.semanas_calendario
+        .flat()
+        .find((c) => c.fecha_iso === fechaTx);
+      if (celda) gastoDia = celda.egresos;
+    } else if (nuevoEstado.dias_semana_vista) {
+      const dia = nuevoEstado.dias_semana_vista.find(
+        (d) => d.fecha_iso === fechaTx
+      );
+      if (dia) gastoDia = dia.egresos;
+    } else {
+      gastoDia = nuevoEstado.transacciones_dia
+        .filter((t) => t.tipo === "egreso")
+        .reduce((acc, t) => acc + t.monto, 0);
+    }
+
+    if (gastoDia > tope) {
+      ds.lanzarToastSutil(
+        `⚠️ El ${formatearFechaDMY(fechaTx)} superó tu tope diario de ${formatoSoles(tope)} (${formatoSoles(gastoDia)}).`
+      );
+    }
+  };
+
   return (
     <div
       className={
@@ -113,6 +147,8 @@ export default function DashboardClient({
         perfiles={estado.perfiles}
         perfilActual={estado.perfil_actual}
         cantidadPapelera={estado.papelera.length}
+        cantidadPendientes={estado.pendientes_programados.length}
+        programadosActivos={estado.ajustes.programadosActivos}
         modoPrivacidad={estado.ajustes.modoPrivacidad}
         authPinActivo={estado.ajustes.authPinActivo}
         textos={estado.textos}
@@ -135,28 +171,45 @@ export default function DashboardClient({
         onAbrirCategorias={() => setModalCategoriasAbierto(true)}
         onAbrirPerfiles={() => setModalPerfilesAbierto(true)}
         onAbrirPapelera={() => setModalPapeleraAbierto(true)}
+        onAbrirProgramados={() => setModalProgramadosAbierto(true)}
         onAbrirAjustes={() => setModalAjustesAbierto(true)}
         onResetInicio={() => void handleResetInicio()}
       />
 
-      <main className="page-container">
-        {ds.flashes.length > 0 && (
-          <div className="flash-list">
-            {ds.flashes.map((f) => (
-              <div key={f.id} className={`flash-item flash-${f.tipo}`}>
+      {ds.flashes.length > 0 && (
+        <div className="flash-floating-stack" aria-live="polite">
+          {ds.flashes.map((f, idx) => (
+            <div
+              key={f.id}
+              className={`flash-item flash-${f.tipo} ${
+                idx === 0 ? "is-latest" : "is-previous"
+              }`}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                {idx === 0 && ds.flashes.length > 1 && (
+                  <span className="flash-recent-pill">Reciente</span>
+                )}
                 <span>{f.texto}</span>
-                <button
-                  type="button"
-                  onClick={() => ds.cerrarFlash(f.id)}
-                  style={{ background: "transparent", border: "none", cursor: "pointer" }}
-                >
-                  ✕
-                </button>
               </div>
-            ))}
-          </div>
-        )}
+              <button
+                type="button"
+                onClick={() => ds.cerrarFlash(f.id)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                }}
+                aria-label="Cerrar notificación"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
+      <main className="page-container">
         <WorkspaceToolbar
           vista={estado.vista}
           tituloPeriodo={estado.titulo_periodo}
@@ -235,26 +288,39 @@ export default function DashboardClient({
               onEditarTx={(tx) => setTxEditando(tx)}
               onEliminarTx={handleEliminarTx}
             />
+            <div className="sidebar-stack">
+              <FormularioRegistro
+                categoriasEgreso={estado.categorias_egreso}
+                categoriasIngreso={estado.categorias_ingreso}
+                categoriaPredeterminada={estado.ajustes.categoriaPredeterminada}
+                limitarAnios={estado.ajustes.limitarAniosCalendario}
+                fechaSeleccionada={ds.diaSeleccionado}
+                hoyIso={estado.hoy_iso}
+                focusPing={ds.focusPing}
+                textos={estado.textos}
+                editModeTextos={ed.editModeTextos}
+                onGuardarTexto={ed.handleGuardarTexto}
+                onCambiarFechaSeleccionada={ds.setDiaSeleccionado}
+                onMoverDiaFlecha={ds.handleMoverDiaFlecha}
+                onRegistrarExito={async (fechaTx) => {
+                  ds.setDiaSeleccionado(fechaTx);
+                  const nuevoEstado = await ds.refrescarEstado({
+                    vista: estado.vista,
+                    fecha: fechaTx,
+                  });
+                  verificarAlertaTope(nuevoEstado, fechaTx);
+                }}
+                onNotificar={ds.notificar}
+                onToastSutil={ds.lanzarToastSutil}
+              />
 
-            <FormularioRegistro
-              categoriasEgreso={estado.categorias_egreso}
-              categoriasIngreso={estado.categorias_ingreso}
-              categoriaPredeterminada={estado.ajustes.categoriaPredeterminada}
-              programadosActivos={estado.ajustes.programadosActivos}
-              fechaSeleccionada={ds.diaSeleccionado}
-              hoyIso={estado.hoy_iso}
-              focusPing={ds.focusPing}
-              textos={estado.textos}
-              editModeTextos={ed.editModeTextos}
-              onGuardarTexto={ed.handleGuardarTexto}
-              onCambiarFechaSeleccionada={ds.setDiaSeleccionado}
-              onRegistrarExito={async (fechaTx) => {
-                ds.setDiaSeleccionado(fechaTx);
-                await ds.refrescarEstado({ vista: estado.vista, fecha: fechaTx });
-              }}
-              onNotificar={ds.notificar}
-              onToastSutil={ds.lanzarToastSutil}
-            />
+              <MovimientosRecientes
+                transacciones={estado.transacciones_historial.slice(0, 4)}
+                categorias={estado.categorias}
+                modoPrivacidad={estado.ajustes.modoPrivacidad}
+                onEditarTx={(tx) => setTxEditando(tx)}
+              />
+            </div>
           </section>
         )}
 
@@ -310,19 +376,6 @@ export default function DashboardClient({
           />
         )}
 
-        {estado.ajustes.programadosActivos && (
-          <PanelProgramados
-            items={estado.pendientes_programados}
-            sumarEnKpi={estado.ajustes.sumarProgramadosEnKpi}
-            modoPrivacidad={estado.ajustes.modoPrivacidad}
-            onActualizado={async () => {
-              await ds.refrescarEstado();
-            }}
-            onEditarTx={(tx) => setTxEditando(tx)}
-            onNotificar={ds.notificar}
-          />
-        )}
-
         <TablaTransacciones
           initialItems={estado.transacciones_historial}
           initialHasMore={estado.hay_mas_historial}
@@ -360,6 +413,7 @@ export default function DashboardClient({
         modalCategoriasAbierto={modalCategoriasAbierto}
         modalPerfilesAbierto={modalPerfilesAbierto}
         modalPapeleraAbierto={modalPapeleraAbierto}
+        modalProgramadosAbierto={modalProgramadosAbierto}
         modalAjustesAbierto={modalAjustesAbierto}
         modalBuscadorAbierto={modalBuscadorAbierto}
         txEditando={txEditando}
@@ -367,9 +421,11 @@ export default function DashboardClient({
         onCerrarCategorias={() => setModalCategoriasAbierto(false)}
         onCerrarPerfiles={() => setModalPerfilesAbierto(false)}
         onCerrarPapelera={() => setModalPapeleraAbierto(false)}
+        onCerrarProgramados={() => setModalProgramadosAbierto(false)}
         onCerrarAjustes={() => setModalAjustesAbierto(false)}
         onCerrarBuscador={() => setModalBuscadorAbierto(false)}
         onCerrarEditarTx={() => setTxEditando(null)}
+        onEditarTx={(tx) => setTxEditando(tx)}
         onToggleEditModeTextos={() => ed.setEditModeTextos((v) => !v)}
         onRestablecerTextos={ed.handleRestablecerTextos}
         onActualizarConfig={ds.handleActualizarConfig}
