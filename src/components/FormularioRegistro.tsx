@@ -94,6 +94,17 @@ export default function FormularioRegistro({
     }
   }, [todasCategorias, categoria, tipo, categoriasEgreso, categoriasIngreso]);
 
+  useEffect(() => {
+    if (!categoriaPredeterminada) return;
+    const encontrada = todasCategorias.find(
+      (c) => c.nombre === categoriaPredeterminada
+    );
+    if (encontrada) {
+      setCategoria(encontrada.nombre);
+      setTipo(encontrada.tipo);
+    }
+  }, [categoriaPredeterminada, todasCategorias]);
+
   const analisisEntrada = useMemo(
     () => analizarEntradaMonto(montoTexto, todasCategorias),
     [montoTexto, todasCategorias]

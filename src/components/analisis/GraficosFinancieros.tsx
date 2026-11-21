@@ -72,7 +72,7 @@ export default function GraficosFinancieros({
             colorPorCategoria.get(catNombre) ??
             PALETA_FALLBACK[i % PALETA_FALLBACK.length]
         ),
-        borderColor: "#111827",
+        borderColor: "#0d1322",
         borderWidth: 3,
         hoverOffset: 8,
       },
