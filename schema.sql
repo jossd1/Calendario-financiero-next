@@ -1,6 +1,3 @@
-CREATE DATABASE calendario_financiero; 
-\connect calendario_financiero --No ejecutes esta linea si lo haces de manera grafica, como en DBeaver.
-
 CREATE TABLE IF NOT EXISTS perfiles (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(80) NOT NULL UNIQUE,

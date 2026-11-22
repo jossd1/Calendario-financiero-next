@@ -34,7 +34,7 @@ npm install
 
 ### 3. copiar plantilla `.env.example`
 
-Comando para copiar la plantilla `.env.example` en la raíz del proyecto para crear tu archivo `.env`:
+Comando para copiar la plantilla `.env.example` en la raíz del proyecto para crear tu archivo propio `.env`:
 
 En Linux, macOS o Git Bash (Windows):
 ```bash
@@ -55,7 +55,7 @@ En Linux:
 ```bash
 xdg-open .env
 ```
-En Windows(cmd/Powershell)
+En Windows:
 ```bash
 notepad .env
 ```
@@ -71,15 +71,28 @@ Coloca la contraseña de PostgreSQL reemplazando la parte "tu_contraseña" por l
 ```env
 DATABASE_URL="postgresql://postgres:tu_contraseña@localhost:5432/calendario_financiero"
 ```
-
-### 6. Crear la base de datos y tablas (`schema.sql`)
-Debes tener PostgreSQL instalado para:  
-Ejecutar el archivo `schema.sql` ubicado en la raíz para crear la base de datos `calendario_financiero`, sus tablas (`perfiles`, `categorias`, `transacciones`, `presupuestos`, `ajustes_app`) y los índices:
-
+Y guarda los cambios.
+### 6. Crear la base de datos
+Debes tener PostgreSQL instalado, para crear la base de datos:  
+En Linux(contraseña sudo):
 ```bash
-psql -U postgres -f schema.sql
+sudo -u postgres createdb calendario_financiero
 ```
-
+En Windows y macOS(pedira contraseña postgres):
+```bash
+psql -U postgres -c "CREATE DATABASE calendario_financiero;"
+```
+### 7. Ejecutar `schema.sql`
+Ejecutar `schema.sql` para tener las tablas e indices necesarios con el siguiente comando:  
+En Linux
+```bash
+sudo -u postgres psql -d calendario_financiero -f schema.sql
+```
+En Windows y en macOS
+```bash
+psql -U postgres -d calendario_financiero -f schema.sql
+```
+Los comandos directos con psql funciona si el path esta establecido
 ### 7. Ejecutar la aplicación
 
 ```bash
