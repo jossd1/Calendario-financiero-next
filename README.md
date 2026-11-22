@@ -167,7 +167,7 @@ http://localhost:3000
 
 9. **Pagos Pendientes y Programados:**
    - El *badge* rojizo indica cuántos pendientes tienes.
-   - Al abrir el modal "⏳" puedes gestionar los pendientes.
+   - Al abrir el modal `⏳` puedes gestionar los pendientes.
 
 10. **Análisis y Gráficos + Modos:**
    - En el modo automatico, usa la fecha que ves y lo pone automaticamente en el  desde / hasta.
