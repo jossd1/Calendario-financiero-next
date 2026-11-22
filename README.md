@@ -148,38 +148,32 @@ http://localhost:3000
    - Checkbox **Día**: si lo marcas, pide primero el día y salta a la Vista Día.
    - Checkbox **Año** (activo por defecto): si lo desmarcas, omite escribir el año y usa automáticamente el año actual que se esta viendo.
 
-6. **Pagos Pendientes y Programados:**
-   - El *badge* rojizo indica cuántos pendientes tienes.
-   - Al abrir el modal puedes crear nuevos movimientos Pendiente / Programado, editarlos o confirmarlos como `✓ Pagado` en 1 clic (sin afectar tu saldo real salvo que actives "Incluir Pendientes en KPIs").
-
-7. **Movimientos Recientes + Tabla con Scroll Infinito:**
-   - La tarjeta bajo el formulario muestra los últimos 4 registros del periodo para editar en 1 clic.
-   - La tabla inferior filtra por texto, tipo y categoría y carga más al hacer scroll.
-
-8. **Análisis y Gráficos + Modos:**
-   - En el modo automatico, toma la vista vista actual y lo pone automaticamente enel  desde y el hasta.
-   - En el modo Manual puedes fijar el Desde / Hasta exactos.
-
-9. **Vista General:**
+6. **Vista General:**
    - **Panorama:** gráfico mixto interactivo donde las píldoras superiores muestran/ocultan series sin tachar + Top 5 Movimientos + Récords.
    - **Todos los Años:** vista anual con opción multi-perfil.
    - **Ajustes:** Algunos campos se puedes desactivar en Ajustes
 
-10. **Seguridad y Privacidad:**
-    - `👁️` enmascara todos los montos con `S/ •••` (incluyendo Papelera y Programados).
-    - `🔒` Requiere activar, bloquea la app con PIN cuando solo cuando lo presionas, el ingreso al perfil es libre por comdidad (`scrypt`).
+7. **Seguridad y Privacidad:**
+    - `👁️` al presionarlo enmascara todos los montos con `S/ •••`.
+    - `🔒` Requiere activar, bloquea la app con PIN cuando solo cuando lo presionas(`scrypt`).
     - Para eliminar se exige doble clic por seguridad(`⚠️ ¿Seguro?`).
     - En la papelera, puedes restaurar lo eliminado si fue por error.
 
-11. **Presupuestos y Alerta de Tope Diario:**
-    - Barras de progreso por categoría (base mensual o por mes).
-    - Alertas ámbar + *toast* cuando un día supera tu tope de gasto diario.
-
-12. **Personalización y Respaldo:**
+8. **Personalización y Respaldo:**
     - Límite de años `2000–3000` desactivable en Ajustes.
     - Densidad Cómoda/Compacta.
     - Edición de Textos en Pantalla (`Ctrl+Z` / `Ctrl+Y`, puedes dejar campos vacios).
     - Importación/exportación `.CSV` y `.JSON`.
+
+9. **Pagos Pendientes y Programados:**
+   - El *badge* rojizo indica cuántos pendientes tienes.
+   - Al abrir el modal "⏳" puedes gestionar los pendientes.
+
+10. **Análisis y Gráficos + Modos:**
+   - En el modo automatico, usa la fecha que ves y lo pone automaticamente en el  desde / hasta.
+   - En el modo Manual puedes fijar el Desde / Hasta exactos.
+
+11. Hay unas pocas cosas más en ajustes. 
 
 <br>
 
