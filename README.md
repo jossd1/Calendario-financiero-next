@@ -45,7 +45,7 @@ En windows(cmd):
 copy .env.example .env
 ```
 
-En Linux, macOS o Git Bash (Windows):
+En Linux, macOS:
 ```bash
 cp .env.example .env
 ```
@@ -82,7 +82,7 @@ Guarda los cambios.
 
 ### 6. Crear la base de datos
 
-En Windows y macOS(pedira contraseña postgres):
+En Windows, macOS(pedira contraseña postgres):
 ```bash
 psql -U postgres -c "CREATE DATABASE calendario_financiero;"
 ```
@@ -96,11 +96,11 @@ sudo -u postgres createdb calendario_financiero
 ### 7. Ejecutar `schema.sql`
 Ejecutar `schema.sql` para tener la base de datos completo:  
 
-En Windows y en macOS
+En Windows, macOS:
 ```bash
 psql -U postgres -d calendario_financiero -f schema.sql
 ```
-En Linux
+En Linux:
 ```bash
 sudo -u postgres psql -d calendario_financiero -f schema.sql
 ```
@@ -111,18 +111,20 @@ sudo -u postgres psql -d calendario_financiero -f schema.sql
 ```bash
 npm run dev
 ```
+<br>
 
+### 9. Como verlo?
 Abre `http://localhost:3000` en tu navegador escribiendo esto en la barra de direcciones:
 ```bash
 http://localhost:3000
 ```
 <br>
 
-### 9. Disfruta.
+### 10. Disfruta.
 
 <br>
 
-## Guía de funcionalidades (de más útil a menos cotidiana)
+## Guía de las funcionalidades
 
 1. **Atajos literales en el campo rápido:**
    - En "Registrar Movimiento" puedes escribir monto + código exacto de categoría (ej. `15al`) y pulsa `Enter` en el   mismo apartado.
