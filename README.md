@@ -64,7 +64,7 @@ Abre `http://localhost:3000` en tu navegador escribiendo esto en la barra de dir
 ```bash
 http://localhost:3000
 ```
-### 6. Ahora prueba la 
+### 6. Disfruta.
 ## Guía de funcionalidades (de más útil a menos cotidiana)
 
 1. **Atajos literales en el campo rápido:**
