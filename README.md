@@ -7,7 +7,6 @@ Aplicación web full-stack para gestionar finanzas personales en Soles peruanos 
 
 * **Vistas Temporales:** Navegación entre vista Diaria, Mensual, Anual y General.
 * **Registro Rápido por Atajos:** Ingreso ágil de montos y categorías desde un único campo (ej. `15al` para registrar `S/ 15.00` en *Alimentación*).
-* **Indicadores (KPIs) y Presupuestos:** Cálculo en tiempo real de ingresos, egresos, balance neto y límites por categoría.
 * **Multi-perfil y Privacidad:** Espacios independientes, ocultación de montos y bloqueo por PIN.
 * **Papelera y Exportación:** Borrado lógico recuperable y exportación de movimientos a `.CSV`.
 
@@ -27,14 +26,14 @@ cd Calendario-financiero-next
 ```
 
 ### 2. Instalar dependencias
-Para que el comando fucione tienes que tener Node.js instalado.
+Peso de las dependencias aproximadamente: 400MB a más.
 ```bash
 npm install
 ```
-(peso dependencias aproximadamente: 400MB a más)
+
 ### 3. copiar plantilla `.env.example`
 
-Comando para copiar la plantilla `.env.example` en la raíz del proyecto para crear tu archivo propio `.env`:
+Comando para copiar la plantilla `.env.example`:
 
 En windows(cmd):
 ```bash
@@ -49,7 +48,7 @@ cp .env.example .env
 
 
 ### 4. Abrir `.env` creado:
- Comando para abrir el `.env` creado:
+ Comando para abrir el `.env`:
 
 En Windows:
 ```bash
@@ -68,14 +67,13 @@ open -t .env
 
 
 ### 5. Congigurar las credenciales:
-Coloca la contraseña de PostgreSQL reemplazando la parte "tu_contraseña" por la tuya en el `.env`:
+Coloca la contraseña de PostgreSQL reemplazando "tu_contraseña" en el `.env`:
 
 ```env
 DATABASE_URL="postgresql://postgres:tu_contraseña@localhost:5432/calendario_financiero"
 ```
-Y guarda los cambios.
+Guarda los cambios.
 ### 6. Crear la base de datos
-Debes tener PostgreSQL instalado, para crear la base de datos:  
 
 En Windows y macOS(pedira contraseña postgres):
 ```bash
@@ -98,8 +96,6 @@ En Linux
 ```bash
 sudo -u postgres psql -d calendario_financiero -f schema.sql
 ```
-
-Los comandos directos con psql funciona si el path esta establecido
 ### 7. Ejecutar la aplicación
 
 ```bash
