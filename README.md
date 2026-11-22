@@ -1,9 +1,9 @@
 # 📅 Calendario Financiero (S/)    
-Aplicación web full-stack para gestionar finanzas personales en Soles peruanos (`S/`), con interfaz oscura, múltiples vistas temporales y registro rápido de transacciones mediante atajos de teclado.
+Aplicación web para gestionar finanzas personales en Soles peruanos (`S/`), con interfaz oscura, múltiples vistas temporales y registro rápido de transacciones mediante atajos de teclado.
 
 ![Vista Principal del Calendario Financiero](./docs/preview-calendario.png)
 
-## ✨ Características Principales
+## Características Principales
 
 * **Vistas Temporales:** Navegación entre vista Diaria, Mensual, Anual y General.
 * **Registro Rápido por Atajos:** Ingreso ágil de montos y categorías desde un único campo (ej. `15al` para registrar `S/ 15.00` en *Alimentación*).
@@ -15,7 +15,10 @@ Aplicación web full-stack para gestionar finanzas personales en Soles peruanos 
 * **Frontend:** Next.js, React, TypeScript, Tailwind CSS
 * **Backend:** Next.js API Routes / Server Actions
 * **Base de Datos:** PostgreSQL
-* **REQUISITOS:** Instalar Node.js y PostreSQL
+  
+## REQUISITOS
+* Instalar Node.js
+* PostreSQL
 ## 🚀 Inicialización del Proyecto Mediante Terminal
 
 ### 1. Clonar el repositorio
@@ -96,7 +99,7 @@ En Linux
 ```bash
 sudo -u postgres psql -d calendario_financiero -f schema.sql
 ```
-### 7. Ejecutar la aplicación
+### 8. Ejecutar la aplicación
 
 ```bash
 npm run dev
@@ -106,7 +109,7 @@ Abre `http://localhost:3000` en tu navegador escribiendo esto en la barra de dir
 ```bash
 http://localhost:3000
 ```
-### 8. Disfruta.
+### 9. Disfruta.
 ## Guía de funcionalidades (de más útil a menos cotidiana)
 
 1. **Atajos literales en el campo rápido:**
