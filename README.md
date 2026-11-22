@@ -70,7 +70,7 @@ open -t .env
 
 
 ### 5. Congigurar las credenciales:
-Coloca la contraseña de PostgreSQL reemplazando "tu_contraseña" en el `.env`:
+Reemplaza "tu_contraseña" por la contraseña postgres en el `.venv` :
 
 ```env
 DATABASE_URL="postgresql://postgres:tu_contraseña@localhost:5432/calendario_financiero"
@@ -89,7 +89,7 @@ sudo -u postgres createdb calendario_financiero
 ```
 
 ### 7. Ejecutar `schema.sql`
-Ejecutar `schema.sql` para tener las tablas e indices necesarios con el siguiente comando:  
+Ejecutar `schema.sql` para tener la base de datos completo:  
 
 En Windows y en macOS
 ```bash
