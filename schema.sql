@@ -1,3 +1,5 @@
+CREATE DATABASE calendario_financiero;
+
 CREATE TABLE IF NOT EXISTS perfiles (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(80) NOT NULL UNIQUE,
