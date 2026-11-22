@@ -16,7 +16,7 @@ Aplicación web full-stack para gestionar finanzas personales en Soles peruanos 
 * **Frontend:** Next.js, React, TypeScript, Tailwind CSS
 * **Backend:** Next.js API Routes / Server Actions
 * **Base de Datos:** PostgreSQL
-
+* **REQUISITOS:** Instalar Node.js y PostreSQL
 ## 🚀 Inicialización del Proyecto Mediante Terminal
 
 ### 1. Clonar el repositorio
