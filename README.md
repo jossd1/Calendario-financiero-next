@@ -32,21 +32,47 @@ Pesaran aproximadamente de 400MB a más.
 npm install
 ```
 
-### 3. Configurar el entorno (`.env`)
+### 3. copiar plantilla `.env.example`
 
 Comando para copiar la plantilla `.env.example` en la raíz del proyecto para crear tu archivo `.env`:
 
+En Linux, macOS o Git Bash (Windows):
 ```bash
 cp .env.example .env
 ```
 
-Abre `.env` y coloca la contraseña de PostgreSQL reemplazando la parte "tu_contraseña" por la tuya:
+En windows(cmd):
+```bash
+copy .env.example .env
+```
+
+
+
+### 4. Abrir `.env` creado:
+ Comando para abrir el `.env` creado:
+
+En Linux:
+```bash
+xdg-open .env
+```
+En Windows(cmd/Powershell)
+```bash
+notepad .env
+```
+En macOS:
+```bash
+open -t .env
+```
+
+
+### 5. Congigurar las credenciales:
+Coloca la contraseña de PostgreSQL reemplazando la parte "tu_contraseña" por la tuya en el `.env`:
 
 ```env
 DATABASE_URL="postgresql://postgres:tu_contraseña@localhost:5432/calendario_financiero"
 ```
 
-### 4. Crear la base de datos y tablas (`schema.sql`)
+### 6. Crear la base de datos y tablas (`schema.sql`)
 Debes tener PostgreSQL instalado para:  
 Ejecutar el archivo `schema.sql` ubicado en la raíz para crear la base de datos `calendario_financiero`, sus tablas (`perfiles`, `categorias`, `transacciones`, `presupuestos`, `ajustes_app`) y los índices:
 
@@ -54,7 +80,7 @@ Ejecutar el archivo `schema.sql` ubicado en la raíz para crear la base de datos
 psql -U postgres -f schema.sql
 ```
 
-### 5. Ejecutar la aplicación
+### 7. Ejecutar la aplicación
 
 ```bash
 npm run dev
@@ -64,7 +90,7 @@ Abre `http://localhost:3000` en tu navegador escribiendo esto en la barra de dir
 ```bash
 http://localhost:3000
 ```
-### 6. Disfruta.
+### 8. Disfruta.
 ## Guía de funcionalidades (de más útil a menos cotidiana)
 
 1. **Atajos literales en el campo rápido:**
