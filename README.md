@@ -23,7 +23,7 @@ Aplicación web full-stack para gestionar finanzas personales en Soles peruanos 
 En la terminal con cd ubicate en donde deseas que se descargue el proyecto y ejecuta:
 ```bash
 git clone --depth=1 https://github.com/jossd1/Calendario-financiero-next.git
-cd calendario-next-5
+cd Calendario-financiero-next
 ```
 
 ### 2. Instalar dependencias
