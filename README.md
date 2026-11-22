@@ -27,23 +27,23 @@ cd Calendario-financiero-next
 ```
 
 ### 2. Instalar dependencias
-Pesaran aproximadamente de 400MB a más.
+Para que el comando fucione tienes que tener Node.js instalado.
 ```bash
 npm install
 ```
-
+(peso dependencias aproximadamente: 400MB a más)
 ### 3. copiar plantilla `.env.example`
 
 Comando para copiar la plantilla `.env.example` en la raíz del proyecto para crear tu archivo propio `.env`:
 
-En Linux, macOS o Git Bash (Windows):
-```bash
-cp .env.example .env
-```
-
 En windows(cmd):
 ```bash
 copy .env.example .env
+```
+
+En Linux, macOS o Git Bash (Windows):
+```bash
+cp .env.example .env
 ```
 
 
@@ -51,14 +51,16 @@ copy .env.example .env
 ### 4. Abrir `.env` creado:
  Comando para abrir el `.env` creado:
 
-En Linux:
-```bash
-xdg-open .env
-```
 En Windows:
 ```bash
 notepad .env
 ```
+
+En Linux:
+```bash
+xdg-open .env
+```
+
 En macOS:
 ```bash
 open -t .env
@@ -74,24 +76,29 @@ DATABASE_URL="postgresql://postgres:tu_contraseña@localhost:5432/calendario_fin
 Y guarda los cambios.
 ### 6. Crear la base de datos
 Debes tener PostgreSQL instalado, para crear la base de datos:  
-En Linux(contraseña sudo):
-```bash
-sudo -u postgres createdb calendario_financiero
-```
+
 En Windows y macOS(pedira contraseña postgres):
 ```bash
 psql -U postgres -c "CREATE DATABASE calendario_financiero;"
 ```
+
+En Linux(contraseña sudo):
+```bash
+sudo -u postgres createdb calendario_financiero
+```
+
 ### 7. Ejecutar `schema.sql`
 Ejecutar `schema.sql` para tener las tablas e indices necesarios con el siguiente comando:  
-En Linux
-```bash
-sudo -u postgres psql -d calendario_financiero -f schema.sql
-```
+
 En Windows y en macOS
 ```bash
 psql -U postgres -d calendario_financiero -f schema.sql
 ```
+En Linux
+```bash
+sudo -u postgres psql -d calendario_financiero -f schema.sql
+```
+
 Los comandos directos con psql funciona si el path esta establecido
 ### 7. Ejecutar la aplicación
 
