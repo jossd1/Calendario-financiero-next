@@ -27,12 +27,14 @@ En la terminal con cd ubicate en donde deseas que se descargue el proyecto y eje
 git clone --depth=1 https://github.com/jossd1/Calendario-financiero-next.git
 cd Calendario-financiero-next
 ```
+<br>
 
 ### 2. Instalar dependencias
 Peso de las dependencias aproximadamente: 400MB a más.
 ```bash
 npm install
 ```
+<br>
 
 ### 3. copiar plantilla `.env.example`
 
@@ -47,8 +49,7 @@ En Linux, macOS o Git Bash (Windows):
 ```bash
 cp .env.example .env
 ```
-
-
+<br>
 
 ### 4. Abrir `.env` creado:
  Comando para abrir el `.env`:
@@ -67,7 +68,7 @@ En macOS:
 ```bash
 open -t .env
 ```
-
+<br>
 
 ### 5. Congigurar las credenciales:
 Reemplaza "tu_contraseña" por la contraseña postgres en el `.venv` :
@@ -76,6 +77,9 @@ Reemplaza "tu_contraseña" por la contraseña postgres en el `.venv` :
 DATABASE_URL="postgresql://postgres:tu_contraseña@localhost:5432/calendario_financiero"
 ```
 Guarda los cambios.
+
+<br>
+
 ### 6. Crear la base de datos
 
 En Windows y macOS(pedira contraseña postgres):
@@ -87,6 +91,7 @@ En Linux(contraseña sudo):
 ```bash
 sudo -u postgres createdb calendario_financiero
 ```
+<br>
 
 ### 7. Ejecutar `schema.sql`
 Ejecutar `schema.sql` para tener la base de datos completo:  
@@ -99,6 +104,8 @@ En Linux
 ```bash
 sudo -u postgres psql -d calendario_financiero -f schema.sql
 ```
+<br>
+
 ### 8. Ejecutar la aplicación
 
 ```bash
@@ -109,7 +116,12 @@ Abre `http://localhost:3000` en tu navegador escribiendo esto en la barra de dir
 ```bash
 http://localhost:3000
 ```
+<br>
+
 ### 9. Disfruta.
+
+<br>
+
 ## Guía de funcionalidades (de más útil a menos cotidiana)
 
 1. **Atajos literales en el campo rápido:**
@@ -169,7 +181,7 @@ http://localhost:3000
     - Edición de Textos en Pantalla (`Ctrl+Z` / `Ctrl+Y`, puedes dejar campos vacios).
     - Importación/exportación `.CSV` y `.JSON`.
 
-
+<br>
 
 ## 📁 Estructura del Proyecto
 
