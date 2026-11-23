@@ -2,8 +2,7 @@ export type AppIconName =
   | "ajustes"
   | "perfilEngranaje"
   | "categorias"
-  | "papelera"
-  | "eliminar";
+  | "papelera";
 
 export interface AppIconDef {
   src: string;
@@ -35,10 +34,5 @@ export const APP_ICONS: Record<AppIconName, AppIconDef> = {
     src: "/icons/papelera.svg",
     fallback: "🗑️",
     alt: "Papelera",
-  },
-  eliminar: {
-    src: "/icons/papelera.svg",
-    fallback: "🗑️",
-    alt: "Eliminar",
   },
 };

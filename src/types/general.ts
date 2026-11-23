@@ -42,6 +42,9 @@ export interface RecordMovimientoItem {
 
 export interface DatosGeneralDTO {
   consolidado: boolean;
+  moneda: string;
+  perfiles_incluidos: number;
+  perfiles_omitidos: number;
   tasa_ahorro_pct: number;
   cantidad_movimientos: number;
   meses_activos: number;

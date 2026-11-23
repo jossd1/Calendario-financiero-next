@@ -1,10 +1,16 @@
 "use client";
 
-import { DIAS_SEMANA_ES, formatoSoles, mostrarMonto } from "@/lib/format";
+import { DIAS_SEMANA_ES } from "@/lib/format";
+import {
+  formatoMoneda,
+  mostrarMontoMoneda,
+  obtenerMonedaInfo,
+} from "@/lib/monedas";
 import type { CeldaCalendario, ModoCalendarioClick } from "@/types";
 
 interface VistaMensualProps {
   semanasCalendario: CeldaCalendario[][];
+  moneda: string;
   diaSeleccionado: string;
   modoClick: ModoCalendarioClick;
   rangoMin: string | null;
@@ -21,6 +27,7 @@ interface VistaMensualProps {
 
 export default function VistaMensual({
   semanasCalendario,
+  moneda,
   diaSeleccionado,
   modoClick,
   rangoMin,
@@ -34,6 +41,8 @@ export default function VistaMensual({
   modoPrivacidad,
   onClicDia,
 }: VistaMensualProps) {
+  const { simbolo } = obtenerMonedaInfo(moneda);
+
   return (
     <>
       <div className="calendar-weekdays">
@@ -101,7 +110,7 @@ export default function VistaMensual({
                 <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
                   {alertaTopeDiario > 0 && celda.egresos > alertaTopeDiario && (
                     <span
-                      title={`Superó tope diario de S/ ${alertaTopeDiario}`}
+                      title={`Superó tope diario de ${simbolo} ${alertaTopeDiario}`}
                       style={{ fontSize: "0.72rem" }}
                     >
                       ⚠️
@@ -120,18 +129,20 @@ export default function VistaMensual({
               >
                 {celda.ingresos > 0 && (
                   <span className="amt-in">
-                    {mostrarMonto(
-                      formatoSoles(celda.ingresos),
+                    {mostrarMontoMoneda(
+                      formatoMoneda(celda.ingresos, moneda),
                       modoPrivacidad,
+                      moneda,
                       "+"
                     )}
                   </span>
                 )}
                 {celda.egresos > 0 && (
                   <span className="amt-out">
-                    {mostrarMonto(
-                      formatoSoles(celda.egresos),
+                    {mostrarMontoMoneda(
+                      formatoMoneda(celda.egresos, moneda),
                       modoPrivacidad,
+                      moneda,
                       "-"
                     )}
                   </span>
@@ -146,7 +157,11 @@ export default function VistaMensual({
                             : "var(--range-end-color)",
                       }}
                     >
-                      {mostrarMonto(formatoSoles(celda.neto), modoPrivacidad)}
+                      {mostrarMontoMoneda(
+                        formatoMoneda(celda.neto, moneda),
+                        modoPrivacidad,
+                        moneda
+                      )}
                     </span>
                   )}
               </div>
@@ -171,7 +186,11 @@ export default function VistaMensual({
                       } ${modoPrivacidad ? "privacy-dots" : ""}`}
                       style={{ fontWeight: 700 }}
                     >
-                      {mostrarMonto(formatoSoles(celda.neto), modoPrivacidad)}
+                      {mostrarMontoMoneda(
+                        formatoMoneda(celda.neto, moneda),
+                        modoPrivacidad,
+                        moneda
+                      )}
                     </span>
                   </div>
 
@@ -214,9 +233,10 @@ export default function VistaMensual({
                         } ${modoPrivacidad ? "privacy-dots" : ""}`}
                         style={{ fontWeight: 600, flexShrink: 0 }}
                       >
-                        {mostrarMonto(
+                        {mostrarMontoMoneda(
                           item.monto_fmt,
                           modoPrivacidad,
+                          moneda,
                           item.tipo === "ingreso" ? "+" : "-"
                         )}
                       </span>

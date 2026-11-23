@@ -4,9 +4,30 @@ import { db } from "@/db";
 import { categorias, presupuestos, transacciones } from "@/db/schema";
 import { obtenerPerfilActivo } from "@/lib/perfil";
 
-function validarColorHex(valor: unknown, fallback = "#3b82f6"): string {
+const PALETA_ALEATORIA = [
+  "#3b82f6",
+  "#10b981",
+  "#f59e0b",
+  "#ec4899",
+  "#8b5cf6",
+  "#06b6d4",
+  "#84cc16",
+  "#f97316",
+  "#e11d48",
+  "#14b8a6",
+  "#a855f7",
+  "#eab308",
+];
+
+function colorAleatorio(): string {
+  return PALETA_ALEATORIA[
+    Math.floor(Math.random() * PALETA_ALEATORIA.length)
+  ];
+}
+
+function validarColorHex(valor: unknown): string {
   const texto = String(valor ?? "").trim();
-  return /^#[0-9a-fA-F]{6}$/.test(texto) ? texto : fallback;
+  return /^#[0-9a-fA-F]{6}$/.test(texto) ? texto : colorAleatorio();
 }
 
 export async function POST(request: NextRequest) {
@@ -15,7 +36,7 @@ export async function POST(request: NextRequest) {
     const tipo = String(body.tipo ?? "egreso").trim().toLowerCase();
     const nombre = String(body.nombre ?? "").trim().slice(0, 60);
     let atajo = String(body.atajo ?? "").trim().toLowerCase().slice(0, 10);
-    const color = validarColorHex(body.color, "#3b82f6");
+    const color = validarColorHex(body.color);
 
     if (!nombre || (tipo !== "ingreso" && tipo !== "egreso")) {
       return NextResponse.json(
@@ -66,7 +87,7 @@ export async function PUT(request: NextRequest) {
       .trim()
       .toLowerCase()
       .slice(0, 10);
-    const colorNuevo = validarColorHex(body.color_nuevo, "#3b82f6");
+    const colorNuevo = validarColorHex(body.color_nuevo);
 
     if (!nombreAntiguo || !nombreNuevo) {
       return NextResponse.json(

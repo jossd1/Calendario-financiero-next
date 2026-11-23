@@ -1,12 +1,17 @@
 "use client";
 
+import CustomSelect, { type CustomSelectOption } from "@/components/CustomSelect";
+import { MONEDAS_DISPONIBLES } from "@/lib/monedas";
+
 interface PerfilEdicionFormProps {
   nombreOriginal: string;
   nombre: string;
   descripcion: string;
+  moneda: string;
   procesando: boolean;
   onCambiarNombre: (val: string) => void;
   onCambiarDescripcion: (val: string) => void;
+  onCambiarMoneda: (val: string) => void;
   onCancelar: () => void;
   onSubmit: (e: React.FormEvent) => Promise<void>;
 }
@@ -15,12 +20,20 @@ export default function PerfilEdicionForm({
   nombreOriginal,
   nombre,
   descripcion,
+  moneda,
   procesando,
   onCambiarNombre,
   onCambiarDescripcion,
+  onCambiarMoneda,
   onCancelar,
   onSubmit,
 }: PerfilEdicionFormProps) {
+  const opcionesMoneda: CustomSelectOption[] = MONEDAS_DISPONIBLES.map((m) => ({
+    value: m.codigo,
+    label: `${m.codigo} · ${m.nombre}`,
+    hint: m.simbolo,
+  }));
+
   return (
     <form
       onSubmit={(e) => void onSubmit(e)}
@@ -56,6 +69,12 @@ export default function PerfilEdicionForm({
         placeholder="Descripción"
         maxLength={160}
         style={{ padding: "6px 10px" }}
+      />
+      <CustomSelect
+        ariaLabel="Moneda del perfil"
+        value={moneda}
+        options={opcionesMoneda}
+        onChange={onCambiarMoneda}
       />
       <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
         <button

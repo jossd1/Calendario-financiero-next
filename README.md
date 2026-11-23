@@ -1,5 +1,5 @@
-# 📅 Calendario Financiero (S/)    
-Aplicación web para gestionar finanzas personales en Soles peruanos (`S/`), con interfaz oscura, múltiples vistas temporales y registro rápido de transacciones mediante atajos de teclado.
+# 📅 Calendario Financiero $    
+Aplicación web para gestionar finanzas personales, con interfaz oscura, múltiples vistas temporales y registro rápido de transacciones mediante atajos de teclado.
 
 ![Vista Principal del Calendario Financiero](./docs/preview-calendario.png)
 

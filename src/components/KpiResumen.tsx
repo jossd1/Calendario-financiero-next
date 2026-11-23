@@ -1,11 +1,12 @@
 "use client";
 
 import EditableText from "@/components/EditableText";
-import { formatoSoles, mostrarMonto } from "@/lib/format";
+import { formatoMoneda, mostrarMontoMoneda } from "@/lib/monedas";
 import type { ComparativaKpiDTO, TextosUI, TopEgresoKpiDTO } from "@/types";
 
 interface KpiResumenProps {
   tituloPeriodo: string;
+  moneda: string;
   totalIngresos: number;
   totalEgresos: number;
   balanceNeto: number;
@@ -21,6 +22,7 @@ interface KpiResumenProps {
 
 export default function KpiResumen({
   tituloPeriodo,
+  moneda,
   totalIngresos,
   totalEgresos,
   balanceNeto,
@@ -88,7 +90,11 @@ export default function KpiResumen({
         <strong
           className={`kpi-value income ${modoPrivacidad ? "privacy-dots" : ""}`}
         >
-          {mostrarMonto(formatoSoles(totalIngresos), modoPrivacidad)}
+          {mostrarMontoMoneda(
+            formatoMoneda(totalIngresos, moneda),
+            modoPrivacidad,
+            moneda
+          )}
         </strong>
         {mostrarComparativa && comparativaKpi && (
           <div>{renderDeltaPct(comparativaKpi.ingresos_pct_delta, false)}</div>
@@ -132,7 +138,11 @@ export default function KpiResumen({
         <strong
           className={`kpi-value expense ${modoPrivacidad ? "privacy-dots" : ""}`}
         >
-          {mostrarMonto(formatoSoles(totalEgresos), modoPrivacidad)}
+          {mostrarMontoMoneda(
+            formatoMoneda(totalEgresos, moneda),
+            modoPrivacidad,
+            moneda
+          )}
         </strong>
         {mostrarComparativa && comparativaKpi && (
           <div>{renderDeltaPct(comparativaKpi.egresos_pct_delta, true)}</div>
@@ -187,7 +197,11 @@ export default function KpiResumen({
             balanceNeto >= 0 ? "balance-pos" : "balance-neg"
           } ${modoPrivacidad ? "privacy-dots" : ""}`}
         >
-          {mostrarMonto(formatoSoles(balanceNeto), modoPrivacidad)}
+          {mostrarMontoMoneda(
+            formatoMoneda(balanceNeto, moneda),
+            modoPrivacidad,
+            moneda
+          )}
         </strong>
         {mostrarComparativa && comparativaKpi && (
           <div>
@@ -197,9 +211,10 @@ export default function KpiResumen({
               }`}
             >
               {comparativaKpi.balance_diff >= 0 ? "▲ +" : "▼ "}
-              {mostrarMonto(
-                formatoSoles(comparativaKpi.balance_diff),
-                modoPrivacidad
+              {mostrarMontoMoneda(
+                formatoMoneda(comparativaKpi.balance_diff, moneda),
+                modoPrivacidad,
+                moneda
               )}{" "}
               vs periodo anterior
             </span>
@@ -261,7 +276,7 @@ export default function KpiResumen({
             className={`tabular-nums ${modoPrivacidad ? "privacy-dots" : ""}`}
             style={{ fontSize: "0.85rem", fontWeight: 600, color: "#f87171" }}
           >
-            {mostrarMonto(topEgresoKpi.monto_fmt, modoPrivacidad)} (
+            {mostrarMontoMoneda(topEgresoKpi.monto_fmt, modoPrivacidad, moneda)} (
             {topEgresoKpi.porcentaje}%)
           </div>
           <span className="kpi-meta">

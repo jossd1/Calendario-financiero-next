@@ -1,10 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import FormularioRegistro from "@/components/FormularioRegistro";
 import KpiResumen from "@/components/KpiResumen";
+import MovimientosRecientes from "@/components/MovimientosRecientes";
 import TablaTransacciones from "@/components/TablaTransacciones";
 import Topbar from "@/components/Topbar";
-import MovimientosRecientes from "@/components/MovimientosRecientes";
 import WorkspaceToolbar from "@/components/WorkspaceToolbar";
 import PanelAnalisis from "@/components/analisis/PanelAnalisis";
 import PanelPresupuestos from "@/components/analisis/PanelPresupuestos";
@@ -12,21 +14,18 @@ import CalendarioPanel from "@/components/calendario/CalendarioPanel";
 import VistaGeneral from "@/components/calendario/VistaGeneral";
 import DashboardModales from "@/components/dashboard/DashboardModales";
 import EditModeFloatingBar from "@/components/dashboard/EditModeFloatingBar";
+import FlashFloatingStack from "@/components/dashboard/FlashFloatingStack";
 import ToastContainer from "@/components/dashboard/ToastContainer";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useDashboardActions } from "@/hooks/useDashboardActions";
 import { useDashboardState } from "@/hooks/useDashboardState";
 import { useEditModeTextos } from "@/hooks/useEditModeTextos";
-import { formatearFechaDMY, formatoSoles } from "@/lib/format";
 import type { DashboardEstadoDTO, TransaccionDTO } from "@/types";
-
-interface DashboardClientProps {
-  initialEstado: DashboardEstadoDTO;
-}
 
 export default function DashboardClient({
   initialEstado,
-}: DashboardClientProps) {
+}: {
+  initialEstado: DashboardEstadoDTO;
+}) {
   const router = useRouter();
   const ds = useDashboardState(initialEstado);
   const ed = useEditModeTextos({
@@ -43,94 +42,38 @@ export default function DashboardClient({
   const [modalAjustesAbierto, setModalAjustesAbierto] = useState(false);
   const [modalBuscadorAbierto, setModalBuscadorAbierto] = useState(false);
   const [txEditando, setTxEditando] = useState<TransaccionDTO | null>(null);
+  const [modoSimpleActivo, setModoSimpleActivo] = useState(false);
 
   const { estado } = ds;
+  const moneda = estado.perfil_actual.moneda;
 
-  const handleCambiarPerfil = async (perfilId: number) => {
-    try {
-      const res = await fetch("/api/perfiles/seleccionar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ perfil_id: perfilId }),
-      });
-      const data = await res.json();
-      if (data.ok) {
-        ds.setFiltroCategoria("todas");
-        await ds.refrescarEstado({ historialCategoria: "todas" });
+  const actions = useDashboardActions({
+    hoyIso: estado.hoy_iso,
+    notificar: ds.notificar,
+    lanzarToastSutil: ds.lanzarToastSutil,
+    setDiaSeleccionado: ds.setDiaSeleccionado,
+    setModoClick: ds.setModoClick,
+    setPrimerToque: ds.setPrimerToque,
+    setRangoDesde: ds.setRangoDesde,
+    setRangoHasta: ds.setRangoHasta,
+    setModoAnalisis: ds.setModoAnalisis,
+    setFiltroCategoria: ds.setFiltroCategoria,
+    setFiltroTipo: ds.setFiltroTipo,
+    setFiltroBusqueda: ds.setFiltroBusqueda,
+    refrescarEstado: ds.refrescarEstado,
+  });
+
+  useEffect(() => {
+    setModoSimpleActivo(window.localStorage.getItem("cf_modo_simple") === "1");
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setModalBuscadorAbierto((v) => !v);
       }
-    } catch {
-      ds.notificar("error", "No se pudo cambiar de perfil.");
-    }
-  };
-
-  const handleEliminarTx = async (txId: number) => {
-    try {
-      const res = await fetch(`/api/transacciones/${txId}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
-      if (!data.ok) {
-        ds.notificar("error", data.error ?? "No se pudo eliminar.");
-        return;
-      }
-      ds.notificar("success", data.mensaje ?? "Movimiento enviado a papelera.");
-      await ds.refrescarEstado();
-    } catch {
-      ds.notificar("error", "Error de red al eliminar la transacción.");
-    }
-  };
-
-  const handleResetInicio = async () => {
-    ds.setDiaSeleccionado(estado.hoy_iso);
-    ds.setModoClick("precargar");
-    ds.setPrimerToque(null);
-    ds.setRangoDesde(null);
-    ds.setRangoHasta(null);
-    ds.setModoAnalisis("auto");
-    ds.setFiltroCategoria("todas");
-    ds.setFiltroTipo("todos");
-    ds.setFiltroBusqueda("");
-    await ds.refrescarEstado({
-      vista: "mensual",
-      fecha: estado.hoy_iso,
-      analisisModo: "auto",
-      historialCategoria: "todas",
-      historialTipo: "todos",
-      historialBusqueda: "",
-    });
-  };
-
-  const verificarAlertaTope = (
-    nuevoEstado: DashboardEstadoDTO | null,
-    fechaTx: string
-  ) => {
-    if (!nuevoEstado) return;
-    const tope = nuevoEstado.ajustes.alertaTopeDiario;
-    if (tope <= 0) return;
-
-    let gastoDia = 0;
-    if (nuevoEstado.semanas_calendario) {
-      const celda = nuevoEstado.semanas_calendario
-        .flat()
-        .find((c) => c.fecha_iso === fechaTx);
-      if (celda) gastoDia = celda.egresos;
-    } else if (nuevoEstado.dias_semana_vista) {
-      const dia = nuevoEstado.dias_semana_vista.find(
-        (d) => d.fecha_iso === fechaTx
-      );
-      if (dia) gastoDia = dia.egresos;
-    } else {
-      gastoDia = nuevoEstado.transacciones_dia
-        .filter((t) => t.tipo === "egreso")
-        .reduce((acc, t) => acc + t.monto, 0);
-    }
-
-    if (gastoDia > tope) {
-      ds.lanzarToastSutil(
-        `⚠️ El ${formatearFechaDMY(fechaTx)} superó tu tope diario de ${formatoSoles(tope)} (${formatoSoles(gastoDia)}).`
-      );
-    }
-  };
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   return (
     <div
@@ -167,47 +110,16 @@ export default function DashboardClient({
           });
           router.refresh();
         }}
-        onCambiarPerfil={(id) => void handleCambiarPerfil(id)}
+        onCambiarPerfil={(id) => void actions.handleCambiarPerfil(id)}
         onAbrirCategorias={() => setModalCategoriasAbierto(true)}
         onAbrirPerfiles={() => setModalPerfilesAbierto(true)}
         onAbrirPapelera={() => setModalPapeleraAbierto(true)}
         onAbrirProgramados={() => setModalProgramadosAbierto(true)}
         onAbrirAjustes={() => setModalAjustesAbierto(true)}
-        onResetInicio={() => void handleResetInicio()}
+        onResetInicio={() => void actions.handleResetInicio()}
       />
 
-      {ds.flashes.length > 0 && (
-        <div className="flash-floating-stack" aria-live="polite">
-          {ds.flashes.map((f, idx) => (
-            <div
-              key={f.id}
-              className={`flash-item flash-${f.tipo} ${
-                idx === 0 ? "is-latest" : "is-previous"
-              }`}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                {idx === 0 && ds.flashes.length > 1 && (
-                  <span className="flash-recent-pill">Reciente</span>
-                )}
-                <span>{f.texto}</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => ds.cerrarFlash(f.id)}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  flexShrink: 0,
-                }}
-                aria-label="Cerrar notificación"
-              >
-                ✕
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+      <FlashFloatingStack flashes={ds.flashes} onCerrar={ds.cerrarFlash} />
 
       <main className="page-container">
         <WorkspaceToolbar
@@ -230,6 +142,7 @@ export default function DashboardClient({
 
         <KpiResumen
           tituloPeriodo={estado.titulo_periodo}
+          moneda={moneda}
           totalIngresos={estado.total_ingresos}
           totalEgresos={estado.total_egresos}
           balanceNeto={estado.balance_neto}
@@ -261,6 +174,7 @@ export default function DashboardClient({
               vista={estado.vista}
               fechaRef={estado.fecha_ref}
               tituloPeriodo={estado.titulo_periodo}
+              moneda={moneda}
               diaSeleccionado={ds.diaSeleccionado}
               modoClick={ds.modoClick}
               rangoDesde={ds.rangoDesde}
@@ -286,10 +200,12 @@ export default function DashboardClient({
                 void ds.refrescarEstado({ vista: "mensual", analisisModo: "auto" });
               }}
               onEditarTx={(tx) => setTxEditando(tx)}
-              onEliminarTx={handleEliminarTx}
+              onEliminarTx={actions.handleEliminarTx}
             />
+
             <div className="sidebar-stack">
               <FormularioRegistro
+                moneda={moneda}
                 categoriasEgreso={estado.categorias_egreso}
                 categoriasIngreso={estado.categorias_ingreso}
                 categoriaPredeterminada={estado.ajustes.categoriaPredeterminada}
@@ -302,21 +218,24 @@ export default function DashboardClient({
                 onGuardarTexto={ed.handleGuardarTexto}
                 onCambiarFechaSeleccionada={ds.setDiaSeleccionado}
                 onMoverDiaFlecha={ds.handleMoverDiaFlecha}
+                onModoSimpleChange={setModoSimpleActivo}
                 onRegistrarExito={async (fechaTx) => {
                   ds.setDiaSeleccionado(fechaTx);
                   const nuevoEstado = await ds.refrescarEstado({
                     vista: estado.vista,
                     fecha: fechaTx,
                   });
-                  verificarAlertaTope(nuevoEstado, fechaTx);
+                  actions.verificarAlertaTope(nuevoEstado, fechaTx);
                 }}
                 onNotificar={ds.notificar}
                 onToastSutil={ds.lanzarToastSutil}
               />
 
               <MovimientosRecientes
-                transacciones={estado.transacciones_historial.slice(0, 4)}
+                transacciones={estado.transacciones_historial}
                 categorias={estado.categorias}
+                moneda={moneda}
+                maxItems={modoSimpleActivo ? 8 : 4}
                 modoPrivacidad={estado.ajustes.modoPrivacidad}
                 onEditarTx={(tx) => setTxEditando(tx)}
               />
@@ -326,6 +245,7 @@ export default function DashboardClient({
 
         <PanelAnalisis
           analisis={estado.analisis}
+          moneda={moneda}
           categorias={estado.categorias}
           modoAnalisis={ds.modoAnalisis}
           manualDesde={ds.manualDesde}
@@ -366,6 +286,7 @@ export default function DashboardClient({
           <PanelPresupuestos
             presupuestos={estado.presupuestos}
             categoriasEgreso={estado.categorias_egreso}
+            moneda={moneda}
             fechaRef={estado.fecha_ref}
             modoPresupuesto={estado.ajustes.modoPresupuesto}
             modoPrivacidad={estado.ajustes.modoPrivacidad}
@@ -382,6 +303,7 @@ export default function DashboardClient({
           inicioPeriodo={estado.inicio_periodo}
           finPeriodo={estado.fin_periodo}
           tituloPeriodo={estado.titulo_periodo}
+          moneda={moneda}
           todasCategorias={estado.categorias}
           filtroCategoria={ds.filtroCategoria}
           filtroTipo={ds.filtroTipo}
@@ -392,7 +314,7 @@ export default function DashboardClient({
           onGuardarTexto={ed.handleGuardarTexto}
           onCambiarFiltros={ds.handleCambiarFiltrosHistorial}
           onEditarTx={(tx) => setTxEditando(tx)}
-          onEliminarTx={handleEliminarTx}
+          onEliminarTx={actions.handleEliminarTx}
         />
       </main>
 

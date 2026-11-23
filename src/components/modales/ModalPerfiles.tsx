@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import AppIcon from "@/components/AppIcon";
+import CustomSelect, { type CustomSelectOption } from "@/components/CustomSelect";
 import PerfilEdicionForm from "@/components/modales/PerfilEdicionForm";
+import { MONEDAS_DISPONIBLES, obtenerMonedaInfo } from "@/lib/monedas";
 import type { PerfilDTO } from "@/types";
 
 interface ModalPerfilesProps {
@@ -23,13 +26,21 @@ export default function ModalPerfiles({
 }: ModalPerfilesProps) {
   const [nuevoNombre, setNuevoNombre] = useState("");
   const [nuevaDesc, setNuevaDesc] = useState("");
+  const [nuevaMoneda, setNuevaMoneda] = useState("PEN");
 
   const [editPerfil, setEditPerfil] = useState<PerfilDTO | null>(null);
   const [editNombre, setEditNombre] = useState("");
   const [editDesc, setEditDesc] = useState("");
+  const [editMoneda, setEditMoneda] = useState("PEN");
 
   const [armadoId, setArmadoId] = useState<number | null>(null);
   const [procesando, setProcesando] = useState(false);
+
+  const opcionesMoneda: CustomSelectOption[] = MONEDAS_DISPONIBLES.map((m) => ({
+    value: m.codigo,
+    label: `${m.codigo} · ${m.nombre}`,
+    hint: m.simbolo,
+  }));
 
   useEffect(() => {
     if (armadoId === null) return;
@@ -63,6 +74,7 @@ export default function ModalPerfiles({
         body: JSON.stringify({
           nombre: nuevoNombre.trim(),
           descripcion: nuevaDesc.trim(),
+          moneda: nuevaMoneda,
         }),
       });
       const data = await res.json();
@@ -72,6 +84,7 @@ export default function ModalPerfiles({
       }
       setNuevoNombre("");
       setNuevaDesc("");
+      setNuevaMoneda("PEN");
       onNotificar("success", data.mensaje ?? "Perfil creado y activado.");
       await onActualizado();
     } catch {
@@ -92,6 +105,7 @@ export default function ModalPerfiles({
         body: JSON.stringify({
           nombre: editNombre.trim(),
           descripcion: editDesc.trim(),
+          moneda: editMoneda,
         }),
       });
       const data = await res.json();
@@ -137,10 +151,10 @@ export default function ModalPerfiles({
   return (
     <>
       <div className="modal-backdrop-blur" onClick={onCerrar} />
-      <div className="modal-flotante" role="dialog" aria-modal="true">
+      <div className="modal-flotante" style={{ maxWidth: "590px" }} role="dialog" aria-modal="true">
         <div className="modal-content-box">
           <div className="panel-header">
-            <h3 className="panel-title">Administración de Perfiles</h3>
+            <h3 className="panel-title">Administración de Perfiles y Monedas</h3>
             <button
               type="button"
               className="btn btn-secondary btn-sm"
@@ -152,7 +166,7 @@ export default function ModalPerfiles({
 
           <div
             style={{
-              maxHeight: "220px",
+              maxHeight: "210px",
               overflowY: "auto",
               marginBottom: "1rem",
               background: "rgba(255, 255, 255, 0.02)",
@@ -179,73 +193,94 @@ export default function ModalPerfiles({
                 gap: "0.4rem",
               }}
             >
-              {perfiles.map((p) => (
-                <li
-                  key={p.id}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    background: "rgba(255,255,255,0.03)",
-                    padding: "6px 10px",
-                    borderRadius: "4px",
-                    fontSize: "0.85rem",
-                  }}
-                >
-                  <div>
-                    <strong>{p.nombre}</strong>
-                    {p.id === perfilActual.id && (
+              {perfiles.map((p) => {
+                const mInfo = obtenerMonedaInfo(p.moneda);
+                return (
+                  <li
+                    key={p.id}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      background: "rgba(255,255,255,0.03)",
+                      padding: "6px 10px",
+                      borderRadius: "6px",
+                      fontSize: "0.85rem",
+                    }}
+                  >
+                    <div>
+                      <strong>{p.nombre}</strong>
                       <span
+                        className="tabular-nums"
                         style={{
                           fontSize: "0.7rem",
-                          background: "var(--accent-primary)",
-                          color: "#fff",
-                          padding: "1px 4px",
-                          borderRadius: "3px",
+                          background: "rgba(56, 189, 248, 0.14)",
+                          color: "var(--neutral-color)",
+                          padding: "1px 6px",
+                          borderRadius: "4px",
                           marginLeft: "6px",
                         }}
                       >
-                        Activo
+                        {mInfo.codigo} ({mInfo.simbolo})
                       </span>
-                    )}
-                    <div
-                      style={{
-                        fontSize: "0.75rem",
-                        color: "var(--text-secondary)",
-                      }}
-                    >
-                      {p.descripcion || "Sin descripción"}
+                      {p.id === perfilActual.id && (
+                        <span
+                          style={{
+                            fontSize: "0.7rem",
+                            background: "var(--accent-primary)",
+                            color: "#fff",
+                            padding: "1px 5px",
+                            borderRadius: "4px",
+                            marginLeft: "6px",
+                          }}
+                        >
+                          Activo
+                        </span>
+                      )}
+                      <div
+                        style={{
+                          fontSize: "0.75rem",
+                          color: "var(--text-secondary)",
+                        }}
+                      >
+                        {p.descripcion || "Sin descripción"}
+                      </div>
                     </div>
-                  </div>
 
-                  <div style={{ display: "flex", gap: "4px" }}>
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => {
-                        setEditPerfil(p);
-                        setEditNombre(p.nombre);
-                        setEditDesc(p.descripcion);
-                      }}
-                      style={{ padding: "2px 6px", fontSize: "0.7rem" }}
-                      title="Editar"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      type="button"
-                      className={`btn btn-danger btn-sm ${
-                        armadoId === p.id ? "btn-danger-armed" : ""
-                      }`}
-                      onClick={() => void handleEliminar(p.id)}
-                      style={{ padding: "2px 6px", fontSize: "0.7rem" }}
-                      title="Eliminar"
-                    >
-                      {armadoId === p.id ? "⚠️ ¿Seguro?" : "🗑️"}
-                    </button>
-                  </div>
-                </li>
-              ))}
+                    <div style={{ display: "flex", gap: "4px" }}>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => {
+                          setEditPerfil(p);
+                          setEditNombre(p.nombre);
+                          setEditDesc(p.descripcion);
+                          setEditMoneda(mInfo.codigo);
+                        }}
+                        style={{ padding: "2px 6px", fontSize: "0.7rem" }}
+                        title="Editar"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        type="button"
+                        className={`btn btn-danger btn-sm ${
+                          armadoId === p.id ? "btn-danger-armed" : ""
+                        }`}
+                        onClick={() => void handleEliminar(p.id)}
+                        style={{ padding: "2px 6px", fontSize: "0.7rem" }}
+                        title="Eliminar"
+                      >
+                        {armadoId === p.id ? (
+                          "⚠️ ¿Seguro?"
+                        ) : (
+                          <AppIcon name="papelera" size={13} />
+                        )}
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
@@ -254,9 +289,11 @@ export default function ModalPerfiles({
               nombreOriginal={editPerfil.nombre}
               nombre={editNombre}
               descripcion={editDesc}
+              moneda={editMoneda}
               procesando={procesando}
               onCambiarNombre={setEditNombre}
               onCambiarDescripcion={setEditDesc}
+              onCambiarMoneda={setEditMoneda}
               onCancelar={() => setEditPerfil(null)}
               onSubmit={handleGuardarEdicion}
             />
@@ -267,7 +304,7 @@ export default function ModalPerfiles({
             style={{
               display: "flex",
               flexDirection: "column",
-              gap: "0.5rem",
+              gap: "0.55rem",
               borderTop: "1px solid var(--border-hairline)",
               paddingTop: "10px",
             }}
@@ -287,10 +324,10 @@ export default function ModalPerfiles({
                 value={nuevoNombre}
                 onChange={(e) => setNuevoNombre(e.target.value)}
                 className="input-control"
-                placeholder="Nombre (ej. Negocio)..."
+                placeholder="Nombre (ej. Negocio USD)..."
                 required
                 maxLength={80}
-                style={{ flex: 1, padding: "6px" }}
+                style={{ flex: 1, minWidth: "150px", padding: "6px 10px" }}
               />
               <input
                 type="text"
@@ -299,8 +336,19 @@ export default function ModalPerfiles({
                 className="input-control"
                 placeholder="Descripción..."
                 maxLength={160}
-                style={{ flex: 1, padding: "6px" }}
+                style={{ flex: 1, minWidth: "150px", padding: "6px 10px" }}
               />
+            </div>
+            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+              <div style={{ flex: 1 }}>
+                <CustomSelect
+                  ariaLabel="Moneda del nuevo perfil"
+                  menuDirection="up"
+                  value={nuevaMoneda}
+                  options={opcionesMoneda}
+                  onChange={setNuevaMoneda}
+                />
+              </div>
               <button
                 type="submit"
                 disabled={procesando}

@@ -48,7 +48,7 @@ export function calcularRangoPeriodo(
   }
 
   if (vista === "semana") {
-    const dow = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+    const dow = (new Date(Date.UTC(year, month - 1, day)).getUTCDay() + 6) % 7;
     const inicio = addDaysISO(fechaRef, -dow);
     const fin = addDaysISO(inicio, 6);
     return {

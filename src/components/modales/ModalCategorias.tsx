@@ -1,8 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import CustomSelect from "@/components/CustomSelect";
+import CategoriaEdicionForm from "@/components/modales/CategoriaEdicionForm";
 import CategoriaListaBox from "@/components/modales/CategoriaListaBox";
 import type { CategoriaDTO, TipoMovimiento } from "@/types";
+
+const PALETA_COLORES = [
+  "#3b82f6",
+  "#10b981",
+  "#f59e0b",
+  "#ec4899",
+  "#8b5cf6",
+  "#06b6d4",
+  "#84cc16",
+  "#f97316",
+  "#e11d48",
+  "#14b8a6",
+  "#a855f7",
+  "#eab308",
+];
+
+function elegirColorAleatorio(usados: Set<string>): string {
+  const libres = PALETA_COLORES.filter((c) => !usados.has(c.toLowerCase()));
+  const pool = libres.length > 0 ? libres : PALETA_COLORES;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
 
 interface ModalCategoriasProps {
   abierto: boolean;
@@ -21,6 +44,16 @@ export default function ModalCategorias({
   onActualizado,
   onNotificar,
 }: ModalCategoriasProps) {
+  const todas = useMemo(
+    () => [...categoriasEgreso, ...categoriasIngreso],
+    [categoriasEgreso, categoriasIngreso]
+  );
+
+  const coloresUsados = useMemo(
+    () => new Set(todas.map((c) => (c.color || "").toLowerCase())),
+    [todas]
+  );
+
   const [nuevoTipo, setNuevoTipo] = useState<TipoMovimiento>("egreso");
   const [nuevoNombre, setNuevoNombre] = useState("");
   const [nuevoAtajo, setNuevoAtajo] = useState("");
@@ -33,6 +66,12 @@ export default function ModalCategorias({
 
   const [armadoNombre, setArmadoNombre] = useState<string | null>(null);
   const [procesando, setProcesando] = useState(false);
+
+  useEffect(() => {
+    if (abierto) {
+      setNuevoColor(elegirColorAleatorio(coloresUsados));
+    }
+  }, [abierto, coloresUsados]);
 
   useEffect(() => {
     if (armadoNombre === null) return;
@@ -54,6 +93,30 @@ export default function ModalCategorias({
   }, [abierto, onCerrar]);
 
   if (!abierto) return null;
+
+  const atajoEfectivoNuevo = (
+    nuevoAtajo.trim() || nuevoNombre.trim().slice(0, 2)
+  ).toLowerCase();
+  const atajoDuplicadoNuevo =
+    atajoEfectivoNuevo.length > 0
+      ? todas.find(
+          (c) =>
+            c.atajo.trim().toLowerCase() === atajoEfectivoNuevo &&
+            c.nombre.toLowerCase() !== nuevoNombre.trim().toLowerCase()
+        )?.nombre ?? null
+      : null;
+
+  const atajoEfectivoEdit = (
+    editAtajo.trim() || editNombre.trim().slice(0, 2)
+  ).toLowerCase();
+  const atajoDuplicadoEdit =
+    editandoOriginal && atajoEfectivoEdit.length > 0
+      ? todas.find(
+          (c) =>
+            c.atajo.trim().toLowerCase() === atajoEfectivoEdit &&
+            c.nombre !== editandoOriginal
+        )?.nombre ?? null
+      : null;
 
   const handleCrear = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,6 +140,7 @@ export default function ModalCategorias({
       }
       setNuevoNombre("");
       setNuevoAtajo("");
+      setNuevoColor(elegirColorAleatorio(coloresUsados));
       onNotificar("success", data.mensaje ?? "Categoría guardada.");
       await onActualizado();
     } catch {
@@ -155,7 +219,7 @@ export default function ModalCategorias({
       <div className="modal-backdrop-blur" onClick={onCerrar} />
       <div
         className="modal-flotante"
-        style={{ maxWidth: "620px" }}
+        style={{ maxWidth: "640px" }}
         role="dialog"
         aria-modal="true"
       >
@@ -178,7 +242,7 @@ export default function ModalCategorias({
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
               gap: "1rem",
-              maxHeight: "280px",
+              maxHeight: "260px",
               overflowY: "auto",
               marginBottom: "1rem",
             }}
@@ -202,78 +266,19 @@ export default function ModalCategorias({
           </div>
 
           {editandoOriginal && (
-            <form
+            <CategoriaEdicionForm
+              nombreOriginal={editandoOriginal}
+              nombre={editNombre}
+              atajo={editAtajo}
+              color={editColor}
+              procesando={procesando}
+              atajoDuplicado={atajoDuplicadoEdit}
+              onCambiarNombre={setEditNombre}
+              onCambiarAtajo={setEditAtajo}
+              onCambiarColor={setEditColor}
+              onCancelar={() => setEditandoOriginal(null)}
               onSubmit={handleGuardarEdicion}
-              style={{
-                display: "flex",
-                gap: "0.5rem",
-                alignItems: "center",
-                background: "rgba(59, 130, 246, 0.08)",
-                border: "1px solid rgba(59, 130, 246, 0.3)",
-                padding: "10px",
-                borderRadius: "8px",
-                marginBottom: "1rem",
-                flexWrap: "wrap",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "0.75rem",
-                  width: "100%",
-                  color: "var(--neutral-color)",
-                }}
-              >
-                Editando categoría: <strong>{editandoOriginal}</strong>
-              </span>
-              <input
-                type="color"
-                aria-label="Color de categoría"
-                value={editColor}
-                onChange={(e) => setEditColor(e.target.value)}
-                style={{
-                  width: "34px",
-                  height: "32px",
-                  padding: "2px",
-                  background: "var(--bg-canvas)",
-                  border: "1px solid var(--border-hairline)",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                }}
-              />
-              <input
-                type="text"
-                value={editNombre}
-                onChange={(e) => setEditNombre(e.target.value)}
-                className="input-control"
-                placeholder="Nuevo nombre"
-                maxLength={60}
-                required
-                style={{ flex: 2, padding: "6px" }}
-              />
-              <input
-                type="text"
-                value={editAtajo}
-                onChange={(e) => setEditAtajo(e.target.value)}
-                className="input-control"
-                placeholder="Atajo"
-                maxLength={10}
-                style={{ flex: 1, padding: "6px" }}
-              />
-              <button
-                type="submit"
-                disabled={procesando}
-                className="btn btn-primary btn-sm"
-              >
-                Guardar
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditandoOriginal(null)}
-                className="btn btn-secondary btn-sm"
-              >
-                Cancelar
-              </button>
-            </form>
+            />
           )}
 
           <form
@@ -302,16 +307,25 @@ export default function ModalCategorias({
                 cursor: "pointer",
               }}
             />
-            <select
-              value={nuevoTipo}
-              onChange={(e) => setNuevoTipo(e.target.value as TipoMovimiento)}
-              className="input-control"
-              style={{ width: "auto", padding: "6px" }}
-              required
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setNuevoColor(elegirColorAleatorio(coloresUsados))}
+              title="Color aleatorio"
+              style={{ padding: "5px 7px" }}
             >
-              <option value="egreso">Egreso</option>
-              <option value="ingreso">Ingreso</option>
-            </select>
+              🎲
+            </button>
+            <CustomSelect
+              ariaLabel="Tipo de categoría"
+              className="compact"
+              value={nuevoTipo}
+              options={[
+                { value: "egreso", label: "Egreso", color: "#ef4444" },
+                { value: "ingreso", label: "Ingreso", color: "#10b981" },
+              ]}
+              onChange={(val) => setNuevoTipo(val as TipoMovimiento)}
+            />
             <input
               type="text"
               value={nuevoNombre}
@@ -320,16 +334,16 @@ export default function ModalCategorias({
               placeholder="Nueva categoría..."
               required
               maxLength={60}
-              style={{ flex: 2, padding: "6px" }}
+              style={{ flex: 2, minWidth: "130px", padding: "6px" }}
             />
             <input
               type="text"
               value={nuevoAtajo}
               onChange={(e) => setNuevoAtajo(e.target.value)}
               className="input-control"
-              placeholder="Atajo"
+              placeholder="Auto (2 letras)"
               maxLength={10}
-              style={{ flex: 1, padding: "6px" }}
+              style={{ flex: 1, minWidth: "90px", padding: "6px" }}
             />
             <button
               type="submit"
@@ -338,6 +352,18 @@ export default function ModalCategorias({
             >
               + Agregar
             </button>
+
+            {atajoDuplicadoNuevo && (
+              <span
+                style={{
+                  width: "100%",
+                  fontSize: "0.73rem",
+                  color: "var(--range-end-color)",
+                }}
+              >
+                ⚠️ El atajo &quot;{atajoEfectivoNuevo}&quot; ya lo usa &quot;{atajoDuplicadoNuevo}&quot;.
+              </span>
+            )}
           </form>
         </div>
       </div>

@@ -1,11 +1,13 @@
 import { and, between, desc, eq, gt, ilike, inArray, or } from "drizzle-orm";
 import { db } from "@/db";
 import { transacciones } from "@/db/schema";
-import { formatearFechaDMY, formatearHoraLima, formatoSoles } from "@/lib/format";
+import { formatearFechaDMY, formatearHoraLima } from "@/lib/format";
+import { formatoMoneda } from "@/lib/monedas";
 import type { TransaccionDTO } from "@/types";
 
 export function mapearTransaccion(
-  row: typeof transacciones.$inferSelect
+  row: typeof transacciones.$inferSelect,
+  moneda = "PEN"
 ): TransaccionDTO {
   const monto = Number(row.monto);
   const fechaIso = String(row.fecha);
@@ -14,7 +16,7 @@ export function mapearTransaccion(
     perfil_id: row.perfil_id,
     tipo: row.tipo === "ingreso" ? "ingreso" : "egreso",
     monto,
-    monto_fmt: formatoSoles(monto),
+    monto_fmt: formatoMoneda(monto, moneda),
     categoria: row.categoria,
     descripcion: row.descripcion ?? "",
     fecha_iso: fechaIso,
@@ -30,6 +32,7 @@ export function mapearTransaccion(
 
 export async function obtenerHistorialYPapelera(params: {
   perfilId: number;
+  moneda?: string;
   inicio: string;
   fin: string;
   categoria?: string | null;
@@ -37,6 +40,7 @@ export async function obtenerHistorialYPapelera(params: {
   busqueda?: string | null;
   incluirPendientes: boolean;
 }) {
+  const moneda = params.moneda ?? "PEN";
   const condicionesHistorial = [
     eq(transacciones.perfil_id, params.perfilId),
     eq(transacciones.eliminado, false),
@@ -95,9 +99,13 @@ export async function obtenerHistorialYPapelera(params: {
     : [];
 
   return {
-    transacciones_historial: filasHistorial.slice(0, 30).map(mapearTransaccion),
+    transacciones_historial: filasHistorial
+      .slice(0, 30)
+      .map((r) => mapearTransaccion(r, moneda)),
     hay_mas_historial: filasHistorial.length > 30,
-    papelera: filasPapelera.map(mapearTransaccion),
-    pendientes_programados: filasPendientes.map(mapearTransaccion),
+    papelera: filasPapelera.map((r) => mapearTransaccion(r, moneda)),
+    pendientes_programados: filasPendientes.map((r) =>
+      mapearTransaccion(r, moneda)
+    ),
   };
 }

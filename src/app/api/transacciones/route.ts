@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { transacciones } from "@/db/schema";
 import { mapearTransaccion } from "@/lib/dashboard";
 import { esFechaISOValida, obtenerHoyPeruISO } from "@/lib/format";
+import { obtenerMonedaInfo } from "@/lib/monedas";
 import { obtenerPerfilActivo } from "@/lib/perfil";
 
 export async function GET(request: NextRequest) {
@@ -18,6 +19,7 @@ export async function GET(request: NextRequest) {
     const q = (sp.get("q") ?? "").trim();
 
     const { perfilActual } = await obtenerPerfilActivo();
+    const moneda = obtenerMonedaInfo(perfilActual.moneda).codigo;
 
     const condiciones = [
       eq(transacciones.perfil_id, perfilActual.id),
@@ -57,7 +59,7 @@ export async function GET(request: NextRequest) {
       .offset(offset);
 
     const hasMore = filas.length > limit;
-    const items = filas.slice(0, limit).map(mapearTransaccion);
+    const items = filas.slice(0, limit).map((r) => mapearTransaccion(r, moneda));
 
     return NextResponse.json({
       ok: true,

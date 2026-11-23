@@ -31,6 +31,7 @@ import {
   obtenerHoyPeruISO,
   parseIsoDateParts,
 } from "@/lib/format";
+import { obtenerMonedaInfo } from "@/lib/monedas";
 import { obtenerCategoriasPerfil, obtenerPerfilActivo } from "@/lib/perfil";
 import type {
   ComparativaKpiDTO,
@@ -70,6 +71,7 @@ export async function compilarEstadoDashboard(
   const rawFechaRef = esFechaISOValida(params.fecha) ? params.fecha : hoyIso;
   const fechaRef = limitarFechaAnios(rawFechaRef, ajustes.limitarAniosCalendario);
   const { perfiles, perfilActual } = await obtenerPerfilActivo();
+  const moneda = obtenerMonedaInfo(perfilActual.moneda).codigo;
   const { todas, egresos, ingresos } = await obtenerCategoriasPerfil(
     perfilActual.id
   );
@@ -85,13 +87,14 @@ export async function compilarEstadoDashboard(
   let inicioConsultaGrid = inicio;
   let finConsultaGrid = fin;
   if (vista === "mensual") {
-    const primerDiaSemana = new Date(
-      Date.UTC(partsRef.year, partsRef.month - 1, 1)
-    ).getUTCDay();
+    const primerDiaSemana =
+      (new Date(Date.UTC(partsRef.year, partsRef.month - 1, 1)).getUTCDay() + 6) %
+      7;
     const ultimoDiaNum = daysInMonth(partsRef.year, partsRef.month);
-    const ultimoDiaSemana = new Date(
-      Date.UTC(partsRef.year, partsRef.month - 1, ultimoDiaNum)
-    ).getUTCDay();
+    const ultimoDiaSemana =
+      (new Date(Date.UTC(partsRef.year, partsRef.month - 1, ultimoDiaNum)).getUTCDay() +
+        6) %
+      7;
     inicioConsultaGrid = addDaysISO(inicio, -primerDiaSemana);
     finConsultaGrid = addDaysISO(fin, 6 - ultimoDiaSemana);
   }
@@ -109,7 +112,7 @@ export async function compilarEstadoDashboard(
     )
     .orderBy(desc(transacciones.fecha), desc(transacciones.id));
 
-  const txGrid = filasGrid.map(mapearTransaccion);
+  const txGrid = filasGrid.map((r) => mapearTransaccion(r, moneda));
   const txPeriodoTodos = txGrid.filter(
     (tx) => tx.fecha_iso >= inicio && tx.fecha_iso <= fin
   );
@@ -127,7 +130,7 @@ export async function compilarEstadoDashboard(
   const balanceNeto = totalIngresos - totalEgresos;
 
   const topEgresoKpi = ajustes.kpiTopEgreso
-    ? calcularTopEgresoKpi(txPeriodo, totalEgresos, todas)
+    ? calcularTopEgresoKpi(txPeriodo, totalEgresos, todas, moneda)
     : null;
 
   let comparativaKpi: ComparativaKpiDTO | null = null;
@@ -180,6 +183,7 @@ export async function compilarEstadoDashboard(
     vista === "general"
       ? await compilarDatosGenerales(
           perfilActual.id,
+          moneda,
           params.generalConsolidado === "1" &&
             ajustes.generalPermitirConsolidado
         )
@@ -234,7 +238,7 @@ export async function compilarEstadoDashboard(
       .from(transacciones)
       .where(and(...condicionesAnalisis))
       .orderBy(desc(transacciones.fecha), desc(transacciones.id));
-    txParaAnalisis = filasAnalisis.map(mapearTransaccion);
+    txParaAnalisis = filasAnalisis.map((r) => mapearTransaccion(r, moneda));
   }
 
   const analisis = compilarAnalisis(
@@ -242,7 +246,8 @@ export async function compilarEstadoDashboard(
     analisisHasta,
     txParaAnalisis,
     esAnualCompleta,
-    tituloRangoAnalisis
+    tituloRangoAnalisis,
+    moneda
   );
 
   const presupuestosLista = ajustes.presupuestosActivos
@@ -257,6 +262,7 @@ export async function compilarEstadoDashboard(
 
   const historial = await obtenerHistorialYPapelera({
     perfilId: perfilActual.id,
+    moneda,
     inicio,
     fin,
     categoria: params.historialCategoria,

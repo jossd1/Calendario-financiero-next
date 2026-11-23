@@ -1,7 +1,7 @@
 "use client";
 
 import EditableText from "@/components/EditableText";
-import { mostrarMonto } from "@/lib/format";
+import { mostrarMontoMoneda, obtenerMonedaInfo } from "@/lib/monedas";
 import type { DesgloseCategoria, TextosUI } from "@/types";
 
 const PALETA_FALLBACK = [
@@ -18,6 +18,7 @@ const PALETA_FALLBACK = [
 
 interface ResumenCategoriasTablaProps {
   desgloseEgresos: DesgloseCategoria[];
+  moneda: string;
   colorPorCategoria: Map<string, string>;
   modoPrivacidad: boolean;
   textos: TextosUI;
@@ -27,12 +28,15 @@ interface ResumenCategoriasTablaProps {
 
 export default function ResumenCategoriasTabla({
   desgloseEgresos,
+  moneda,
   colorPorCategoria,
   modoPrivacidad,
   textos,
   editModeTextos,
   onGuardarTexto,
 }: ResumenCategoriasTablaProps) {
+  const { simbolo } = obtenerMonedaInfo(moneda);
+
   return (
     <div className="analysis-subcard" style={{ marginTop: "20px" }}>
       <h4
@@ -55,7 +59,7 @@ export default function ResumenCategoriasTabla({
             <tr>
               <th>Categoría</th>
               <th>Distribución</th>
-              <th className="num">Total Egresos (S/)</th>
+              <th className="num">Total Egresos ({simbolo})</th>
               <th className="num">Porcentaje (%)</th>
             </tr>
           </thead>
@@ -107,7 +111,11 @@ export default function ResumenCategoriasTabla({
                       }`}
                       style={{ fontWeight: 600 }}
                     >
-                      {mostrarMonto(item.monto_fmt, modoPrivacidad)}
+                      {mostrarMontoMoneda(
+                        item.monto_fmt,
+                        modoPrivacidad,
+                        moneda
+                      )}
                     </td>
                     <td className="num tabular-nums">{item.porcentaje}%</td>
                   </tr>

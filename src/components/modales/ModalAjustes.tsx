@@ -19,6 +19,7 @@ interface ModalAjustesProps {
   abierto: boolean;
   ajustes: AjustesAppConfig;
   categorias: CategoriaDTO[];
+  moneda: string;
   editModeTextos: boolean;
   onCerrar: () => void;
   onToggleEditModeTextos: () => void;
@@ -42,6 +43,7 @@ export default function ModalAjustes({
   abierto,
   ajustes,
   categorias,
+  moneda,
   editModeTextos,
   onCerrar,
   onToggleEditModeTextos,
@@ -133,6 +135,7 @@ export default function ModalAjustes({
               {seccion === "apariencia" && (
                 <SeccionApariencia
                   ajustes={ajustes}
+                  moneda={moneda}
                   onActualizarConfig={onActualizarConfig}
                 />
               )}

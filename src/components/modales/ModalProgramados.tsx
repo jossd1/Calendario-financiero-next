@@ -1,16 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { mostrarMonto } from "@/lib/format";
-import type {
-  CategoriaDTO,
-  TipoMovimiento,
-  TransaccionDTO,
-} from "@/types";
+import ProgramadosCreateForm from "@/components/modales/ProgramadosCreateForm";
+import { formatoMoneda, mostrarMontoMoneda } from "@/lib/monedas";
+import type { CategoriaDTO, TransaccionDTO } from "@/types";
 
 interface ModalProgramadosProps {
   abierto: boolean;
   items: TransaccionDTO[];
+  moneda: string;
   categoriasEgreso: CategoriaDTO[];
   categoriasIngreso: CategoriaDTO[];
   hoyIso: string;
@@ -26,6 +24,7 @@ interface ModalProgramadosProps {
 export default function ModalProgramados({
   abierto,
   items,
+  moneda,
   categoriasEgreso,
   categoriasIngreso,
   hoyIso,
@@ -38,28 +37,7 @@ export default function ModalProgramados({
   onNotificar,
 }: ModalProgramadosProps) {
   const [confirmandoId, setConfirmandoId] = useState<number | null>(null);
-  const [tipo, setTipo] = useState<TipoMovimiento>("egreso");
-  const [monto, setMonto] = useState("");
-  const [categoria, setCategoria] = useState(
-    categoriasEgreso[0]?.nombre ?? categoriasIngreso[0]?.nombre ?? ""
-  );
-  const [fecha, setFecha] = useState(hoyIso);
-  const [descripcion, setDescripcion] = useState("");
-  const [estadoNuevo, setEstadoNuevo] = useState<"pendiente" | "programado">(
-    "pendiente"
-  );
-  const [guardando, setGuardando] = useState(false);
-
   const maskClass = modoPrivacidad ? "privacy-dots" : "";
-
-  useEffect(() => {
-    if (!abierto) return;
-    setFecha(hoyIso);
-    const lista = tipo === "ingreso" ? categoriasIngreso : categoriasEgreso;
-    if (lista.length > 0 && !lista.some((c) => c.nombre === categoria)) {
-      setCategoria(lista[0].nombre);
-    }
-  }, [abierto, hoyIso, tipo, categoriasEgreso, categoriasIngreso, categoria]);
 
   useEffect(() => {
     if (!abierto) return;
@@ -76,54 +54,6 @@ export default function ModalProgramados({
     (acc, tx) => (tx.tipo === "egreso" ? acc - tx.monto : acc + tx.monto),
     0
   );
-
-  const handleCambioTipo = (nuevoTipo: TipoMovimiento) => {
-    setTipo(nuevoTipo);
-    const lista =
-      nuevoTipo === "ingreso" ? categoriasIngreso : categoriasEgreso;
-    if (lista.length > 0) setCategoria(lista[0].nombre);
-  };
-
-  const handleCrearProgramado = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const montoNum = Number(monto.replace(",", "."));
-    if (!Number.isFinite(montoNum) || montoNum <= 0 || !categoria || !fecha) {
-      onNotificar("error", "Completa monto, categoría y fecha válidos.");
-      return;
-    }
-
-    setGuardando(true);
-    try {
-      const res = await fetch("/api/transacciones", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tipo,
-          monto: montoNum.toFixed(2),
-          categoria,
-          descripcion,
-          fecha,
-          estado: estadoNuevo,
-        }),
-      });
-      const data = await res.json();
-      if (!data.ok) {
-        onNotificar("error", data.error ?? "No se pudo guardar.");
-        return;
-      }
-      setMonto("");
-      setDescripcion("");
-      onNotificar(
-        "success",
-        `${estadoNuevo === "programado" ? "Programado" : "Pendiente"} registrado.`
-      );
-      await onActualizado();
-    } catch {
-      onNotificar("error", "Error de red al guardar pendiente/programado.");
-    } finally {
-      setGuardando(false);
-    }
-  };
 
   const handleMarcarPagado = async (tx: TransaccionDTO) => {
     setConfirmandoId(tx.id);
@@ -154,9 +84,6 @@ export default function ModalProgramados({
     }
   };
 
-  const listaCatsActiva =
-    tipo === "ingreso" ? categoriasIngreso : categoriasEgreso;
-
   return (
     <>
       <div className="modal-backdrop-blur" onClick={onCerrar} />
@@ -183,9 +110,10 @@ export default function ModalProgramados({
               >
                 {items.length} pend. ·{" "}
                 <span className={maskClass}>
-                  {mostrarMonto(
-                    `${totalPendiente < 0 ? "-" : ""}S/ ${Math.abs(totalPendiente).toFixed(2)}`,
-                    modoPrivacidad
+                  {mostrarMontoMoneda(
+                    formatoMoneda(totalPendiente, moneda),
+                    modoPrivacidad,
+                    moneda
                   )}
                 </span>
               </span>
@@ -199,106 +127,15 @@ export default function ModalProgramados({
             </div>
           </div>
 
-          <form
-            onSubmit={handleCrearProgramado}
-            style={{
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid var(--border-hairline)",
-              borderRadius: "10px",
-              padding: "12px",
-              marginBottom: "14px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "8px",
-            }}
-          >
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
-                gap: "8px",
-              }}
-            >
-              <select
-                aria-label="Tipo"
-                value={tipo}
-                onChange={(e) => handleCambioTipo(e.target.value as TipoMovimiento)}
-                className="input-control"
-                style={{ padding: "6px 8px", fontSize: "0.82rem" }}
-              >
-                <option value="egreso">Egreso (-)</option>
-                <option value="ingreso">Ingreso (+)</option>
-              </select>
-
-              <input
-                type="text"
-                inputMode="decimal"
-                placeholder="Monto S/"
-                value={monto}
-                onChange={(e) => setMonto(e.target.value)}
-                className="input-control tabular-nums"
-                style={{ padding: "6px 8px", fontSize: "0.82rem" }}
-                required
-              />
-
-              <select
-                aria-label="Categoría"
-                value={categoria}
-                onChange={(e) => setCategoria(e.target.value)}
-                className="input-control"
-                style={{ padding: "6px 8px", fontSize: "0.82rem" }}
-                required
-              >
-                {listaCatsActiva.map((c) => (
-                  <option key={c.id} value={c.nombre}>
-                    {c.nombre}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                aria-label="Estado"
-                value={estadoNuevo}
-                onChange={(e) =>
-                  setEstadoNuevo(e.target.value as "pendiente" | "programado")
-                }
-                className="input-control"
-                style={{ padding: "6px 8px", fontSize: "0.82rem" }}
-              >
-                <option value="pendiente">Pendiente</option>
-                <option value="programado">Programado</option>
-              </select>
-            </div>
-
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-              <input
-                type="date"
-                min={limitarAnios ? "2000-01-01" : undefined}
-                max={limitarAnios ? "3000-12-31" : undefined}
-                value={fecha}
-                onChange={(e) => setFecha(e.target.value)}
-                className="input-control tabular-nums"
-                style={{ width: "155px", padding: "6px 8px", fontSize: "0.82rem" }}
-                required
-              />
-              <input
-                type="text"
-                maxLength={240}
-                placeholder="Descripción (ej. Recibo de luz)..."
-                value={descripcion}
-                onChange={(e) => setDescripcion(e.target.value)}
-                className="input-control"
-                style={{ flex: 1, minWidth: "160px", padding: "6px 8px", fontSize: "0.82rem" }}
-              />
-              <button
-                type="submit"
-                disabled={guardando}
-                className="btn btn-primary btn-sm"
-              >
-                {guardando ? "..." : "+ Agregar"}
-              </button>
-            </div>
-          </form>
+          <ProgramadosCreateForm
+            moneda={moneda}
+            categoriasEgreso={categoriasEgreso}
+            categoriasIngreso={categoriasIngreso}
+            hoyIso={hoyIso}
+            limitarAnios={limitarAnios}
+            onCreado={onActualizado}
+            onNotificar={onNotificar}
+          />
 
           <div
             style={{
@@ -354,9 +191,10 @@ export default function ModalProgramados({
                       } ${maskClass}`}
                       style={{ fontWeight: 700, fontSize: "0.9rem" }}
                     >
-                      {mostrarMonto(
+                      {mostrarMontoMoneda(
                         tx.monto_fmt,
                         modoPrivacidad,
+                        moneda,
                         tx.tipo === "ingreso" ? "+" : "-"
                       )}
                     </span>

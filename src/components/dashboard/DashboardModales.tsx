@@ -67,6 +67,7 @@ export default function DashboardModales({
   onToastSutil,
 }: DashboardModalesProps) {
   const anioVista = Number(estado.fecha_ref.slice(0, 4)) || new Date().getFullYear();
+  const moneda = estado.perfil_actual.moneda;
 
   return (
     <>
@@ -80,6 +81,7 @@ export default function DashboardModales({
 
       <ModalEditarTx
         tx={txEditando}
+        moneda={moneda}
         categoriasEgreso={estado.categorias_egreso}
         categoriasIngreso={estado.categorias_ingreso}
         programadosActivos={estado.ajustes.programadosActivos}
@@ -109,6 +111,7 @@ export default function DashboardModales({
       <ModalPapelera
         abierto={modalPapeleraAbierto}
         items={estado.papelera}
+        moneda={moneda}
         modoPrivacidad={estado.ajustes.modoPrivacidad}
         onCerrar={onCerrarPapelera}
         onActualizado={onRefrescar}
@@ -118,6 +121,7 @@ export default function DashboardModales({
       <ModalProgramados
         abierto={modalProgramadosAbierto}
         items={estado.pendientes_programados}
+        moneda={moneda}
         categoriasEgreso={estado.categorias_egreso}
         categoriasIngreso={estado.categorias_ingreso}
         hoyIso={estado.hoy_iso}
@@ -134,6 +138,7 @@ export default function DashboardModales({
         abierto={modalAjustesAbierto}
         ajustes={estado.ajustes}
         categorias={estado.categorias}
+        moneda={moneda}
         editModeTextos={editModeTextos}
         onCerrar={onCerrarAjustes}
         onToggleEditModeTextos={onToggleEditModeTextos}

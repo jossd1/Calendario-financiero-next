@@ -1,12 +1,14 @@
 "use client";
 
 import { useMemo } from "react";
-import { mostrarMonto } from "@/lib/format";
+import { mostrarMontoMoneda } from "@/lib/monedas";
 import type { CategoriaDTO, TransaccionDTO } from "@/types";
 
 interface MovimientosRecientesProps {
   transacciones: TransaccionDTO[];
   categorias: CategoriaDTO[];
+  moneda: string;
+  maxItems: number;
   modoPrivacidad: boolean;
   onEditarTx: (tx: TransaccionDTO) => void;
 }
@@ -14,10 +16,12 @@ interface MovimientosRecientesProps {
 export default function MovimientosRecientes({
   transacciones,
   categorias,
+  moneda,
+  maxItems,
   modoPrivacidad,
   onEditarTx,
 }: MovimientosRecientesProps) {
-  const recientes = transacciones.slice(0, 4);
+  const recientes = transacciones.slice(0, maxItems);
 
   const colorPorCategoria = useMemo(() => {
     const mapa = new Map<string, string>();
@@ -97,9 +101,10 @@ export default function MovimientosRecientes({
                   } ${modoPrivacidad ? "privacy-dots" : ""}`}
                   style={{ fontSize: "0.8rem", fontWeight: 600 }}
                 >
-                  {mostrarMonto(
+                  {mostrarMontoMoneda(
                     tx.monto_fmt,
                     modoPrivacidad,
+                    moneda,
                     tx.tipo === "ingreso" ? "+" : "-"
                   )}
                 </span>

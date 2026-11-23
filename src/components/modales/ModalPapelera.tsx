@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import AppIcon from "@/components/AppIcon";
-import { mostrarMonto } from "@/lib/format";
+import { mostrarMontoMoneda } from "@/lib/monedas";
 import type { TransaccionDTO } from "@/types";
 
 interface ModalPapeleraProps {
   abierto: boolean;
   items: TransaccionDTO[];
+  moneda: string;
   modoPrivacidad: boolean;
   onCerrar: () => void;
   onActualizado: () => Promise<void>;
@@ -17,6 +18,7 @@ interface ModalPapeleraProps {
 export default function ModalPapelera({
   abierto,
   items,
+  moneda,
   modoPrivacidad,
   onCerrar,
   onActualizado,
@@ -178,7 +180,11 @@ export default function ModalPapelera({
                         p.tipo === "ingreso" ? "amt-in" : "amt-out"
                       } ${modoPrivacidad ? "privacy-dots" : ""}`}
                     >
-                      {mostrarMonto(p.monto_fmt, modoPrivacidad)}
+                      {mostrarMontoMoneda(
+                        p.monto_fmt,
+                        modoPrivacidad,
+                        moneda
+                      )}
                     </span>
                     <div
                       style={{
@@ -211,7 +217,7 @@ export default function ModalPapelera({
                       {armadoEliminarId === p.id ? (
                         "⚠️ ¿Seguro?"
                       ) : (
-                        <AppIcon name="eliminar" size={14} />
+                        <AppIcon name="papelera" size={14} />
                       )}
                     </button>
                   </div>

@@ -10,20 +10,27 @@ import {
   type ChartOptions,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
-import { formatoSoles, mostrarMonto } from "@/lib/format";
+import {
+  formatoMoneda,
+  mostrarMontoMoneda,
+  obtenerMonedaInfo,
+} from "@/lib/monedas";
 import type { AnioDetalleItem } from "@/types/general";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 interface GeneralVistaAnualesProps {
   anios: AnioDetalleItem[];
+  moneda: string;
   modoPrivacidad: boolean;
 }
 
 export default function GeneralVistaAnuales({
   anios,
+  moneda,
   modoPrivacidad,
 }: GeneralVistaAnualesProps) {
+  const { simbolo } = obtenerMonedaInfo(moneda);
   const maskClass = modoPrivacidad ? "privacy-dots" : "";
 
   if (anios.length === 0) {
@@ -40,21 +47,21 @@ export default function GeneralVistaAnuales({
     labels: aniosAsc.map((a) => String(a.anio)),
     datasets: [
       {
-        label: "Ingresos (S/)",
+        label: `Ingresos (${simbolo})`,
         data: aniosAsc.map((a) => a.ingresos),
         backgroundColor: "rgba(16, 185, 129, 0.85)",
         borderRadius: 6,
         maxBarThickness: 32,
       },
       {
-        label: "Egresos (S/)",
+        label: `Egresos (${simbolo})`,
         data: aniosAsc.map((a) => a.egresos),
         backgroundColor: "rgba(239, 68, 68, 0.85)",
         borderRadius: 6,
         maxBarThickness: 32,
       },
       {
-        label: "Ahorro Neto (S/)",
+        label: `Ahorro Neto (${simbolo})`,
         data: aniosAsc.map((a) => a.neto),
         backgroundColor: "rgba(56, 189, 248, 0.85)",
         borderRadius: 6,
@@ -74,8 +81,8 @@ export default function GeneralVistaAnuales({
           color: "#94a3b8",
           callback: (v) =>
             modoPrivacidad
-              ? "S/ •••"
-              : "S/ " + Number(v).toLocaleString("en-US"),
+              ? `${simbolo} •••`
+              : `${simbolo} ${Number(v).toLocaleString("en-US")}`,
         },
       },
     },
@@ -89,7 +96,9 @@ export default function GeneralVistaAnuales({
         callbacks: {
           label: (ctx) =>
             ` ${ctx.dataset.label}: ${
-              modoPrivacidad ? "S/ •••" : formatoSoles(ctx.parsed.y ?? 0)
+              modoPrivacidad
+                ? `${simbolo} •••`
+                : formatoMoneda(ctx.parsed.y ?? 0, moneda)
             }`,
         },
       },
@@ -98,14 +107,7 @@ export default function GeneralVistaAnuales({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-      <div
-        style={{
-          background: "rgba(255,255,255,0.015)",
-          border: "1px solid var(--border-hairline)",
-          borderRadius: "10px",
-          padding: "16px",
-        }}
-      >
+      <div className="analysis-subcard">
         <h4 className="panel-title" style={{ marginBottom: "12px", fontSize: "0.95rem" }}>
           📆 Comparativa Multi-Año (Ingresos, Egresos y Ahorro Neto)
         </h4>
@@ -139,14 +141,22 @@ export default function GeneralVistaAnuales({
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.84rem" }}>
               <span style={{ color: "var(--text-secondary)" }}>Ingresos</span>
               <span className={`tabular-nums amt-in ${maskClass}`}>
-                {mostrarMonto(formatoSoles(a.ingresos), modoPrivacidad)}
+                {mostrarMontoMoneda(
+                  formatoMoneda(a.ingresos, moneda),
+                  modoPrivacidad,
+                  moneda
+                )}
               </span>
             </div>
 
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.84rem" }}>
               <span style={{ color: "var(--text-secondary)" }}>Egresos</span>
               <span className={`tabular-nums amt-out ${maskClass}`}>
-                {mostrarMonto(formatoSoles(a.egresos), modoPrivacidad)}
+                {mostrarMontoMoneda(
+                  formatoMoneda(a.egresos, moneda),
+                  modoPrivacidad,
+                  moneda
+                )}
               </span>
             </div>
 
@@ -162,7 +172,11 @@ export default function GeneralVistaAnuales({
             >
               <span>Neto ({a.tasa_ahorro_pct}% ahorro)</span>
               <span className={`tabular-nums ${a.neto >= 0 ? "amt-in" : "amt-out"} ${maskClass}`}>
-                {mostrarMonto(formatoSoles(a.neto), modoPrivacidad)}
+                {mostrarMontoMoneda(
+                  formatoMoneda(a.neto, moneda),
+                  modoPrivacidad,
+                  moneda
+                )}
               </span>
             </div>
 
@@ -191,7 +205,11 @@ export default function GeneralVistaAnuales({
                 <span>
                   Mejor mes: <strong>{a.mejor_mes.etiqueta}</strong> (
                   <span className={`tabular-nums ${maskClass}`}>
-                    {mostrarMonto(formatoSoles(a.mejor_mes.neto), modoPrivacidad)}
+                    {mostrarMontoMoneda(
+                      formatoMoneda(a.mejor_mes.neto, moneda),
+                      modoPrivacidad,
+                      moneda
+                    )}
                   </span>
                   )
                 </span>

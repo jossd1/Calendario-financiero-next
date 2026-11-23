@@ -5,9 +5,11 @@ import EditableText from "@/components/EditableText";
 import CamposCompletosRegistro from "@/components/registro/CamposCompletosRegistro";
 import { analizarEntradaMonto } from "@/lib/atajos";
 import { formatearFechaDMY } from "@/lib/format";
+import { obtenerMonedaInfo } from "@/lib/monedas";
 import type { CategoriaDTO, TextosUI, TipoMovimiento } from "@/types";
 
 interface FormularioRegistroProps {
+  moneda: string;
   categoriasEgreso: CategoriaDTO[];
   categoriasIngreso: CategoriaDTO[];
   categoriaPredeterminada: string;
@@ -20,12 +22,14 @@ interface FormularioRegistroProps {
   onGuardarTexto: (clave: string, valor: string) => void;
   onCambiarFechaSeleccionada: (fecha: string) => void;
   onMoverDiaFlecha: (deltaDias: number) => void;
+  onModoSimpleChange: (activo: boolean) => void;
   onRegistrarExito: (fechaTx: string) => Promise<void>;
   onNotificar: (tipo: "success" | "error", texto: string) => void;
   onToastSutil: (texto: string) => void;
 }
 
 export default function FormularioRegistro({
+  moneda,
   categoriasEgreso,
   categoriasIngreso,
   categoriaPredeterminada,
@@ -38,6 +42,7 @@ export default function FormularioRegistro({
   onGuardarTexto,
   onCambiarFechaSeleccionada,
   onMoverDiaFlecha,
+  onModoSimpleChange,
   onRegistrarExito,
   onNotificar,
   onToastSutil,
@@ -65,10 +70,13 @@ export default function FormularioRegistro({
   const modoSimpleRef = useRef(modoSimple);
   modoSimpleRef.current = modoSimple;
 
+  const monedaInfo = obtenerMonedaInfo(moneda);
+
   useEffect(() => {
-    const guardado = window.localStorage.getItem("cf_modo_simple");
-    if (guardado === "1") setModoSimple(true);
-  }, []);
+    const guardado = window.localStorage.getItem("cf_modo_simple") === "1";
+    setModoSimple(guardado);
+    onModoSimpleChange(guardado);
+  }, [onModoSimpleChange]);
 
   useEffect(() => {
     if (focusPing <= 0) return;
@@ -109,6 +117,7 @@ export default function FormularioRegistro({
   const toggleModoSimple = () => {
     const siguiente = !modoSimple;
     setModoSimple(siguiente);
+    onModoSimpleChange(siguiente);
     if (siguiente) {
       ultimoCampoActivoRef.current = "monto";
     }
@@ -245,7 +254,7 @@ export default function FormularioRegistro({
               checked={tipo === "ingreso"}
               onChange={() => handleCambioTipo("ingreso")}
             />
-            <span>Ingreso(+)</span>
+            <span>Ingreso (+)</span>
           </label>
           <label className="type-radio">
             <input
@@ -255,7 +264,7 @@ export default function FormularioRegistro({
               checked={tipo === "egreso"}
               onChange={() => handleCambioTipo("egreso")}
             />
-            <span>Egreso(-)</span>
+            <span>Egreso (-)</span>
           </label>
         </div>
 
@@ -267,7 +276,10 @@ export default function FormularioRegistro({
                 textos={textos}
                 editMode={editModeTextos}
                 onGuardarTexto={onGuardarTexto}
-              />
+              />{" "}
+              <span style={{ color: "var(--text-muted)", fontWeight: 500 }}>
+                ({monedaInfo.simbolo})
+              </span>
             </label>
             <input
               ref={inputMontoRef}

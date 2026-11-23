@@ -1,9 +1,6 @@
 import { construirVistaAnual } from "@/lib/dashboard/calendario";
-import {
-  addDaysISO,
-  formatearFechaCortaDM,
-  formatoSoles,
-} from "@/lib/format";
+import { addDaysISO, formatearFechaCortaDM } from "@/lib/format";
+import { formatoMoneda } from "@/lib/monedas";
 import type {
   AnalisisResultadoDTO,
   CategoriaDTO,
@@ -15,7 +12,8 @@ import type {
 export function calcularTopEgresoKpi(
   listaTx: TransaccionDTO[],
   totalEgresos: number,
-  categorias: CategoriaDTO[]
+  categorias: CategoriaDTO[],
+  moneda = "PEN"
 ): TopEgresoKpiDTO | null {
   const mapa = new Map<string, { monto: number; cantidad: number }>();
 
@@ -46,7 +44,7 @@ export function calcularTopEgresoKpi(
     categoria,
     color: catObj?.color ?? "#ef4444",
     monto: Number(info.monto.toFixed(2)),
-    monto_fmt: formatoSoles(info.monto),
+    monto_fmt: formatoMoneda(info.monto, moneda),
     porcentaje,
     cantidad: info.cantidad,
   };
@@ -57,7 +55,8 @@ export function compilarAnalisis(
   hasta: string,
   listaTx: TransaccionDTO[],
   esVistaAnualCompleta: boolean,
-  tituloRango: string
+  tituloRango: string,
+  moneda = "PEN"
 ): AnalisisResultadoDTO {
   let totalIngresos = 0;
   let totalEgresos = 0;
@@ -93,7 +92,7 @@ export function compilarAnalisis(
       categoria,
       tipo: "egreso",
       monto: Number(val.toFixed(2)),
-      monto_fmt: formatoSoles(val),
+      monto_fmt: formatoMoneda(val, moneda),
       porcentaje:
         totalEgresos > 0
           ? Number(((val / totalEgresos) * 100).toFixed(1))
@@ -106,7 +105,7 @@ export function compilarAnalisis(
       categoria,
       tipo: "ingreso",
       monto: Number(val.toFixed(2)),
-      monto_fmt: formatoSoles(val),
+      monto_fmt: formatoMoneda(val, moneda),
       porcentaje:
         totalIngresos > 0
           ? Number(((val / totalIngresos) * 100).toFixed(1))

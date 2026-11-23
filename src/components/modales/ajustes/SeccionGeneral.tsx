@@ -1,5 +1,6 @@
 "use client";
 
+import CustomSelect, { type CustomSelectOption } from "@/components/CustomSelect";
 import {
   AjustesActionRow,
   AjustesCard,
@@ -29,6 +30,20 @@ export default function SeccionGeneral({
   onEjecutarReset,
   onActualizarConfig,
 }: SeccionGeneralProps) {
+  const opcionesCategorias: CustomSelectOption[] = [
+    { value: "", label: "Automática (primera)" },
+    ...categorias.map((c) => ({
+      value: c.nombre,
+      label: c.nombre,
+      color: c.color || "#3b82f6",
+    })),
+  ];
+
+  const opcionesDensidad: CustomSelectOption[] = [
+    { value: "comoda", label: "Cómoda" },
+    { value: "compacta", label: "Compacta" },
+  ];
+
   return (
     <>
       <AjustesCard titulo="Edición de Textos en Pantalla">
@@ -77,42 +92,34 @@ export default function SeccionGeneral({
           titulo="Categoría Predeterminada"
           descripcion="Categoría seleccionada inicialmente en el registro rápido."
         >
-          <select
+          <CustomSelect
+            ariaLabel="Categoría predeterminada"
+            className="compact"
+            menuAlign="right"
             value={ajustes.categoriaPredeterminada}
-            onChange={(e) =>
-              void onActualizarConfig({
-                categoriaPredeterminada: e.target.value,
-              })
+            options={opcionesCategorias}
+            onChange={(val) =>
+              void onActualizarConfig({ categoriaPredeterminada: val })
             }
-            className="input-control"
-            style={{ width: "170px", padding: "6px 10px", fontSize: "0.82rem" }}
-          >
-            <option value="">Automática (primera)</option>
-            {categorias.map((c) => (
-              <option key={c.id} value={c.nombre}>
-                {c.nombre}
-              </option>
-            ))}
-          </select>
+          />
         </AjustesActionRow>
 
         <AjustesActionRow
           titulo="Densidad Visual"
           descripcion="Espaciado de celdas y filas en el dashboard."
         >
-          <select
+          <CustomSelect
+            ariaLabel="Densidad visual"
+            className="compact"
+            menuAlign="right"
             value={ajustes.densidad}
-            onChange={(e) =>
+            options={opcionesDensidad}
+            onChange={(val) =>
               void onActualizarConfig({
-                densidad: e.target.value as "comoda" | "compacta",
+                densidad: val as "comoda" | "compacta",
               })
             }
-            className="input-control"
-            style={{ width: "130px", padding: "6px 10px", fontSize: "0.82rem" }}
-          >
-            <option value="comoda">Cómoda</option>
-            <option value="compacta">Compacta</option>
-          </select>
+          />
         </AjustesActionRow>
       </AjustesCard>
     </>

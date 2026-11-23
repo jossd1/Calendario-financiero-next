@@ -1,3 +1,4 @@
+import { formatoMoneda, mostrarMontoMoneda } from "@/lib/monedas";
 import type { TipoMovimiento } from "@/types";
 
 export const MESES_ES = [
@@ -17,13 +18,13 @@ export const MESES_ES = [
 ] as const;
 
 export const DIAS_SEMANA_ES = [
-  "Dom",
   "Lun",
   "Mar",
   "Mié",
   "Jue",
   "Vie",
   "Sáb",
+  "Dom",
 ] as const;
 
 export const CATEGORIAS_DEFECTO: ReadonlyArray<{
@@ -45,26 +46,25 @@ export const CATEGORIAS_DEFECTO: ReadonlyArray<{
   { nombre: "Otros Gastos", tipo: "egreso", atajo: "og", color: "#64748b" },
 ];
 
-export function formatoSoles(valor: number | string | null | undefined): string {
-  const numero = Number(valor ?? 0);
-  const seguro = Number.isFinite(numero) ? numero : 0;
-  const signo = seguro < 0 ? "-" : "";
-  const formateado = new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(Math.abs(seguro));
-  return `${signo}S/ ${formateado}`;
+export function formatoSoles(
+  valor: number | string | null | undefined,
+  codigoMoneda = "PEN"
+): string {
+  return formatoMoneda(valor, codigoMoneda);
 }
 
 export function mostrarMonto(
   textoFormateado: string,
   modoPrivacidad: boolean,
-  prefijoSigno = ""
+  prefijoSigno = "",
+  codigoMoneda = "PEN"
 ): string {
-  if (modoPrivacidad) {
-    return `${prefijoSigno}S/ •••`;
-  }
-  return `${prefijoSigno}${textoFormateado}`;
+  return mostrarMontoMoneda(
+    textoFormateado,
+    modoPrivacidad,
+    codigoMoneda,
+    prefijoSigno
+  );
 }
 
 export function obtenerHoyPeruISO(): string {

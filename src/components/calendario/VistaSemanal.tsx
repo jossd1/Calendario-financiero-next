@@ -1,6 +1,6 @@
 "use client";
 
-import { formatoSoles, mostrarMonto } from "@/lib/format";
+import { formatoMoneda, mostrarMontoMoneda } from "@/lib/monedas";
 import type {
   DiaSemanaDetalle,
   ModoCalendarioClick,
@@ -9,6 +9,7 @@ import type {
 
 interface VistaSemanalProps {
   diasSemanaVista: DiaSemanaDetalle[];
+  moneda: string;
   diaSeleccionado: string;
   modoClick: ModoCalendarioClick;
   rangoMin: string | null;
@@ -23,6 +24,7 @@ interface VistaSemanalProps {
 
 export default function VistaSemanal({
   diasSemanaVista,
+  moneda,
   diaSeleccionado,
   modoClick,
   rangoMin,
@@ -93,12 +95,22 @@ export default function VistaSemanal({
             >
               {dia.ingresos > 0 && (
                 <span className="amt-in">
-                  {mostrarMonto(formatoSoles(dia.ingresos), modoPrivacidad, "+")}
+                  {mostrarMontoMoneda(
+                    formatoMoneda(dia.ingresos, moneda),
+                    modoPrivacidad,
+                    moneda,
+                    "+"
+                  )}
                 </span>
               )}
               {dia.egresos > 0 && (
                 <span className="amt-out">
-                  {mostrarMonto(formatoSoles(dia.egresos), modoPrivacidad, "-")}
+                  {mostrarMontoMoneda(
+                    formatoMoneda(dia.egresos, moneda),
+                    modoPrivacidad,
+                    moneda,
+                    "-"
+                  )}
                 </span>
               )}
               {dia.ingresos === 0 && dia.egresos === 0 && (
@@ -160,9 +172,10 @@ export default function VistaSemanal({
                       tx.tipo === "ingreso" ? "amt-in" : "amt-out"
                     } ${modoPrivacidad ? "privacy-dots" : ""}`}
                   >
-                    {mostrarMonto(
+                    {mostrarMontoMoneda(
                       tx.monto_fmt,
                       modoPrivacidad,
+                      moneda,
                       tx.tipo === "ingreso" ? "+" : "-"
                     )}
                   </span>

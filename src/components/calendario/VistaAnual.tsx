@@ -1,10 +1,12 @@
 "use client";
 
-import { buildIsoDate, formatoSoles, mostrarMonto } from "@/lib/format";
+import { buildIsoDate } from "@/lib/format";
+import { formatoMoneda, mostrarMontoMoneda } from "@/lib/monedas";
 import type { MesAnual, ModoCalendarioClick } from "@/types";
 
 interface VistaAnualProps {
   anioActual: number;
+  moneda: string;
   mesesAnual: MesAnual[];
   modoClick: ModoCalendarioClick;
   rangoMin: string | null;
@@ -17,6 +19,7 @@ interface VistaAnualProps {
 
 export default function VistaAnual({
   anioActual,
+  moneda,
   mesesAnual,
   modoClick,
   rangoMin,
@@ -70,7 +73,11 @@ export default function VistaAnual({
                   modoPrivacidad ? "privacy-dots" : ""
                 }`}
               >
-                {mostrarMonto(formatoSoles(m.ingresos), modoPrivacidad)}
+                {mostrarMontoMoneda(
+                  formatoMoneda(m.ingresos, moneda),
+                  modoPrivacidad,
+                  moneda
+                )}
               </span>
             </div>
             <div className="month-card-row">
@@ -80,7 +87,11 @@ export default function VistaAnual({
                   modoPrivacidad ? "privacy-dots" : ""
                 }`}
               >
-                {mostrarMonto(formatoSoles(m.egresos), modoPrivacidad)}
+                {mostrarMontoMoneda(
+                  formatoMoneda(m.egresos, moneda),
+                  modoPrivacidad,
+                  moneda
+                )}
               </span>
             </div>
             <div
@@ -96,7 +107,11 @@ export default function VistaAnual({
                   m.neto >= 0 ? "amt-in" : "amt-out"
                 } ${modoPrivacidad ? "privacy-dots" : ""}`}
               >
-                {mostrarMonto(formatoSoles(m.neto), modoPrivacidad)}
+                {mostrarMontoMoneda(
+                  formatoMoneda(m.neto, moneda),
+                  modoPrivacidad,
+                  moneda
+                )}
               </span>
             </div>
           </button>

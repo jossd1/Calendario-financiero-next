@@ -30,7 +30,7 @@ export const AJUSTES_DEFECTO: AjustesAppConfig = {
 };
 
 export const TEXTOS_UI_DEFECTO: TextosUI = {
-  brandTitle: "Calendario Financiero (S/)",
+  brandTitle: "Calendario Financiero",
   navCalendario: "Calendario",
   navAnalisis: "Análisis & Gráficos",
   navMovimientos: "Movimientos",
@@ -39,10 +39,10 @@ export const TEXTOS_UI_DEFECTO: TextosUI = {
   kpiEgresosTitulo: "Total Egresos",
   kpiEgresosSub: "Salidas",
   kpiBalanceTitulo: "Balance Neto",
-  kpiBalanceSub: "Diferencia neta en Soles",
+  kpiBalanceSub: "Diferencia neta del periodo",
   kpiTopEgresoTitulo: "Mayor Egreso",
-  tituloCalendarioMensual: "Calendario Mensual (Dom–Sáb)",
-  tituloVistaSemanal: "Vista Semanal (Dom–Sáb)",
+  tituloCalendarioMensual: "Calendario Mensual (Lun–Dom)",
+  tituloVistaSemanal: "Vista Semanal (Lun–Dom)",
   tituloDesgloseDia: "Desglose del Día",
   tituloResumenAnual: "Resumen Anual",
   tituloVistaGeneral: "Resumen General Histórico",
@@ -51,17 +51,17 @@ export const TEXTOS_UI_DEFECTO: TextosUI = {
   modoVerDia: "Ver Día",
   modoAnalizar: "Analizar",
   btnVolverAlMes: "↩ Volver al Mes",
-  tituloRegistroRapido: "Registrar Movimiento (S/)",
+  tituloRegistroRapido: "Registrar Movimiento",
   subtituloAtajos: "Atajos ej: 15al",
   labelTipoOperacion: "Tipo de Operación",
-  labelMontoAtajo: "Monto (S/)",
+  labelMontoAtajo: "Monto",
   labelCategoria: "Categoría",
   labelFechaTx: "Fecha",
   labelDescripcion: "Descripción (Opcional)",
   btnGuardarMovimiento: "Guardar Movimiento (Enter)",
   tituloAnalisis: "Análisis y Gráficos Financieros",
   tituloGraficoDona: "Egresos por Categoría (%)",
-  tituloGraficoBarras: "Comparativa Ingresos vs Egresos (S/)",
+  tituloGraficoBarras: "Comparativa Ingresos vs Egresos",
   tituloResumenCategorias: "📋 Resumen Agrupado por Categorías (Periodo Activo)",
   tituloHistorial: "Historial de Movimientos",
 };
@@ -127,17 +127,23 @@ export async function obtenerAjustesApp(): Promise<{
   const textosGuardados = { ...(fila.textos_json ?? {}) };
   let textosCambiados = false;
 
-  if (textosGuardados.subtituloAtajos === "⚡ Atajos literales ej: 15al") {
-    textosGuardados.subtituloAtajos = "Atajos ej: 15al";
-    textosCambiados = true;
-  }
-  if (textosGuardados.labelMontoAtajo === "Monto (S/) o atajo (ej. 15al)") {
-    textosGuardados.labelMontoAtajo = "Monto (S/)";
-    textosCambiados = true;
-  }
-  if (textosGuardados.labelFechaTx === "Fecha (Persistente)") {
-    textosGuardados.labelFechaTx = "Fecha";
-    textosCambiados = true;
+  const migracionesTexto: ReadonlyArray<[string, string, string]> = [
+    ["subtituloAtajos", "⚡ Atajos literales ej: 15al", "Atajos ej: 15al"],
+    ["labelMontoAtajo", "Monto (S/) o atajo (ej. 15al)", "Monto"],
+    ["labelMontoAtajo", "Monto (S/)", "Monto"],
+    ["labelFechaTx", "Fecha (Persistente)", "Fecha"],
+    ["tituloCalendarioMensual", "Calendario Mensual (Dom–Sáb)", "Calendario Mensual (Lun–Dom)"],
+    ["tituloVistaSemanal", "Vista Semanal (Dom–Sáb)", "Vista Semanal (Lun–Dom)"],
+    ["tituloRegistroRapido", "Registrar Movimiento (S/)", "Registrar Movimiento"],
+    ["tituloGraficoBarras", "Comparativa Ingresos vs Egresos (S/)", "Comparativa Ingresos vs Egresos"],
+    ["kpiBalanceSub", "Diferencia neta en Soles", "Diferencia neta del periodo"],
+  ];
+
+  for (const [clave, viejo, nuevo] of migracionesTexto) {
+    if (textosGuardados[clave] === viejo) {
+      textosGuardados[clave] = nuevo;
+      textosCambiados = true;
+    }
   }
 
   if (textosCambiados) {

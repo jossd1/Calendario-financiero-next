@@ -3,6 +3,7 @@ import { and, desc, eq, gt } from "drizzle-orm";
 import { db } from "@/db";
 import { transacciones } from "@/db/schema";
 import { formatearHoraLima, obtenerHoyPeruISO } from "@/lib/format";
+import { obtenerMonedaInfo } from "@/lib/monedas";
 import { obtenerPerfilActivo } from "@/lib/perfil";
 import { estaAppBloqueada } from "@/lib/pin";
 
@@ -24,6 +25,7 @@ export async function GET() {
     }
 
     const { perfilActual } = await obtenerPerfilActivo();
+    const monedaInfo = obtenerMonedaInfo(perfilActual.moneda);
 
     const filas = await db
       .select()
@@ -46,7 +48,7 @@ export async function GET() {
         "Categoría",
         "Descripción",
         "Moneda",
-        "Monto (S/)",
+        `Monto (${monedaInfo.simbolo})`,
       ]
         .map(escaparCsv)
         .join(","),
@@ -61,7 +63,7 @@ export async function GET() {
           f.tipo === "ingreso" ? "Ingreso" : "Egreso",
           f.categoria,
           f.descripcion ?? "",
-          "PEN (S/)",
+          `${monedaInfo.codigo} (${monedaInfo.simbolo})`,
           Number(f.monto).toFixed(2),
         ]
           .map(escaparCsv)

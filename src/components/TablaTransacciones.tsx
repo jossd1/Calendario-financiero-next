@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import AppIcon from "@/components/AppIcon";
+import CustomSelect, { type CustomSelectOption } from "@/components/CustomSelect";
 import EditableText from "@/components/EditableText";
-import { mostrarMonto } from "@/lib/format";
+import { mostrarMontoMoneda, obtenerMonedaInfo } from "@/lib/monedas";
 import type { CategoriaDTO, TextosUI, TransaccionDTO } from "@/types";
 
 interface TablaTransaccionesProps {
@@ -12,6 +13,7 @@ interface TablaTransaccionesProps {
   inicioPeriodo: string;
   finPeriodo: string;
   tituloPeriodo: string;
+  moneda: string;
   todasCategorias: CategoriaDTO[];
   filtroCategoria: string;
   filtroTipo: "todos" | "ingreso" | "egreso";
@@ -35,6 +37,7 @@ export default function TablaTransacciones({
   inicioPeriodo,
   finPeriodo,
   tituloPeriodo,
+  moneda,
   todasCategorias,
   filtroCategoria,
   filtroTipo,
@@ -52,8 +55,8 @@ export default function TablaTransacciones({
   const [cargandoMas, setCargandoMas] = useState(false);
   const [busquedaLocal, setBusquedaLocal] = useState(filtroBusqueda);
   const [armadoTxId, setArmadoTxId] = useState<number | null>(null);
-
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const { simbolo } = obtenerMonedaInfo(moneda);
 
   const colorPorCategoria = useMemo(() => {
     const mapa = new Map<string, string>();
@@ -62,6 +65,21 @@ export default function TablaTransacciones({
     }
     return mapa;
   }, [todasCategorias]);
+
+  const opcionesTipo: CustomSelectOption[] = [
+    { value: "todos", label: "Todos los tipos" },
+    { value: "ingreso", label: "Solo Ingresos", color: "#10b981" },
+    { value: "egreso", label: "Solo Egresos", color: "#ef4444" },
+  ];
+
+  const opcionesCat: CustomSelectOption[] = [
+    { value: "todas", label: "Todas las categorías" },
+    ...todasCategorias.map((c) => ({
+      value: c.nombre,
+      label: c.nombre,
+      color: c.color || "#3b82f6",
+    })),
+  ];
 
   useEffect(() => {
     setItems(initialItems);
@@ -169,45 +187,35 @@ export default function TablaTransacciones({
             style={{ width: "180px", padding: "7px 10px", fontSize: "0.85rem" }}
           />
 
-          <select
-            aria-label="Filtrar por tipo"
+          <CustomSelect
+            ariaLabel="Filtrar por tipo"
+            className="compact"
             value={filtroTipo}
-            onChange={(e) =>
+            options={opcionesTipo}
+            onChange={(val) =>
               void onCambiarFiltros({
                 categoria: filtroCategoria,
-                tipo: e.target.value as "todos" | "ingreso" | "egreso",
+                tipo: val as "todos" | "ingreso" | "egreso",
                 busqueda: busquedaLocal,
               })
             }
-            className="input-control"
-            style={{ width: "auto", minWidth: "130px", padding: "7px 10px" }}
-          >
-            <option value="todos">Todos los tipos</option>
-            <option value="ingreso">Solo Ingresos</option>
-            <option value="egreso">Solo Egresos</option>
-          </select>
+          />
 
-          <select
+          <CustomSelect
             id="filtro-categoria"
-            aria-label="Filtrar por categoría"
+            ariaLabel="Filtrar por categoría"
+            className="compact"
+            menuAlign="right"
             value={filtroCategoria}
-            onChange={(e) =>
+            options={opcionesCat}
+            onChange={(val) =>
               void onCambiarFiltros({
-                categoria: e.target.value,
+                categoria: val,
                 tipo: filtroTipo,
                 busqueda: busquedaLocal,
               })
             }
-            className="input-control"
-            style={{ width: "auto", minWidth: "180px", padding: "7px 10px" }}
-          >
-            <option value="todas">Todas las categorías</option>
-            {todasCategorias.map((c) => (
-              <option key={c.id} value={c.nombre}>
-                {c.nombre}
-              </option>
-            ))}
-          </select>
+          />
         </div>
       </div>
 
@@ -229,7 +237,7 @@ export default function TablaTransacciones({
               <th>Tipo</th>
               <th>Categoría</th>
               <th>Descripción</th>
-              <th className="num">Monto (S/)</th>
+              <th className="num">Monto ({simbolo})</th>
               <th className="num">Acciones</th>
             </tr>
           </thead>
@@ -278,9 +286,10 @@ export default function TablaTransacciones({
                     } ${modoPrivacidad ? "privacy-dots" : ""}`}
                     style={{ fontWeight: 600 }}
                   >
-                    {mostrarMonto(
+                    {mostrarMontoMoneda(
                       tx.monto_fmt,
                       modoPrivacidad,
+                      moneda,
                       tx.tipo === "ingreso" ? "+" : "-"
                     )}
                   </td>
@@ -307,7 +316,7 @@ export default function TablaTransacciones({
                         {armadoTxId === tx.id ? (
                           "⚠️ ¿Seguro?"
                         ) : (
-                          <AppIcon name="eliminar" size={14} />
+                          <AppIcon name="papelera" size={14} />
                         )}
                       </button>
                     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import type { RefObject } from "react";
+import CustomSelect, { type CustomSelectOption } from "@/components/CustomSelect";
 import EditableText from "@/components/EditableText";
 import type { CategoriaDTO, TextosUI } from "@/types";
 
@@ -31,6 +32,23 @@ export default function CamposCompletosRegistro({
   onCambiarDescripcion,
   onFocusDescripcion,
 }: CamposCompletosRegistroProps) {
+  const opciones: CustomSelectOption[] = [
+    ...categoriasEgreso.map((c) => ({
+      value: c.nombre,
+      label: c.nombre,
+      color: c.color || "#3b82f6",
+      grupo: "Egresos",
+      hint: c.atajo ? `[${c.atajo}]` : undefined,
+    })),
+    ...categoriasIngreso.map((c) => ({
+      value: c.nombre,
+      label: c.nombre,
+      color: c.color || "#10b981",
+      grupo: "Ingresos",
+      hint: c.atajo ? `[${c.atajo}]` : undefined,
+    })),
+  ];
+
   return (
     <>
       <div className="form-field">
@@ -42,29 +60,13 @@ export default function CamposCompletosRegistro({
             onGuardarTexto={onGuardarTexto}
           />
         </label>
-        <select
+        <CustomSelect
           id="categoria"
-          name="categoria"
+          ariaLabel="Categoría"
           value={categoria}
-          onChange={(e) => onCambiarCategoria(e.target.value)}
-          className="input-control"
-          required
-        >
-          <optgroup label="Egresos">
-            {categoriasEgreso.map((cat) => (
-              <option key={cat.id} value={cat.nombre}>
-                {cat.nombre} {cat.atajo ? `[${cat.atajo}]` : ""}
-              </option>
-            ))}
-          </optgroup>
-          <optgroup label="Ingresos">
-            {categoriasIngreso.map((cat) => (
-              <option key={cat.id} value={cat.nombre}>
-                {cat.nombre} {cat.atajo ? `[${cat.atajo}]` : ""}
-              </option>
-            ))}
-          </optgroup>
-        </select>
+          options={opciones}
+          onChange={onCambiarCategoria}
+        />
       </div>
 
       <div className="form-field">

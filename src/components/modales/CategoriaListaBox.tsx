@@ -98,7 +98,7 @@ export default function CategoriaListaBox({
                 {armadoNombre === cat.nombre ? (
                   "⚠️ ¿Seguro?"
                 ) : (
-                  <AppIcon name="eliminar" size={13} />
+                  <AppIcon name="papelera" size={13} />
                 )}
               </button>
             </div>

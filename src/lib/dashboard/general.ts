@@ -1,7 +1,8 @@
-import { and, asc, eq, gt } from "drizzle-orm";
+import { and, asc, eq, gt, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { categorias, transacciones } from "@/db/schema";
-import { MESES_ES, formatearFechaDMY, formatoSoles } from "@/lib/format";
+import { categorias, perfiles, transacciones } from "@/db/schema";
+import { MESES_ES, formatearFechaDMY } from "@/lib/format";
+import { formatoMoneda, obtenerMonedaInfo } from "@/lib/monedas";
 import type {
   AnioDetalleItem,
   ComparativaAnualItem,
@@ -13,24 +14,44 @@ import type {
 
 export async function compilarDatosGenerales(
   perfilId: number,
+  monedaPerfil: string,
   consolidado: boolean
 ): Promise<DatosGeneralDTO> {
-  const condicionesTx = [
-    eq(transacciones.eliminado, false),
-    gt(transacciones.monto, "0"),
-  ];
-  if (!consolidado) {
-    condicionesTx.push(eq(transacciones.perfil_id, perfilId));
+  const moneda = obtenerMonedaInfo(monedaPerfil).codigo;
+  let perfilIdsIncluidos = [perfilId];
+  let perfilesOmitidos = 0;
+
+  if (consolidado) {
+    const todosPerfiles = await db
+      .select({ id: perfiles.id, moneda: perfiles.moneda })
+      .from(perfiles);
+    const mismaMoneda = todosPerfiles.filter(
+      (p) => obtenerMonedaInfo(p.moneda).codigo === moneda
+    );
+    perfilIdsIncluidos =
+      mismaMoneda.length > 0 ? mismaMoneda.map((p) => p.id) : [perfilId];
+    perfilesOmitidos = Math.max(0, todosPerfiles.length - perfilIdsIncluidos.length);
   }
 
   const filasTx = await db
     .select()
     .from(transacciones)
-    .where(and(...condicionesTx))
+    .where(
+      and(
+        eq(transacciones.eliminado, false),
+        gt(transacciones.monto, "0"),
+        consolidado
+          ? inArray(transacciones.perfil_id, perfilIdsIncluidos)
+          : eq(transacciones.perfil_id, perfilId)
+      )
+    )
     .orderBy(asc(transacciones.fecha), asc(transacciones.id));
 
   const filasCat = consolidado
-    ? await db.select().from(categorias)
+    ? await db
+        .select()
+        .from(categorias)
+        .where(inArray(categorias.perfil_id, perfilIdsIncluidos))
     : await db
         .select()
         .from(categorias)
@@ -211,7 +232,7 @@ export async function compilarDatosGenerales(
       tipo: r.tipo === "ingreso" ? "ingreso" : "egreso",
       categoria: r.categoria,
       descripcion: r.descripcion ?? "",
-      monto_fmt: formatoSoles(Number(r.monto)),
+      monto_fmt: formatoMoneda(Number(r.monto), moneda),
     }));
 
   const mesesActivos = Math.max(1, evolucionMensual.length);
@@ -219,6 +240,9 @@ export async function compilarDatosGenerales(
 
   return {
     consolidado,
+    moneda,
+    perfiles_incluidos: perfilIdsIncluidos.length,
+    perfiles_omitidos: perfilesOmitidos,
     tasa_ahorro_pct:
       totalIngresos > 0
         ? Number(((netoTotal / totalIngresos) * 100).toFixed(1))

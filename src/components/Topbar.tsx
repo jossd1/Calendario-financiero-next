@@ -1,7 +1,9 @@
 "use client";
 
 import AppIcon from "@/components/AppIcon";
+import CustomSelect from "@/components/CustomSelect";
 import EditableText from "@/components/EditableText";
+import { obtenerMonedaInfo } from "@/lib/monedas";
 import type { PerfilDTO, TextosUI } from "@/types";
 
 interface TopbarProps {
@@ -47,6 +49,15 @@ export default function Topbar({
   onAbrirAjustes,
   onResetInicio,
 }: TopbarProps) {
+  const opcionesPerfiles = perfiles.map((p) => {
+    const m = obtenerMonedaInfo(p.moneda);
+    return {
+      value: String(p.id),
+      label: p.nombre,
+      hint: `${m.codigo} ${m.simbolo}`,
+    };
+  });
+
   return (
     <header className="topbar">
       <div className="topbar-inner">
@@ -77,18 +88,14 @@ export default function Topbar({
             >
               <AppIcon name="perfilEngranaje" size={17} />
             </button>
-            <select
-              aria-label="Seleccionar perfil activo"
-              className="profile-select"
-              value={perfilActual.id}
-              onChange={(e) => onCambiarPerfil(Number(e.target.value))}
-            >
-              {perfiles.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nombre}
-                </option>
-              ))}
-            </select>
+            <CustomSelect
+              ariaLabel="Seleccionar perfil activo"
+              className="compact"
+              triggerClassName="profile-trigger"
+              value={String(perfilActual.id)}
+              options={opcionesPerfiles}
+              onChange={(val) => onCambiarPerfil(Number(val))}
+            />
           </div>
         </div>
 
@@ -137,7 +144,7 @@ export default function Topbar({
             title={
               modoPrivacidad
                 ? "Mostrar montos en pantalla"
-                : "Ocultar montos (S/ •••)"
+                : "Ocultar montos"
             }
             aria-label="Alternar privacidad de montos"
           >

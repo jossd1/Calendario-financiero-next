@@ -49,10 +49,10 @@ export function construirCalendarioMensual(
   const ultimoDiaNum = daysInMonth(anio, mes);
   const ultimoDiaMes = buildIsoDate(anio, mes, ultimoDiaNum);
 
-  const primerDiaSemana = new Date(Date.UTC(anio, mes - 1, 1)).getUTCDay();
-  const ultimoDiaSemana = new Date(
-    Date.UTC(anio, mes - 1, ultimoDiaNum)
-  ).getUTCDay();
+  const primerDiaSemana =
+    (new Date(Date.UTC(anio, mes - 1, 1)).getUTCDay() + 6) % 7;
+  const ultimoDiaSemana =
+    (new Date(Date.UTC(anio, mes - 1, ultimoDiaNum)).getUTCDay() + 6) % 7;
 
   const inicioGrid = addDaysISO(primerDiaMes, -primerDiaSemana);
   const finGrid = addDaysISO(ultimoDiaMes, 6 - ultimoDiaSemana);

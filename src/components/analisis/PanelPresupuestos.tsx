@@ -1,12 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { formatoSoles, mostrarMonto } from "@/lib/format";
+import CustomSelect, { type CustomSelectOption } from "@/components/CustomSelect";
+import {
+  formatoMoneda,
+  mostrarMontoMoneda,
+  obtenerMonedaInfo,
+} from "@/lib/monedas";
 import type { CategoriaDTO, PresupuestoItemDTO } from "@/types";
 
 interface PanelPresupuestosProps {
   presupuestos: PresupuestoItemDTO[];
   categoriasEgreso: CategoriaDTO[];
+  moneda: string;
   fechaRef: string;
   modoPresupuesto: "base_mensual" | "por_mes";
   modoPrivacidad: boolean;
@@ -17,6 +23,7 @@ interface PanelPresupuestosProps {
 export default function PanelPresupuestos({
   presupuestos,
   categoriasEgreso,
+  moneda,
   fechaRef,
   modoPresupuesto,
   modoPrivacidad,
@@ -29,8 +36,15 @@ export default function PanelPresupuestos({
   const [limite, setLimite] = useState("");
   const [guardando, setGuardando] = useState(false);
 
+  const { simbolo } = obtenerMonedaInfo(moneda);
   const mesAnio = modoPresupuesto === "por_mes" ? fechaRef.slice(0, 7) : "BASE";
   const maskClass = modoPrivacidad ? "privacy-dots" : "";
+
+  const opcionesCat: CustomSelectOption[] = categoriasEgreso.map((c) => ({
+    value: c.nombre,
+    label: c.nombre,
+    color: c.color || "#3b82f6",
+  }));
 
   const handleGuardar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,25 +109,20 @@ export default function PanelPresupuestos({
           onSubmit={handleGuardar}
           style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}
         >
-          <select
+          <CustomSelect
+            ariaLabel="Categoría de presupuesto"
+            className="compact"
             value={categoria}
-            onChange={(e) => setCategoria(e.target.value)}
-            className="input-control"
-            style={{ width: "auto", minWidth: "150px", padding: "6px 10px" }}
-          >
-            {categoriasEgreso.map((c) => (
-              <option key={c.id} value={c.nombre}>
-                {c.nombre}
-              </option>
-            ))}
-          </select>
+            options={opcionesCat}
+            onChange={setCategoria}
+          />
           <input
             type="number"
             step="0.01"
             min="1"
             value={limite}
             onChange={(e) => setLimite(e.target.value)}
-            placeholder="Límite S/"
+            placeholder={`Límite ${simbolo}`}
             className="input-control tabular-nums"
             style={{ width: "120px", padding: "6px 10px" }}
             required
@@ -169,8 +178,17 @@ export default function PanelPresupuestos({
 
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.76rem" }}>
                   <span className={`tabular-nums ${maskClass}`}>
-                    {mostrarMonto(formatoSoles(p.gastado), modoPrivacidad)} /{" "}
-                    {mostrarMonto(formatoSoles(p.limite), modoPrivacidad)}
+                    {mostrarMontoMoneda(
+                      formatoMoneda(p.gastado, moneda),
+                      modoPrivacidad,
+                      moneda
+                    )}{" "}
+                    /{" "}
+                    {mostrarMontoMoneda(
+                      formatoMoneda(p.limite, moneda),
+                      modoPrivacidad,
+                      moneda
+                    )}
                   </span>
                   <span className="tabular-nums" style={{ color: colorBarra, fontWeight: 700 }}>
                     {p.porcentaje}%

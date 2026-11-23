@@ -1,5 +1,6 @@
 "use client";
 
+import CustomSelect from "@/components/CustomSelect";
 import {
   AjustesActionRow,
   AjustesCard,
@@ -30,19 +31,22 @@ export default function SeccionModulos({
           titulo="Modo de Presupuestos"
           descripcion="Elige si los límites aplican cada mes o se configuran por mes puntual."
         >
-          <select
-            value={ajustes.modoPresupuesto}
-            onChange={(e) =>
-              void onActualizarConfig({
-                modoPresupuesto: e.target.value as "base_mensual" | "por_mes",
-              })
-            }
-            className="input-control"
-            style={{ width: "160px", padding: "6px 10px", fontSize: "0.82rem" }}
-          >
-            <option value="base_mensual">Base mensual</option>
-            <option value="por_mes">Por mes exacto</option>
-          </select>
+          <div style={{ width: "165px" }}>
+            <CustomSelect
+              ariaLabel="Modo de Presupuestos"
+              menuAlign="right"
+              value={ajustes.modoPresupuesto}
+              options={[
+                { value: "base_mensual", label: "Base mensual" },
+                { value: "por_mes", label: "Por mes exacto" },
+              ]}
+              onChange={(v) =>
+                void onActualizarConfig({
+                  modoPresupuesto: v as "base_mensual" | "por_mes",
+                })
+              }
+            />
+          </div>
         </AjustesActionRow>
       )}
       <AjustesToggleRow

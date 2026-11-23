@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import CustomSelect, { type CustomSelectOption } from "@/components/CustomSelect";
+import { obtenerMonedaInfo } from "@/lib/monedas";
 import type { CategoriaDTO, TipoMovimiento, TransaccionDTO } from "@/types";
 
 interface ModalEditarTxProps {
   tx: TransaccionDTO | null;
+  moneda: string;
   categoriasEgreso: CategoriaDTO[];
   categoriasIngreso: CategoriaDTO[];
   programadosActivos: boolean;
@@ -15,6 +18,7 @@ interface ModalEditarTxProps {
 
 export default function ModalEditarTx({
   tx,
+  moneda,
   categoriasEgreso,
   categoriasIngreso,
   programadosActivos,
@@ -29,6 +33,8 @@ export default function ModalEditarTx({
   const [descripcion, setDescripcion] = useState("");
   const [estado, setEstado] = useState<"pagado" | "pendiente" | "programado">("pagado");
   const [guardando, setGuardando] = useState(false);
+
+  const { codigo, simbolo } = obtenerMonedaInfo(moneda);
 
   const todasCategorias = useMemo(
     () => [...categoriasEgreso, ...categoriasIngreso],
@@ -57,6 +63,23 @@ export default function ModalEditarTx({
   if (!tx) return null;
 
   const categoriaEnLista = todasCategorias.some((c) => c.nombre === categoria);
+  const opcionesCategorias: CustomSelectOption[] = [
+    ...(!categoriaEnLista && categoria
+      ? [{ value: categoria, label: categoria, color: "#64748b" }]
+      : []),
+    ...categoriasEgreso.map((c) => ({
+      value: c.nombre,
+      label: c.nombre,
+      color: c.color || "#3b82f6",
+      grupo: "Egresos",
+    })),
+    ...categoriasIngreso.map((c) => ({
+      value: c.nombre,
+      label: c.nombre,
+      color: c.color || "#10b981",
+      grupo: "Ingresos",
+    })),
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,7 +134,7 @@ export default function ModalEditarTx({
                   marginTop: "2px",
                 }}
               >
-                Modifica los detalles del movimiento en Soles peruanos (S/).
+                Modifica los detalles del movimiento en {codigo} ({simbolo}).
               </p>
             </div>
             <button
@@ -125,84 +148,65 @@ export default function ModalEditarTx({
           </div>
 
           <form onSubmit={handleSubmit} className="form-stack">
-            <div className="form-field">
-              <label>Tipo de Operación</label>
-              <div className="type-toggle">
-                <label className="type-radio">
-                  <input
-                    type="radio"
-                    name="edit_tipo"
-                    value="ingreso"
-                    checked={tipo === "ingreso"}
-                    onChange={() => setTipo("ingreso")}
-                  />
-                  <span>Ingreso (+)</span>
-                </label>
-                <label className="type-radio">
-                  <input
-                    type="radio"
-                    name="edit_tipo"
-                    value="egreso"
-                    checked={tipo === "egreso"}
-                    onChange={() => setTipo("egreso")}
-                  />
-                  <span>Egreso (-)</span>
-                </label>
+            <div className="type-toggle-unified">
+              <label className="type-radio">
+                <input
+                  type="radio"
+                  name="edit_tipo"
+                  value="ingreso"
+                  checked={tipo === "ingreso"}
+                  onChange={() => setTipo("ingreso")}
+                />
+                <span>Ingreso (+)</span>
+              </label>
+              <label className="type-radio">
+                <input
+                  type="radio"
+                  name="edit_tipo"
+                  value="egreso"
+                  checked={tipo === "egreso"}
+                  onChange={() => setTipo("egreso")}
+                />
+                <span>Egreso (-)</span>
+              </label>
+            </div>
+
+            <div className="form-row-2col">
+              <div className="form-field">
+                <label htmlFor="edit-monto">Monto ({simbolo})</label>
+                <input
+                  id="edit-monto"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  value={monto}
+                  onChange={(e) => setMonto(e.target.value)}
+                  className="input-control tabular-nums"
+                  required
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="edit-fecha">Fecha</label>
+                <input
+                  id="edit-fecha"
+                  type="date"
+                  value={fecha}
+                  onChange={(e) => setFecha(e.target.value)}
+                  className="input-control tabular-nums"
+                  required
+                />
               </div>
             </div>
 
             <div className="form-field">
-              <label htmlFor="edit-monto">Monto en Soles (S/)</label>
-              <input
-                id="edit-monto"
-                type="number"
-                step="0.01"
-                min="0.01"
-                value={monto}
-                onChange={(e) => setMonto(e.target.value)}
-                className="input-control tabular-nums"
-                required
-              />
-            </div>
-
-            <div className="form-field">
               <label htmlFor="edit-categoria">Categoría</label>
-              <select
+              <CustomSelect
                 id="edit-categoria"
+                ariaLabel="Categoría"
                 value={categoria}
-                onChange={(e) => setCategoria(e.target.value)}
-                className="input-control"
-                required
-              >
-                {!categoriaEnLista && categoria && (
-                  <option value={categoria}>{categoria}</option>
-                )}
-                <optgroup label="Egresos">
-                  {categoriasEgreso.map((cat) => (
-                    <option key={cat.id} value={cat.nombre}>
-                      {cat.nombre}
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label="Ingresos">
-                  {categoriasIngreso.map((cat) => (
-                    <option key={cat.id} value={cat.nombre}>
-                      {cat.nombre}
-                    </option>
-                  ))}
-                </optgroup>
-              </select>
-            </div>
-
-            <div className="form-field">
-              <label htmlFor="edit-fecha">Fecha del Movimiento</label>
-              <input
-                id="edit-fecha"
-                type="date"
-                value={fecha}
-                onChange={(e) => setFecha(e.target.value)}
-                className="input-control tabular-nums"
-                required
+                options={opcionesCategorias}
+                onChange={setCategoria}
               />
             </div>
 
@@ -222,20 +226,19 @@ export default function ModalEditarTx({
             {programadosActivos && (
               <div className="form-field">
                 <label htmlFor="edit-estado">Estado</label>
-                <select
+                <CustomSelect
                   id="edit-estado"
+                  ariaLabel="Estado"
                   value={estado}
-                  onChange={(e) =>
-                    setEstado(
-                      e.target.value as "pagado" | "pendiente" | "programado"
-                    )
+                  options={[
+                    { value: "pagado", label: "Pagado" },
+                    { value: "pendiente", label: "Pendiente" },
+                    { value: "programado", label: "Programado" },
+                  ]}
+                  onChange={(val) =>
+                    setEstado(val as "pagado" | "pendiente" | "programado")
                   }
-                  className="input-control"
-                >
-                  <option value="pagado">Pagado</option>
-                  <option value="pendiente">Pendiente</option>
-                  <option value="programado">Programado</option>
-                </select>
+                />
               </div>
             )}
 

@@ -16,7 +16,7 @@ import {
 } from "chart.js";
 import { Bar, Doughnut, Line } from "react-chartjs-2";
 import EditableText from "@/components/EditableText";
-import { formatoSoles } from "@/lib/format";
+import { formatoMoneda, obtenerMonedaInfo } from "@/lib/monedas";
 import type { ChartDataDTO, TextosUI } from "@/types";
 
 ChartJS.register(
@@ -45,6 +45,7 @@ const PALETA_FALLBACK = [
 
 interface GraficosFinancierosProps {
   chartData: ChartDataDTO;
+  moneda: string;
   colorPorCategoria: Map<string, string>;
   modoPrivacidad: boolean;
   textos: TextosUI;
@@ -54,6 +55,7 @@ interface GraficosFinancierosProps {
 
 export default function GraficosFinancieros({
   chartData,
+  moneda,
   colorPorCategoria,
   modoPrivacidad,
   textos,
@@ -61,6 +63,7 @@ export default function GraficosFinancieros({
   onGuardarTexto,
 }: GraficosFinancierosProps) {
   const [modoFlujo, setModoFlujo] = useState<"barras" | "acumulado">("barras");
+  const { simbolo } = obtenerMonedaInfo(moneda);
 
   const doughnutData = {
     labels: chartData.categoriasLabels,
@@ -101,7 +104,7 @@ export default function GraficosFinancieros({
             const valor = Number(ctx.parsed);
             const pct = total > 0 ? ((valor / total) * 100).toFixed(1) : "0.0";
             return ` ${ctx.label}: ${
-              modoPrivacidad ? "S/ •••" : formatoSoles(valor)
+              modoPrivacidad ? `${simbolo} •••` : formatoMoneda(valor, moneda)
             } (${pct}%)`;
           },
         },
@@ -113,14 +116,14 @@ export default function GraficosFinancieros({
     labels: chartData.flujoLabels,
     datasets: [
       {
-        label: "Ingresos (S/)",
+        label: `Ingresos (${simbolo})`,
         data: chartData.flujoIngresos,
         backgroundColor: "rgba(16, 185, 129, 0.85)",
         borderRadius: 6,
         maxBarThickness: 26,
       },
       {
-        label: "Egresos (S/)",
+        label: `Egresos (${simbolo})`,
         data: chartData.flujoEgresos,
         backgroundColor: "rgba(239, 68, 68, 0.85)",
         borderRadius: 6,
@@ -145,8 +148,8 @@ export default function GraficosFinancieros({
           font: { family: '"DM Sans", sans-serif' },
           callback: (v) =>
             modoPrivacidad
-              ? "S/ •••"
-              : "S/ " + Number(v).toLocaleString("en-US"),
+              ? `${simbolo} •••`
+              : `${simbolo} ${Number(v).toLocaleString("en-US")}`,
         },
       },
     },
@@ -164,7 +167,9 @@ export default function GraficosFinancieros({
         callbacks: {
           label: (ctx) =>
             ` ${ctx.dataset.label}: ${
-              modoPrivacidad ? "S/ •••" : formatoSoles(ctx.parsed.y ?? 0)
+              modoPrivacidad
+                ? `${simbolo} •••`
+                : formatoMoneda(ctx.parsed.y ?? 0, moneda)
             }`,
         },
       },
@@ -185,7 +190,7 @@ export default function GraficosFinancieros({
     labels: chartData.flujoLabels,
     datasets: [
       {
-        label: "Saldo Acumulado (S/)",
+        label: `Saldo Acumulado (${simbolo})`,
         data: acumuladoSeries,
         borderColor: "#38bdf8",
         backgroundColor: "rgba(56, 189, 248, 0.14)",
@@ -211,8 +216,8 @@ export default function GraficosFinancieros({
           font: { family: '"DM Sans", sans-serif' },
           callback: (v) =>
             modoPrivacidad
-              ? "S/ •••"
-              : "S/ " + Number(v).toLocaleString("en-US"),
+              ? `${simbolo} •••`
+              : `${simbolo} ${Number(v).toLocaleString("en-US")}`,
         },
       },
     },
@@ -230,7 +235,9 @@ export default function GraficosFinancieros({
         callbacks: {
           label: (ctx) =>
             ` ${ctx.dataset.label}: ${
-              modoPrivacidad ? "S/ •••" : formatoSoles(ctx.parsed.y ?? 0)
+              modoPrivacidad
+                ? `${simbolo} •••`
+                : formatoMoneda(ctx.parsed.y ?? 0, moneda)
             }`,
         },
       },

@@ -13,6 +13,7 @@ import type {
 
 interface PanelAnalisisProps {
   analisis: AnalisisResultadoDTO;
+  moneda: string;
   categorias: CategoriaDTO[];
   modoAnalisis: ModoAnalisis;
   manualDesde: string;
@@ -33,6 +34,7 @@ interface PanelAnalisisProps {
 
 export default function PanelAnalisis({
   analisis,
+  moneda,
   categorias,
   modoAnalisis,
   manualDesde,
@@ -158,6 +160,7 @@ export default function PanelAnalisis({
 
       <GraficosFinancieros
         chartData={analisis.chart_data}
+        moneda={moneda}
         colorPorCategoria={colorPorCategoria}
         modoPrivacidad={modoPrivacidad}
         textos={textos}
@@ -167,6 +170,7 @@ export default function PanelAnalisis({
 
       <ResumenCategoriasTabla
         desgloseEgresos={analisis.desglose_egresos_pct}
+        moneda={moneda}
         colorPorCategoria={colorPorCategoria}
         modoPrivacidad={modoPrivacidad}
         textos={textos}

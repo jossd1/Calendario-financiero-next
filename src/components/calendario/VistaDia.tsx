@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import AppIcon from "@/components/AppIcon";
-import { mostrarMonto } from "@/lib/format";
+import { mostrarMontoMoneda, obtenerMonedaInfo } from "@/lib/monedas";
 import type { TransaccionDTO } from "@/types";
 
 interface VistaDiaProps {
   transaccionesDia: TransaccionDTO[];
+  moneda: string;
   colorPorCategoria: Map<string, string>;
   modoPrivacidad: boolean;
   onEditarTx: (tx: TransaccionDTO) => void;
@@ -15,6 +16,7 @@ interface VistaDiaProps {
 
 export default function VistaDia({
   transaccionesDia,
+  moneda,
   colorPorCategoria,
   modoPrivacidad,
   onEditarTx,
@@ -22,6 +24,7 @@ export default function VistaDia({
 }: VistaDiaProps) {
   const [busquedaDia, setBusquedaDia] = useState("");
   const [armadoTxId, setArmadoTxId] = useState<number | null>(null);
+  const { simbolo } = obtenerMonedaInfo(moneda);
 
   useEffect(() => {
     if (armadoTxId === null) return;
@@ -83,7 +86,7 @@ export default function VistaDia({
               <th>Tipo</th>
               <th>Categoría</th>
               <th>Descripción</th>
-              <th className="num">Monto (S/)</th>
+              <th className="num">Monto ({simbolo})</th>
               <th className="num">Acciones</th>
             </tr>
           </thead>
@@ -132,9 +135,10 @@ export default function VistaDia({
                     } ${modoPrivacidad ? "privacy-dots" : ""}`}
                     style={{ fontWeight: 600 }}
                   >
-                    {mostrarMonto(
+                    {mostrarMontoMoneda(
                       tx.monto_fmt,
                       modoPrivacidad,
+                      moneda,
                       tx.tipo === "ingreso" ? "+" : "-"
                     )}
                   </td>
@@ -161,7 +165,7 @@ export default function VistaDia({
                         {armadoTxId === tx.id ? (
                           "⚠️ ¿Seguro?"
                         ) : (
-                          <AppIcon name="eliminar" size={14} />
+                          <AppIcon name="papelera" size={14} />
                         )}
                       </button>
                     </div>

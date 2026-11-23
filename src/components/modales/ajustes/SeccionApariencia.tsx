@@ -6,18 +6,22 @@ import {
   AjustesCard,
   AjustesToggleRow,
 } from "@/components/modales/AjustesControles";
+import { obtenerMonedaInfo } from "@/lib/monedas";
 import type { AjustesAppConfig } from "@/types";
 
 interface SeccionAparienciaProps {
   ajustes: AjustesAppConfig;
+  moneda: string;
   onActualizarConfig: (parcial: Partial<AjustesAppConfig>) => Promise<void>;
 }
 
 export default function SeccionApariencia({
   ajustes,
+  moneda,
   onActualizarConfig,
 }: SeccionAparienciaProps) {
   const [topeLocal, setTopeLocal] = useState(String(ajustes.alertaTopeDiario));
+  const { simbolo } = obtenerMonedaInfo(moneda);
 
   useEffect(() => {
     setTopeLocal(String(ajustes.alertaTopeDiario));
@@ -85,7 +89,7 @@ export default function SeccionApariencia({
         }
       />
       <AjustesActionRow
-        titulo="Alerta de Tope Diario (S/)"
+        titulo={`Alerta de Tope Diario (${simbolo})`}
         descripcion="Resalta en ámbar los días cuyo egreso supere este monto (0 = desactivado)."
       >
         <input

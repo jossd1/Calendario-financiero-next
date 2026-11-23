@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { perfiles } from "@/db/schema";
+import { obtenerMonedaInfo } from "@/lib/monedas";
 import { asegurarCategoriasPerfil, PERFIL_COOKIE_NAME } from "@/lib/perfil";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const nombre = String(body.nombre ?? "").trim().slice(0, 80);
+    const monedaInfo = obtenerMonedaInfo(String(body.moneda ?? "PEN"));
     const descripcion = String(
-      body.descripcion ?? "Cuenta en Soles (S/)"
+      body.descripcion ?? `Cuenta en ${monedaInfo.nombre}`
     )
       .trim()
       .slice(0, 160);
@@ -24,12 +26,15 @@ export async function POST(request: NextRequest) {
       .insert(perfiles)
       .values({
         nombre,
-        descripcion: descripcion || "Cuenta en Soles (S/)",
-        moneda: "PEN",
+        descripcion: descripcion || `Cuenta en ${monedaInfo.nombre}`,
+        moneda: monedaInfo.codigo,
       })
       .onConflictDoUpdate({
         target: perfiles.nombre,
-        set: { descripcion: descripcion || "Cuenta en Soles (S/)" },
+        set: {
+          descripcion: descripcion || `Cuenta en ${monedaInfo.nombre}`,
+          moneda: monedaInfo.codigo,
+        },
       })
       .returning();
 
@@ -38,7 +43,7 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json({
       ok: true,
       perfil,
-      mensaje: `Perfil '${nombre}' activado correctamente.`,
+      mensaje: `Perfil '${nombre}' (${monedaInfo.codigo}) activado correctamente.`,
     });
 
     response.cookies.set(PERFIL_COOKIE_NAME, String(perfil.id), {

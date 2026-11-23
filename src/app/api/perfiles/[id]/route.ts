@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { asc, count, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { perfiles } from "@/db/schema";
+import { obtenerMonedaInfo } from "@/lib/monedas";
 import { PERFIL_COOKIE_NAME } from "@/lib/perfil";
 
 export async function PUT(
@@ -21,6 +22,7 @@ export async function PUT(
     const body = await request.json();
     const nombre = String(body.nombre ?? "").trim().slice(0, 80);
     const descripcion = String(body.descripcion ?? "").trim().slice(0, 160);
+    const moneda = obtenerMonedaInfo(String(body.moneda ?? "PEN")).codigo;
 
     if (!nombre) {
       return NextResponse.json(
@@ -31,7 +33,7 @@ export async function PUT(
 
     await db
       .update(perfiles)
-      .set({ nombre, descripcion })
+      .set({ nombre, descripcion, moneda })
       .where(eq(perfiles.id, perfilId));
 
     return NextResponse.json({
