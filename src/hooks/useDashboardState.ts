@@ -5,11 +5,14 @@ import { useAnalisisRango } from "@/hooks/useAnalisisRango";
 import { MAX_ANIO_CALENDARIO, MIN_ANIO_CALENDARIO } from "@/lib/dashboard/periodos";
 import { addDaysISO, buildIsoDate } from "@/lib/format";
 import type {
+  AccionActividad,
+  ActividadRecienteItem,
   AjustesAppConfig,
   DashboardEstadoDTO,
   FlashMensaje,
   ModoAnalisis,
   TextosUI,
+  TransaccionDTO,
   VistaCalendario,
 } from "@/types";
 
@@ -47,6 +50,29 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
 
   const [flashes, setFlashes] = useState<FlashMensaje[]>([]);
   const [bottomToasts, setBottomToasts] = useState<BottomToast[]>([]);
+  const [eventosSesion, setEventosSesion] = useState<ActividadRecienteItem[]>(
+    []
+  );
+
+  const registrarActividad = useCallback(
+    (accion: AccionActividad, tx: TransaccionDTO) => {
+      setEventosSesion((prev) => {
+        const filtrado = prev.filter((item) => item.txId !== tx.id);
+        const nuevo: ActividadRecienteItem = {
+          key: `${accion}-${tx.id}-${Date.now()}`,
+          txId: tx.id,
+          accion,
+          tx,
+        };
+        return [nuevo, ...filtrado].slice(0, 20);
+      });
+    },
+    []
+  );
+
+  const limpiarEventosSesion = useCallback(() => {
+    setEventosSesion([]);
+  }, []);
 
   const notificar = useCallback(
     (tipo: "success" | "error", texto: string) => {
@@ -312,6 +338,9 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
     filtroTipo,
     setFiltroTipo,
     filtroBusqueda,
+    eventosSesion,
+    registrarActividad,
+    limpiarEventosSesion,
     setFiltroBusqueda,
     generalConsolidado,
     setGeneralConsolidado,

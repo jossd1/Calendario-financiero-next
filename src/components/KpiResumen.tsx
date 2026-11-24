@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import EditableText from "@/components/EditableText";
 import { formatoMoneda, mostrarMontoMoneda } from "@/lib/monedas";
 import type { ComparativaKpiDTO, TextosUI, TopEgresoKpiDTO } from "@/types";
@@ -231,7 +232,10 @@ export default function KpiResumen({
       </article>
 
       {mostrarCuartoKpi && topEgresoKpi && (
-        <article className="kpi-card">
+        <article
+          className="kpi-card"
+          style={{ "--kpi-top-accent": topEgresoKpi.color } as CSSProperties}
+        >
           <div className="kpi-card-top">
             <span
               className="kpi-title"

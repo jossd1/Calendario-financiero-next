@@ -5,8 +5,13 @@ import EditableText from "@/components/EditableText";
 import CamposCompletosRegistro from "@/components/registro/CamposCompletosRegistro";
 import { analizarEntradaMonto } from "@/lib/atajos";
 import { formatearFechaDMY } from "@/lib/format";
-import { obtenerMonedaInfo } from "@/lib/monedas";
-import type { CategoriaDTO, TextosUI, TipoMovimiento } from "@/types";
+import { formatoMoneda, obtenerMonedaInfo } from "@/lib/monedas";
+import type {
+  CategoriaDTO,
+  TextosUI,
+  TipoMovimiento,
+  TransaccionDTO,
+} from "@/types";
 
 interface FormularioRegistroProps {
   moneda: string;
@@ -23,7 +28,7 @@ interface FormularioRegistroProps {
   onCambiarFechaSeleccionada: (fecha: string) => void;
   onMoverDiaFlecha: (deltaDias: number) => void;
   onModoSimpleChange: (activo: boolean) => void;
-  onRegistrarExito: (fechaTx: string) => Promise<void>;
+  onRegistrarExito: (fechaTx: string, txCreada: TransaccionDTO) => Promise<void>;
   onNotificar: (tipo: "success" | "error", texto: string) => void;
   onToastSutil: (texto: string) => void;
 }
@@ -206,10 +211,26 @@ export default function FormularioRegistro({
         return;
       }
 
+      const montoNum = Number(analisisEntrada.monto);
+      const txCreada: TransaccionDTO = {
+        id: Number(data.id),
+        perfil_id: 0,
+        tipo: tipoFinal,
+        monto: montoNum,
+        monto_fmt: formatoMoneda(montoNum, moneda),
+        categoria: categoriaFinal,
+        descripcion: modoSimple ? "" : descripcion,
+        fecha_iso: data.fecha_tx,
+        fecha_fmt: formatearFechaDMY(data.fecha_tx),
+        hora_fmt: "",
+        estado: "pagado",
+        eliminado: false,
+      };
+
       setMontoTexto("");
       setDescripcion("");
       onNotificar("success", data.mensaje ?? "Registrado con éxito.");
-      await onRegistrarExito(data.fecha_tx);
+      await onRegistrarExito(data.fecha_tx, txCreada);
       inputMontoRef.current?.focus();
     } catch {
       onNotificar("error", "Error de red al guardar la transacción.");

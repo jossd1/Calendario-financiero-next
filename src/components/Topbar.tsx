@@ -13,11 +13,14 @@ interface TopbarProps {
   cantidadPendientes: number;
   programadosActivos: boolean;
   modoPrivacidad: boolean;
+  paletaSobria: boolean;
+  mostrarBotonPaletaTopbar: boolean;
   authPinActivo: boolean;
   textos: TextosUI;
   editModeTextos: boolean;
   onGuardarTexto: (clave: string, valor: string) => void;
   onTogglePrivacidad: () => void;
+  onTogglePaletaSobria: () => void;
   onBloquearPin: () => void;
   onCambiarPerfil: (perfilId: number) => void;
   onAbrirCategorias: () => void;
@@ -35,11 +38,14 @@ export default function Topbar({
   cantidadPendientes,
   programadosActivos,
   modoPrivacidad,
+  paletaSobria,
+  mostrarBotonPaletaTopbar,
   authPinActivo,
   textos,
   editModeTextos,
   onGuardarTexto,
   onTogglePrivacidad,
+  onTogglePaletaSobria,
   onBloquearPin,
   onCambiarPerfil,
   onAbrirCategorias,
@@ -97,6 +103,35 @@ export default function Topbar({
               onChange={(val) => onCambiarPerfil(Number(val))}
             />
           </div>
+
+          {mostrarBotonPaletaTopbar && (
+            <button
+              type="button"
+              onClick={onTogglePaletaSobria}
+              className={`topbar-palette-btn ${paletaSobria ? "is-active" : ""}`}
+              title={
+                paletaSobria
+                  ? "Paleta sobria activa (clic para restaurar colores)"
+                  : "Activar paleta sobria oscura"
+              }
+              aria-label="Alternar paleta sobria oscura"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.9"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+              </svg>
+            </button>
+          )}
         </div>
 
         <div className="topbar-actions">

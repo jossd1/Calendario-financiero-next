@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import ProgramadosCreateForm from "@/components/modales/ProgramadosCreateForm";
 import { formatoMoneda, mostrarMontoMoneda } from "@/lib/monedas";
-import type { CategoriaDTO, TransaccionDTO } from "@/types";
+import type { AccionActividad, CategoriaDTO, TransaccionDTO } from "@/types";
 
 interface ModalProgramadosProps {
   abierto: boolean;
@@ -16,6 +16,7 @@ interface ModalProgramadosProps {
   sumarEnKpi: boolean;
   modoPrivacidad: boolean;
   onCerrar: () => void;
+  onActividad?: (accion: AccionActividad, tx: TransaccionDTO) => void;
   onActualizado: () => Promise<void>;
   onEditarTx: (tx: TransaccionDTO) => void;
   onNotificar: (tipo: "success" | "error", texto: string) => void;
@@ -32,6 +33,7 @@ export default function ModalProgramados({
   sumarEnKpi,
   modoPrivacidad,
   onCerrar,
+  onActividad,
   onActualizado,
   onEditarTx,
   onNotificar,
@@ -75,6 +77,7 @@ export default function ModalProgramados({
         onNotificar("error", data.error ?? "No se pudo confirmar.");
         return;
       }
+      onActividad?.("Pagado", { ...tx, estado: "pagado" });
       onNotificar("success", "Movimiento confirmado como Pagado.");
       await onActualizado();
     } catch {
@@ -133,7 +136,10 @@ export default function ModalProgramados({
             categoriasIngreso={categoriasIngreso}
             hoyIso={hoyIso}
             limitarAnios={limitarAnios}
-            onCreado={onActualizado}
+            onCreado={async (txCreada) => {
+              onActividad?.("Agregado", txCreada);
+              await onActualizado();
+            }}
             onNotificar={onNotificar}
           />
 

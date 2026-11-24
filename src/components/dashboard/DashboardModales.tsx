@@ -8,6 +8,7 @@ import ModalPapelera from "@/components/modales/ModalPapelera";
 import ModalPerfiles from "@/components/modales/ModalPerfiles";
 import ModalProgramados from "@/components/modales/ModalProgramados";
 import type {
+  AccionActividad,
   AjustesAppConfig,
   DashboardEstadoDTO,
   TransaccionDTO,
@@ -31,6 +32,7 @@ interface DashboardModalesProps {
   onCerrarBuscador: () => void;
   onCerrarEditarTx: () => void;
   onEditarTx: (tx: TransaccionDTO) => void;
+  onRegistrarActividad: (accion: AccionActividad, tx: TransaccionDTO) => void;
   onToggleEditModeTextos: () => void;
   onRestablecerTextos: () => Promise<void>;
   onActualizarConfig: (parcial: Partial<AjustesAppConfig>) => Promise<void>;
@@ -58,6 +60,7 @@ export default function DashboardModales({
   onCerrarBuscador,
   onCerrarEditarTx,
   onEditarTx,
+  onRegistrarActividad,
   onToggleEditModeTextos,
   onRestablecerTextos,
   onActualizarConfig,
@@ -86,7 +89,10 @@ export default function DashboardModales({
         categoriasIngreso={estado.categorias_ingreso}
         programadosActivos={estado.ajustes.programadosActivos}
         onCerrar={onCerrarEditarTx}
-        onGuardado={onRefrescar}
+        onGuardado={async (txActualizada) => {
+          onRegistrarActividad("Editado", txActualizada);
+          await onRefrescar();
+        }}
         onNotificar={onNotificar}
       />
 
@@ -114,6 +120,7 @@ export default function DashboardModales({
         moneda={moneda}
         modoPrivacidad={estado.ajustes.modoPrivacidad}
         onCerrar={onCerrarPapelera}
+        onRestaurado={(tx) => onRegistrarActividad("Restaurado", tx)}
         onActualizado={onRefrescar}
         onNotificar={onNotificar}
       />
@@ -129,6 +136,7 @@ export default function DashboardModales({
         sumarEnKpi={estado.ajustes.sumarProgramadosEnKpi}
         modoPrivacidad={estado.ajustes.modoPrivacidad}
         onCerrar={onCerrarProgramados}
+        onActividad={onRegistrarActividad}
         onActualizado={onRefrescar}
         onEditarTx={onEditarTx}
         onNotificar={onNotificar}

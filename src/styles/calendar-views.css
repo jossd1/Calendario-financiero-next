@@ -1,0 +1,82 @@
+@layer components {
+  .week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .week-col {
+    background-color: rgba(6, 9, 17, 0.78);
+    border: 1px solid transparent;
+    border-radius: 11px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 250px;
+    transition: border-color 0.15s ease;
+  }
+
+  .week-col:hover { border-color: var(--border-strong); }
+  .week-col.is-today { border-color: var(--accent-primary); }
+
+  .week-col-header {
+    border-bottom: 1px solid var(--border-hairline);
+    padding-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .week-col-title { font-weight: 700; font-size: 0.85rem; }
+  .week-col-date { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); }
+
+  .annual-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .month-card {
+    background-color: rgba(6, 9, 17, 0.78);
+    border: 1px solid transparent;
+    border-radius: 11px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+    cursor: pointer;
+  }
+
+  .month-card:hover { border-color: var(--accent-primary); transform: translateY(-1px); }
+  .month-card.is-in-range { background-color: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.45); }
+  .month-card.is-range-start { border-color: var(--neutral-color) !important; background-color: rgba(56, 189, 248, 0.14) !important; box-shadow: inset 0 0 0 1px var(--neutral-color); }
+  .month-card.is-range-end { border-color: var(--range-end-color) !important; background-color: rgba(245, 158, 11, 0.14) !important; box-shadow: inset 0 0 0 1px var(--range-end-color); }
+
+  .month-card-name { font-family: var(--font-display); font-weight: 700; font-size: 0.95rem; }
+  .month-card-row { display: flex; justify-content: space-between; font-size: 0.8rem; }
+
+  .btn-volver-mes {
+    background-color: #0284c7;
+    color: #ffffff;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 7px;
+    padding: 4px 10px;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
+    transition: transform 0.2s ease;
+  }
+
+  .btn-volver-mes:hover { transform: translateY(-1px); }
+
+  .cat-color-dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 9999px;
+    flex-shrink: 0;
+  }
+}

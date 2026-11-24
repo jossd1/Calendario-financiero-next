@@ -3,12 +3,20 @@
 import { useCallback } from "react";
 import { formatearFechaDMY } from "@/lib/format";
 import { formatoMoneda } from "@/lib/monedas";
-import type { DashboardEstadoDTO, ModoAnalisis, ModoCalendarioClick } from "@/types";
+import type {
+  AccionActividad,
+  DashboardEstadoDTO,
+  ModoAnalisis,
+  ModoCalendarioClick,
+  TransaccionDTO,
+} from "@/types";
 
 interface UseDashboardActionsParams {
-  hoyIso: string;
+  estado: DashboardEstadoDTO;
   notificar: (tipo: "success" | "error", texto: string) => void;
   lanzarToastSutil: (texto: string) => void;
+  registrarActividad: (accion: AccionActividad, tx: TransaccionDTO) => void;
+  limpiarEventosSesion: () => void;
   setDiaSeleccionado: (f: string) => void;
   setModoClick: (m: ModoCalendarioClick) => void;
   setPrimerToque: (p: { inicio: string; fin: string } | null) => void;
@@ -23,9 +31,11 @@ interface UseDashboardActionsParams {
 
 export function useDashboardActions(params: UseDashboardActionsParams) {
   const {
-    hoyIso,
+    estado,
     notificar,
     lanzarToastSutil,
+    registrarActividad,
+    limpiarEventosSesion,
     setDiaSeleccionado,
     setModoClick,
     setPrimerToque,
@@ -48,6 +58,7 @@ export function useDashboardActions(params: UseDashboardActionsParams) {
         });
         const data = await res.json();
         if (data.ok) {
+          limpiarEventosSesion();
           setFiltroCategoria("todas");
           await refrescarEstado({ historialCategoria: "todas" });
         }
@@ -55,11 +66,16 @@ export function useDashboardActions(params: UseDashboardActionsParams) {
         notificar("error", "No se pudo cambiar de perfil.");
       }
     },
-    [notificar, refrescarEstado, setFiltroCategoria]
+    [limpiarEventosSesion, notificar, refrescarEstado, setFiltroCategoria]
   );
 
   const handleEliminarTx = useCallback(
     async (txId: number) => {
+      const txObjetivo =
+        estado.transacciones_historial.find((t) => t.id === txId) ??
+        estado.transacciones_dia.find((t) => t.id === txId) ??
+        null;
+
       try {
         const res = await fetch(`/api/transacciones/${txId}`, {
           method: "DELETE",
@@ -69,17 +85,26 @@ export function useDashboardActions(params: UseDashboardActionsParams) {
           notificar("error", data.error ?? "No se pudo eliminar.");
           return;
         }
+        if (txObjetivo) {
+          registrarActividad("Eliminado", txObjetivo);
+        }
         notificar("success", data.mensaje ?? "Movimiento enviado a papelera.");
         await refrescarEstado();
       } catch {
         notificar("error", "Error de red al eliminar la transacción.");
       }
     },
-    [notificar, refrescarEstado]
+    [
+      estado.transacciones_dia,
+      estado.transacciones_historial,
+      notificar,
+      refrescarEstado,
+      registrarActividad,
+    ]
   );
 
   const handleResetInicio = useCallback(async () => {
-    setDiaSeleccionado(hoyIso);
+    setDiaSeleccionado(estado.hoy_iso);
     setModoClick("precargar");
     setPrimerToque(null);
     setRangoDesde(null);
@@ -90,14 +115,14 @@ export function useDashboardActions(params: UseDashboardActionsParams) {
     setFiltroBusqueda("");
     await refrescarEstado({
       vista: "mensual",
-      fecha: hoyIso,
+      fecha: estado.hoy_iso,
       analisisModo: "auto",
       historialCategoria: "todas",
       historialTipo: "todos",
       historialBusqueda: "",
     });
   }, [
-    hoyIso,
+    estado.hoy_iso,
     refrescarEstado,
     setDiaSeleccionado,
     setFiltroBusqueda,

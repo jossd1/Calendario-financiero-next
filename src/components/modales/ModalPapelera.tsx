@@ -11,6 +11,7 @@ interface ModalPapeleraProps {
   moneda: string;
   modoPrivacidad: boolean;
   onCerrar: () => void;
+  onRestaurado?: (tx: TransaccionDTO) => void;
   onActualizado: () => Promise<void>;
   onNotificar: (tipo: "success" | "error", texto: string) => void;
 }
@@ -21,6 +22,7 @@ export default function ModalPapelera({
   moneda,
   modoPrivacidad,
   onCerrar,
+  onRestaurado,
   onActualizado,
   onNotificar,
 }: ModalPapeleraProps) {
@@ -28,6 +30,8 @@ export default function ModalPapelera({
   const [armadoEliminarId, setArmadoEliminarId] = useState<number | null>(null);
   const [armadoVaciar, setArmadoVaciar] = useState(false);
   const [vaciando, setVaciando] = useState(false);
+  const [armadoRevertirTodo, setArmadoRevertirTodo] = useState(false);
+  const [revirtiendoTodo, setRevirtiendoTodo] = useState(false);
 
   useEffect(() => {
     if (armadoEliminarId === null) return;
@@ -42,9 +46,16 @@ export default function ModalPapelera({
   }, [armadoVaciar]);
 
   useEffect(() => {
+    if (!armadoRevertirTodo) return;
+    const timer = setTimeout(() => setArmadoRevertirTodo(false), 3500);
+    return () => clearTimeout(timer);
+  }, [armadoRevertirTodo]);
+
+  useEffect(() => {
     if (!abierto) {
       setArmadoEliminarId(null);
       setArmadoVaciar(false);
+      setArmadoRevertirTodo(false);
       return;
     }
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -56,10 +67,10 @@ export default function ModalPapelera({
 
   if (!abierto) return null;
 
-  const handleRestaurar = async (txId: number) => {
-    setProcesandoId(txId);
+  const handleRestaurar = async (tx: TransaccionDTO) => {
+    setProcesandoId(tx.id);
     try {
-      const res = await fetch(`/api/transacciones/${txId}/restaurar`, {
+      const res = await fetch(`/api/transacciones/${tx.id}/restaurar`, {
         method: "POST",
       });
       const data = await res.json();
@@ -67,6 +78,7 @@ export default function ModalPapelera({
         onNotificar("error", data.error ?? "No se pudo restaurar.");
         return;
       }
+      onRestaurado?.(tx);
       onNotificar("success", data.mensaje ?? "Movimiento restaurado.");
       await onActualizado();
     } catch {
@@ -123,6 +135,34 @@ export default function ModalPapelera({
       onNotificar("error", "Error de red al vaciar papelera.");
     } finally {
       setVaciando(false);
+    }
+  };
+
+  const handleRevertirTodo = async () => {
+    if (!armadoRevertirTodo) {
+      setArmadoRevertirTodo(true);
+      return;
+    }
+    setArmadoRevertirTodo(false);
+    setRevirtiendoTodo(true);
+    try {
+      const res = await fetch("/api/transacciones/papelera", {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        onNotificar("error", data.error ?? "No se pudo revertir todo.");
+        return;
+      }
+      for (const tx of items) {
+        onRestaurado?.(tx);
+      }
+      onNotificar("success", data.mensaje ?? "Movimientos restaurados.");
+      await onActualizado();
+    } catch {
+      onNotificar("error", "Error de red al revertir la papelera.");
+    } finally {
+      setRevirtiendoTodo(false);
     }
   };
 
@@ -201,7 +241,7 @@ export default function ModalPapelera({
                       type="button"
                       disabled={procesandoId === p.id}
                       className="btn btn-primary btn-sm"
-                      onClick={() => void handleRestaurar(p.id)}
+                      onClick={() => void handleRestaurar(p)}
                     >
                       {procesandoId === p.id ? "..." : "♻️ Revertir"}
                     </button>
@@ -235,6 +275,8 @@ export default function ModalPapelera({
               style={{
                 display: "flex",
                 justifyContent: "flex-end",
+                gap: "10px",
+                flexWrap: "wrap",
                 marginTop: "14px",
                 paddingTop: "12px",
                 borderTop: "1px solid var(--border-hairline)",
@@ -242,7 +284,22 @@ export default function ModalPapelera({
             >
               <button
                 type="button"
-                disabled={vaciando}
+                disabled={revirtiendoTodo || vaciando}
+                className={`btn btn-sm ${
+                  armadoRevertirTodo ? "btn-primary" : "btn-secondary"
+                }`}
+                onClick={() => void handleRevertirTodo()}
+              >
+                {revirtiendoTodo
+                  ? "Revirtiendo..."
+                  : armadoRevertirTodo
+                  ? "⚠️ ¿Confirmar revertir todo?"
+                  : "♻️ Revertir Todo"}
+              </button>
+
+              <button
+                type="button"
+                disabled={vaciando || revirtiendoTodo}
                 className={`btn btn-sm ${
                   armadoVaciar ? "btn-danger-armed" : "btn-danger"
                 }`}

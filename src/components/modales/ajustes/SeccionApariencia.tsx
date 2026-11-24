@@ -108,6 +108,32 @@ export default function SeccionApariencia({
           style={{ width: "110px", padding: "6px 10px", fontSize: "0.82rem" }}
         />
       </AjustesActionRow>
+
+      <AjustesToggleRow
+        titulo="Paleta Sobria Oscura"
+        descripcion="Reduce la saturación de colores manteniendo el tema oscuro para mayor descanso visual."
+        badge="Activo"
+        checked={ajustes.paletaSobria}
+        onChange={(v) => void onActualizarConfig({ paletaSobria: v })}
+      />
+      <AjustesToggleRow
+        titulo="Botón Rápido de Paleta en Topbar"
+        descripcion="Muestra u oculta el acceso directo junto al selector de perfil."
+        badge="Activo"
+        checked={ajustes.mostrarBotonPaletaTopbar}
+        onChange={(v) =>
+          void onActualizarConfig({ mostrarBotonPaletaTopbar: v })
+        }
+      />
+      <AjustesToggleRow
+        titulo="Widget de Movimientos Recientes"
+        descripcion="Muestra el resumen de actividad reciente debajo del formulario de registro."
+        badge="Activo"
+        checked={ajustes.mostrarMovimientosRecientes}
+        onChange={(v) =>
+          void onActualizarConfig({ mostrarMovimientosRecientes: v })
+        }
+      />
     </AjustesCard>
   );
 }

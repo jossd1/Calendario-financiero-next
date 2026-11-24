@@ -4,7 +4,7 @@ import { ajustesApp } from "@/db/schema";
 import type { AjustesAppConfig, TextosUI } from "@/types";
 
 export const AJUSTES_DEFECTO: AjustesAppConfig = {
-  configVersion: 3,
+  configVersion: 4,
   modoPrivacidad: false,
   comparativasKpi: false,
   kpiTopEgreso: true,
@@ -13,6 +13,9 @@ export const AJUSTES_DEFECTO: AjustesAppConfig = {
   hoverPreviewDia: true,
   mostrarNetoCeldas: false,
   limitarAniosCalendario: true,
+  mostrarMovimientosRecientes: true,
+  paletaSobria: false,
+  mostrarBotonPaletaTopbar: true,
   categoriaPredeterminada: "",
   alertaTopeDiario: 0,
   densidad: "comoda",
@@ -97,10 +100,10 @@ export async function obtenerAjustesApp(): Promise<{
   let configFinal: AjustesAppConfig = { ...AJUSTES_DEFECTO, ...guardado };
   const versionGuardada = guardado.configVersion ?? 1;
 
-  if (versionGuardada < 3) {
+  if (versionGuardada < 4) {
     configFinal = {
       ...configFinal,
-      configVersion: 3,
+      configVersion: 4,
       kpiTopEgreso: versionGuardada < 2 ? true : configFinal.kpiTopEgreso,
       vistaGeneral: versionGuardada < 2 ? true : configFinal.vistaGeneral,
       hoverPreviewDia: versionGuardada < 2 ? true : configFinal.hoverPreviewDia,
@@ -114,8 +117,13 @@ export async function obtenerAjustesApp(): Promise<{
         versionGuardada < 2 ? true : configFinal.generalMostrarAnual,
       generalPermitirConsolidado:
         versionGuardada < 2 ? false : configFinal.generalPermitirConsolidado,
-      limitarAniosCalendario: true,
-      programadosActivos: true,
+      limitarAniosCalendario:
+        versionGuardada < 3 ? true : configFinal.limitarAniosCalendario,
+      programadosActivos:
+        versionGuardada < 3 ? true : configFinal.programadosActivos,
+      mostrarMovimientosRecientes: true,
+      paletaSobria: false,
+      mostrarBotonPaletaTopbar: true,
     };
 
     await db
@@ -167,7 +175,7 @@ export async function guardarAjustesApp(params: {
   const actual = await obtenerAjustesApp();
 
   const nuevoConfig: AjustesAppConfig = params.config
-    ? { ...actual.config, ...params.config, configVersion: 3 }
+    ? { ...actual.config, ...params.config, configVersion: 4 }
     : actual.config;
 
   const nuevosTextos: TextosUI = params.restablecerTextos

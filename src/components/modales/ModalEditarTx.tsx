@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import CustomSelect, { type CustomSelectOption } from "@/components/CustomSelect";
-import { obtenerMonedaInfo } from "@/lib/monedas";
+import { formatearFechaDMY } from "@/lib/format";
+import { formatoMoneda, obtenerMonedaInfo } from "@/lib/monedas";
 import type { CategoriaDTO, TipoMovimiento, TransaccionDTO } from "@/types";
 
 interface ModalEditarTxProps {
@@ -12,7 +13,7 @@ interface ModalEditarTxProps {
   categoriasIngreso: CategoriaDTO[];
   programadosActivos: boolean;
   onCerrar: () => void;
-  onGuardado: () => Promise<void>;
+  onGuardado: (txActualizada: TransaccionDTO) => Promise<void>;
   onNotificar: (tipo: "success" | "error", texto: string) => void;
 }
 
@@ -102,8 +103,19 @@ export default function ModalEditarTx({
         onNotificar("error", data.error ?? "No se pudo actualizar.");
         return;
       }
+      const montoNum = Number(String(monto).replace(",", "."));
       onNotificar("success", data.mensaje ?? "Transacción actualizada.");
-      await onGuardado();
+      await onGuardado({
+        ...tx,
+        tipo,
+        monto: montoNum,
+        monto_fmt: formatoMoneda(montoNum, moneda),
+        categoria,
+        descripcion,
+        fecha_iso: fecha,
+        fecha_fmt: formatearFechaDMY(fecha),
+        estado: programadosActivos ? estado : tx.estado,
+      });
       onCerrar();
     } catch {
       onNotificar("error", "Error de red al actualizar la transacción.");

@@ -1,0 +1,72 @@
+@layer components {
+  .density-compact .day-cell {
+    min-height: 78px;
+    padding: 6px;
+  }
+
+  .density-compact .tx-table th,
+  .density-compact .tx-table td {
+    padding: 8px 10px;
+  }
+
+  .density-compact .kpi-card {
+    padding: 14px 18px;
+  }
+
+  .theme-sobrio {
+    --accent-primary: #64748b;
+    --accent-primary-hover: #475569;
+    --accent-soft: rgba(148, 163, 184, 0.14);
+    --neutral-color: #cbd5e1;
+    --range-end-color: #94a3b8;
+    --income-color: #52b788;
+    --income-soft: rgba(82, 183, 136, 0.1);
+    --expense-color: #d97070;
+    --expense-soft: rgba(217, 112, 112, 0.1);
+  }
+
+  .theme-sobrio .btn-primary {
+    background: #1e293b;
+    border-color: rgba(148, 163, 184, 0.32);
+    color: #f1f5f9;
+  }
+
+  .theme-sobrio .btn-primary:hover:not(:disabled) {
+    background: #334155;
+  }
+
+  .theme-sobrio .btn-topbar-settings,
+  .theme-sobrio .view-tab.active,
+  .theme-sobrio .view-tab-general.active,
+  .theme-sobrio .mode-pill-btn.active-fecha,
+  .theme-sobrio .mode-pill-btn.active-ver-dia,
+  .theme-sobrio .mode-pill-btn.active-analizar {
+    background: rgba(148, 163, 184, 0.18);
+    border-color: rgba(148, 163, 184, 0.36);
+    color: #f1f5f9;
+    box-shadow: none;
+  }
+
+  .theme-sobrio .period-badge-inline,
+  .theme-sobrio .view-tab-general,
+  .theme-sobrio .magic-search-btn {
+    background: rgba(148, 163, 184, 0.08);
+    border-color: rgba(148, 163, 184, 0.24);
+    color: #cbd5e1;
+  }
+
+  .theme-sobrio .kpi-card::after {
+    background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.35), transparent);
+  }
+
+  .theme-sobrio .chart-wrapper,
+  .theme-sobrio .cat-color-dot,
+  .theme-sobrio .magic-search-btn svg,
+  .theme-sobrio .recent-action-ref {
+    filter: saturate(0.45);
+  }
+
+  .theme-sobrio .topbar-notif-badge {
+    background-color: #9f5858;
+  }
+}

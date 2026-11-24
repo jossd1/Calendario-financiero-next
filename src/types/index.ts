@@ -6,6 +6,14 @@ export type VistaCalendario = "dia" | "semana" | "mensual" | "anual" | "general"
 export type ModoCalendarioClick = "precargar" | "ver_dia" | "analizar_dia";
 export type ModoAnalisis = "auto" | "manual";
 
+export type AccionActividad =
+  | "Agregado"
+  | "Editado"
+  | "Eliminado"
+  | "Restaurado"
+  | "Pagado"
+  | "Registrado";
+
 export interface AjustesAppConfig {
   configVersion?: number;
   modoPrivacidad: boolean;
@@ -16,6 +24,9 @@ export interface AjustesAppConfig {
   hoverPreviewDia: boolean;
   mostrarNetoCeldas: boolean;
   limitarAniosCalendario: boolean;
+  mostrarMovimientosRecientes: boolean;
+  paletaSobria: boolean;
+  mostrarBotonPaletaTopbar: boolean;
   categoriaPredeterminada: string;
   alertaTopeDiario: number;
   densidad: "comoda" | "compacta";
@@ -64,6 +75,13 @@ export interface TransaccionDTO {
   hora_fmt: string;
   estado: EstadoMovimiento;
   eliminado: boolean;
+}
+
+export interface ActividadRecienteItem {
+  key: string;
+  txId: number;
+  accion: AccionActividad;
+  tx: TransaccionDTO;
 }
 
 export interface PresupuestoItemDTO {

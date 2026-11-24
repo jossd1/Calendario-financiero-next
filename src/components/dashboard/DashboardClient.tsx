@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import FormularioRegistro from "@/components/FormularioRegistro";
 import KpiResumen from "@/components/KpiResumen";
@@ -19,7 +19,11 @@ import ToastContainer from "@/components/dashboard/ToastContainer";
 import { useDashboardActions } from "@/hooks/useDashboardActions";
 import { useDashboardState } from "@/hooks/useDashboardState";
 import { useEditModeTextos } from "@/hooks/useEditModeTextos";
-import type { DashboardEstadoDTO, TransaccionDTO } from "@/types";
+import type {
+  ActividadRecienteItem,
+  DashboardEstadoDTO,
+  TransaccionDTO,
+} from "@/types";
 
 export default function DashboardClient({
   initialEstado,
@@ -48,9 +52,11 @@ export default function DashboardClient({
   const moneda = estado.perfil_actual.moneda;
 
   const actions = useDashboardActions({
-    hoyIso: estado.hoy_iso,
+    estado,
     notificar: ds.notificar,
     lanzarToastSutil: ds.lanzarToastSutil,
+    registrarActividad: ds.registrarActividad,
+    limpiarEventosSesion: ds.limpiarEventosSesion,
     setDiaSeleccionado: ds.setDiaSeleccionado,
     setModoClick: ds.setModoClick,
     setPrimerToque: ds.setPrimerToque,
@@ -62,6 +68,19 @@ export default function DashboardClient({
     setFiltroBusqueda: ds.setFiltroBusqueda,
     refrescarEstado: ds.refrescarEstado,
   });
+
+  const actividadesRecientes = useMemo<ActividadRecienteItem[]>(() => {
+    const idsSesion = new Set(ds.eventosSesion.map((e) => e.txId));
+    const baseHistorial: ActividadRecienteItem[] = estado.transacciones_historial
+      .filter((tx) => !idsSesion.has(tx.id))
+      .map((tx) => ({
+        key: `reg-${tx.id}`,
+        txId: tx.id,
+        accion: "Registrado",
+        tx,
+      }));
+    return [...ds.eventosSesion, ...baseHistorial];
+  }, [ds.eventosSesion, estado.transacciones_historial]);
 
   useEffect(() => {
     setModoSimpleActivo(window.localStorage.getItem("cf_modo_simple") === "1");
@@ -81,6 +100,7 @@ export default function DashboardClient({
         [
           ed.editModeTextos ? "app-edit-mode-frame" : "",
           estado.ajustes.densidad === "compacta" ? "density-compact" : "",
+          estado.ajustes.paletaSobria ? "theme-sobrio" : "",
         ]
           .filter(Boolean)
           .join(" ") || undefined
@@ -93,6 +113,8 @@ export default function DashboardClient({
         cantidadPendientes={estado.pendientes_programados.length}
         programadosActivos={estado.ajustes.programadosActivos}
         modoPrivacidad={estado.ajustes.modoPrivacidad}
+        paletaSobria={estado.ajustes.paletaSobria}
+        mostrarBotonPaletaTopbar={estado.ajustes.mostrarBotonPaletaTopbar}
         authPinActivo={estado.ajustes.authPinActivo}
         textos={estado.textos}
         editModeTextos={ed.editModeTextos}
@@ -100,6 +122,11 @@ export default function DashboardClient({
         onTogglePrivacidad={() =>
           void ds.handleActualizarConfig({
             modoPrivacidad: !estado.ajustes.modoPrivacidad,
+          })
+        }
+        onTogglePaletaSobria={() =>
+          void ds.handleActualizarConfig({
+            paletaSobria: !estado.ajustes.paletaSobria,
           })
         }
         onBloquearPin={async () => {
@@ -219,7 +246,8 @@ export default function DashboardClient({
                 onCambiarFechaSeleccionada={ds.setDiaSeleccionado}
                 onMoverDiaFlecha={ds.handleMoverDiaFlecha}
                 onModoSimpleChange={setModoSimpleActivo}
-                onRegistrarExito={async (fechaTx) => {
+                onRegistrarExito={async (fechaTx, txCreada) => {
+                  ds.registrarActividad("Agregado", txCreada);
                   ds.setDiaSeleccionado(fechaTx);
                   const nuevoEstado = await ds.refrescarEstado({
                     vista: estado.vista,
@@ -231,14 +259,17 @@ export default function DashboardClient({
                 onToastSutil={ds.lanzarToastSutil}
               />
 
-              <MovimientosRecientes
-                transacciones={estado.transacciones_historial}
-                categorias={estado.categorias}
-                moneda={moneda}
-                maxItems={modoSimpleActivo ? 8 : 4}
-                modoPrivacidad={estado.ajustes.modoPrivacidad}
-                onEditarTx={(tx) => setTxEditando(tx)}
-              />
+              {estado.ajustes.mostrarMovimientosRecientes && (
+                <MovimientosRecientes
+                  actividades={actividadesRecientes}
+                  categorias={estado.categorias}
+                  moneda={moneda}
+                  maxItems={modoSimpleActivo ? 10 : 7}
+                  modoPrivacidad={estado.ajustes.modoPrivacidad}
+                  onEditarTx={(tx) => setTxEditando(tx)}
+                  onAbrirPapelera={() => setModalPapeleraAbierto(true)}
+                />
+              )}
             </div>
           </section>
         )}
@@ -348,6 +379,7 @@ export default function DashboardClient({
         onCerrarBuscador={() => setModalBuscadorAbierto(false)}
         onCerrarEditarTx={() => setTxEditando(null)}
         onEditarTx={(tx) => setTxEditando(tx)}
+        onRegistrarActividad={ds.registrarActividad}
         onToggleEditModeTextos={() => ed.setEditModeTextos((v) => !v)}
         onRestablecerTextos={ed.handleRestablecerTextos}
         onActualizarConfig={ds.handleActualizarConfig}
