@@ -6,7 +6,7 @@ Aplicación web para gestionar finanzas personales en varias monedas, con interf
 ## Características Principales
 
 * Vistas Temporales: Navegación Dia, Mensual, Anual y General.
-* Registro Rápido por Atajos: ejemplo registrar `15al` equivale a `S/ 15.00` en *Alimentación*).
+* Registro Rápido por Atajos: ejemplo registrar `15al` equivale a `S/ 15.00` en *Alimentación*.
 * Multi-perfil y Privacidad: Espacios independientes, ocultación de montos y bloqueo por PIN.
 * Papelera y Exportación: Eliminación recuperable y exportación de movimientos a `.CSV`.
 
