@@ -5,10 +5,10 @@ Aplicación web para gestionar finanzas personales en varias monedas, con interf
 
 ## Características Principales
 
-* Vistas Temporales: Navegación entre vista Diaria, Mensual, Anual y General.
-* Registro Rápido por Atajos: Ingreso ágil de montos y categorías desde un único campo (ej. `15al` para registrar `S/ 15.00` en *Alimentación*).
+* Vistas Temporales: Navegación Dia, Mensual, Anual y General.
+* Registro Rápido por Atajos: ejemplo registrar `15al` equivale a `S/ 15.00` en *Alimentación*).
 * Multi-perfil y Privacidad: Espacios independientes, ocultación de montos y bloqueo por PIN.
-* Papelera y Exportación: Borrado lógico recuperable y exportación de movimientos a `.CSV`.
+* Papelera y Exportación: Eliminación recuperable y exportación de movimientos a `.CSV`.
 
 ## 🛠️ Stack Tecnológico
 
