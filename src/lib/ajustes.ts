@@ -4,12 +4,14 @@ import { ajustesApp } from "@/db/schema";
 import type { AjustesAppConfig, TextosUI } from "@/types";
 
 export const AJUSTES_DEFECTO: AjustesAppConfig = {
-  configVersion: 4,
+  configVersion: 6,
   modoPrivacidad: false,
   comparativasKpi: false,
   kpiTopEgreso: true,
   vistaSemanal: false,
   vistaGeneral: true,
+  vistaSimple: false,
+  barraPreviewRegistro: true,
   hoverPreviewDia: true,
   mostrarNetoCeldas: false,
   limitarAniosCalendario: true,
@@ -100,10 +102,10 @@ export async function obtenerAjustesApp(): Promise<{
   let configFinal: AjustesAppConfig = { ...AJUSTES_DEFECTO, ...guardado };
   const versionGuardada = guardado.configVersion ?? 1;
 
-  if (versionGuardada < 4) {
+  if (versionGuardada < 6) {
     configFinal = {
       ...configFinal,
-      configVersion: 4,
+      configVersion: 6,
       kpiTopEgreso: versionGuardada < 2 ? true : configFinal.kpiTopEgreso,
       vistaGeneral: versionGuardada < 2 ? true : configFinal.vistaGeneral,
       hoverPreviewDia: versionGuardada < 2 ? true : configFinal.hoverPreviewDia,
@@ -124,6 +126,7 @@ export async function obtenerAjustesApp(): Promise<{
       mostrarMovimientosRecientes: true,
       paletaSobria: false,
       mostrarBotonPaletaTopbar: true,
+      vistaSimple: versionGuardada < 6 ? false : configFinal.vistaSimple,
     };
 
     await db
@@ -145,6 +148,7 @@ export async function obtenerAjustesApp(): Promise<{
     ["tituloRegistroRapido", "Registrar Movimiento (S/)", "Registrar Movimiento"],
     ["tituloGraficoBarras", "Comparativa Ingresos vs Egresos (S/)", "Comparativa Ingresos vs Egresos"],
     ["kpiBalanceSub", "Diferencia neta en Soles", "Diferencia neta del periodo"],
+    ["brandTitle", "Calendario Financiero (S/)", "Calendario Financiero"],
   ];
 
   for (const [clave, viejo, nuevo] of migracionesTexto) {
@@ -175,7 +179,7 @@ export async function guardarAjustesApp(params: {
   const actual = await obtenerAjustesApp();
 
   const nuevoConfig: AjustesAppConfig = params.config
-    ? { ...actual.config, ...params.config, configVersion: 4 }
+    ? { ...actual.config, ...params.config, configVersion: 6 }
     : actual.config;
 
   const nuevosTextos: TextosUI = params.restablecerTextos

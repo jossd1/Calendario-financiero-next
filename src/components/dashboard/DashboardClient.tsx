@@ -1,5 +1,9 @@
 "use client";
 
+import ModalAjustesSimple from "@/components/simple/ModalAjustesSimple";
+import ModalCategoriasSimple from "@/components/simple/ModalCategoriasSimple";
+import ModalPapeleraSimple from "@/components/simple/ModalPapeleraSimple";
+import VistaSimpleWorkspace from "@/components/simple/VistaSimpleWorkspace";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import FormularioRegistro from "@/components/FormularioRegistro";
@@ -94,6 +98,65 @@ export default function DashboardClient({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  if (estado.ajustes.vistaSimple) {
+    return (
+      <>
+        <FlashFloatingStack flashes={ds.flashes} onCerrar={ds.cerrarFlash} />
+        <ToastContainer toasts={ds.bottomToasts} />
+
+        <VistaSimpleWorkspace
+          estado={estado}
+          diaSeleccionado={ds.diaSeleccionado}
+          onSeleccionarDia={ds.setDiaSeleccionado}
+          onMoverDiaFlecha={ds.handleMoverDiaFlecha}
+          onNavegarMes={async (fecha) => {
+            await ds.refrescarEstado({ vista: "mensual", fecha });
+          }}
+          onCambiarPerfil={actions.handleCambiarPerfil}
+          onActualizarConfig={ds.handleActualizarConfig}
+          onRefrescar={async () => {
+            await ds.refrescarEstado({ vista: "mensual" });
+          }}
+          onEliminarTx={actions.handleEliminarTx}
+          onAbrirCategorias={() => setModalCategoriasAbierto(true)}
+          onAbrirPapelera={() => setModalPapeleraAbierto(true)}
+          onAbrirAjustes={() => setModalAjustesAbierto(true)}
+          onNotificar={ds.notificar}
+          onToastSutil={ds.lanzarToastSutil}
+        />
+
+        <ModalCategoriasSimple
+          abierto={modalCategoriasAbierto}
+          categorias={estado.categorias}
+          onCerrar={() => setModalCategoriasAbierto(false)}
+          onActualizado={async () => {
+            await ds.refrescarEstado({ vista: "mensual" });
+          }}
+          onNotificar={ds.notificar}
+        />
+
+        <ModalPapeleraSimple
+          abierto={modalPapeleraAbierto}
+          items={estado.papelera}
+          moneda={moneda}
+          modoPrivacidad={estado.ajustes.modoPrivacidad}
+          onCerrar={() => setModalPapeleraAbierto(false)}
+          onActualizado={async () => {
+            await ds.refrescarEstado({ vista: "mensual" });
+          }}
+          onNotificar={ds.notificar}
+        />
+
+        <ModalAjustesSimple
+          abierto={modalAjustesAbierto}
+          ajustes={estado.ajustes}
+          onCerrar={() => setModalAjustesAbierto(false)}
+          onActualizarConfig={ds.handleActualizarConfig}
+        />
+      </>
+    );
+  }
+
   return (
     <div
       className={
@@ -114,6 +177,11 @@ export default function DashboardClient({
         programadosActivos={estado.ajustes.programadosActivos}
         modoPrivacidad={estado.ajustes.modoPrivacidad}
         paletaSobria={estado.ajustes.paletaSobria}
+        vistaSimple={estado.ajustes.vistaSimple}
+        onToggleVistaSimple={async () => {
+          await ds.handleActualizarConfig({ vistaSimple: true });
+          await ds.refrescarEstado({ vista: "mensual" });
+        }}
         mostrarBotonPaletaTopbar={estado.ajustes.mostrarBotonPaletaTopbar}
         authPinActivo={estado.ajustes.authPinActivo}
         textos={estado.textos}
@@ -241,6 +309,7 @@ export default function DashboardClient({
                 hoyIso={estado.hoy_iso}
                 focusPing={ds.focusPing}
                 textos={estado.textos}
+                barraPreviewRegistro={estado.ajustes.barraPreviewRegistro}
                 editModeTextos={ed.editModeTextos}
                 onGuardarTexto={ed.handleGuardarTexto}
                 onCambiarFechaSeleccionada={ds.setDiaSeleccionado}

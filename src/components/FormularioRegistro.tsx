@@ -18,6 +18,7 @@ interface FormularioRegistroProps {
   categoriasEgreso: CategoriaDTO[];
   categoriasIngreso: CategoriaDTO[];
   categoriaPredeterminada: string;
+  barraPreviewRegistro: boolean;
   limitarAnios: boolean;
   fechaSeleccionada: string;
   hoyIso: string;
@@ -38,6 +39,7 @@ export default function FormularioRegistro({
   categoriasEgreso,
   categoriasIngreso,
   categoriaPredeterminada,
+  barraPreviewRegistro,
   limitarAnios,
   fechaSeleccionada,
   hoyIso,
@@ -123,37 +125,17 @@ export default function FormularioRegistro({
     const siguiente = !modoSimple;
     setModoSimple(siguiente);
     onModoSimpleChange(siguiente);
-    if (siguiente) {
-      ultimoCampoActivoRef.current = "monto";
-    }
+    if (siguiente) ultimoCampoActivoRef.current = "monto";
     window.localStorage.setItem("cf_modo_simple", siguiente ? "1" : "0");
-    requestAnimationFrame(() => {
-      inputMontoRef.current?.focus();
-    });
-  };
-
-  const handleCambioTipo = (nuevoTipo: TipoMovimiento) => {
-    setTipo(nuevoTipo);
-    const lista =
-      nuevoTipo === "ingreso" ? categoriasIngreso : categoriasEgreso;
-    if (lista.length > 0) setCategoria(lista[0].nombre);
+    requestAnimationFrame(() => inputMontoRef.current?.focus());
   };
 
   const handleMontoKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (montoTexto.trim() !== "") return;
-    if (e.key === "ArrowLeft") {
-      e.preventDefault();
-      onMoverDiaFlecha(-1);
-    } else if (e.key === "ArrowRight") {
-      e.preventDefault();
-      onMoverDiaFlecha(1);
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      onMoverDiaFlecha(-7);
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      onMoverDiaFlecha(7);
-    }
+    if (e.key === "ArrowLeft") { e.preventDefault(); onMoverDiaFlecha(-1); }
+    else if (e.key === "ArrowRight") { e.preventDefault(); onMoverDiaFlecha(1); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); onMoverDiaFlecha(-7); }
+    else if (e.key === "ArrowDown") { e.preventDefault(); onMoverDiaFlecha(7); }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -163,11 +145,7 @@ export default function FormularioRegistro({
       return;
     }
 
-    if (
-      !analisisEntrada ||
-      !analisisEntrada.monto ||
-      Number(analisisEntrada.monto) <= 0
-    ) {
+    if (!analisisEntrada || !analisisEntrada.monto || Number(analisisEntrada.monto) <= 0) {
       setMontoTexto("");
       onToastSutil("Entrada inválida. Se limpió el campo.");
       inputMontoRef.current?.focus();
@@ -239,6 +217,19 @@ export default function FormularioRegistro({
     }
   };
 
+  const usaBarraPreview = !modoSimple && barraPreviewRegistro;
+  const atajoDetectado = analisisEntrada?.cat ?? null;
+
+  const claseBarra = atajoDetectado
+    ? atajoDetectado.tipo === "ingreso"
+      ? "reg-preview-bar is-in"
+      : "reg-preview-bar is-out"
+    : "reg-preview-bar";
+
+  const codigoBarra = atajoDetectado
+    ? `[${atajoDetectado.atajo.padEnd(2, " ")}]`
+    : "[  ]";
+
   return (
     <aside className="panel">
       <div className="panel-header" style={{ flexWrap: "nowrap", gap: "8px" }}>
@@ -266,28 +257,33 @@ export default function FormularioRegistro({
       </div>
 
       <form onSubmit={handleSubmit} className="form-stack">
-        <div className="type-toggle-unified">
-          <label className="type-radio">
-            <input
-              type="radio"
-              name="tipo"
-              value="ingreso"
-              checked={tipo === "ingreso"}
-              onChange={() => handleCambioTipo("ingreso")}
-            />
-            <span>Ingreso (+)</span>
-          </label>
-          <label className="type-radio">
-            <input
-              type="radio"
-              name="tipo"
-              value="egreso"
-              checked={tipo === "egreso"}
-              onChange={() => handleCambioTipo("egreso")}
-            />
-            <span>Egreso (-)</span>
-          </label>
-        </div>
+        {usaBarraPreview && (
+          <div className={claseBarra}>
+            <div className="reg-preview-left">
+              <span
+                className="cat-color-dot"
+                style={{
+                  backgroundColor: atajoDetectado
+                    ? atajoDetectado.color
+                    : "#64748b",
+                }}
+              />
+              <span className="reg-preview-text">
+                {atajoDetectado ? `  ${atajoDetectado.nombre}` : "  Atajo"}
+              </span>
+            </div>
+            <div className="reg-preview-right">
+              {atajoDetectado && (
+                <span style={{ fontSize: "0.74rem", fontWeight: 600 }}>
+                  {atajoDetectado.tipo === "ingreso"
+                    ? "Ingreso (+)"
+                    : "Egreso (-)"}
+                </span>
+              )}
+              <code className="reg-preview-code">{codigoBarra}</code>
+            </div>
+          </div>
+        )}
 
         <div className={!modoSimple ? "form-row-2col" : undefined}>
           <div className="form-field">
@@ -308,7 +304,7 @@ export default function FormularioRegistro({
               name="monto"
               type="text"
               autoComplete="off"
-              placeholder="0.00 o 15al"
+              placeholder="0.00"
               value={montoTexto}
               onFocus={() => {
                 ultimoCampoActivoRef.current = "monto";
@@ -355,13 +351,15 @@ export default function FormularioRegistro({
           )}
         </div>
 
-        {(analisisEntrada?.cat || analisisEntrada?.sufijo || modoSimple) && (
+        {(!usaBarraPreview && (analisisEntrada?.cat || analisisEntrada?.sufijo || modoSimple)) && (
           <small
             style={{
               fontSize: "0.72rem",
               marginTop: "-6px",
               color: analisisEntrada?.cat
-                ? "var(--accent-primary)"
+                ? analisisEntrada.cat.tipo === "ingreso"
+                  ? "var(--income-color)"
+                  : "var(--expense-color)"
                 : analisisEntrada?.sufijo
                 ? "var(--range-end-color)"
                 : "var(--text-secondary)",
@@ -371,7 +369,7 @@ export default function FormularioRegistro({
               ? `⚡ Atajo literal: [${analisisEntrada.cat.atajo}] -> ${analisisEntrada.cat.nombre}`
               : analisisEntrada?.sufijo
               ? `Sin coincidencia literal para "${analisisEntrada.sufijo}"`
-              : `📅 ${formatearFechaDMY(fechaSeleccionada)} · ${categoria}`}
+              : `📅 ${formatearFechaDMY(fechaSeleccionada)}`}
           </small>
         )}
 

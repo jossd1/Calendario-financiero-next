@@ -10,7 +10,7 @@ import type {
   TransaccionDTO,
 } from "@/types";
 
-interface MovimientosRecientesProps {
+interface AccionesRecientesProps {
   actividades: ActividadRecienteItem[];
   categorias: CategoriaDTO[];
   moneda: string;
@@ -46,7 +46,7 @@ function renderIconoAccion(accion: AccionActividad) {
   }
 }
 
-export default function MovimientosRecientes({
+export default function AccionesRecientes({
   actividades,
   categorias,
   moneda,
@@ -54,7 +54,7 @@ export default function MovimientosRecientes({
   modoPrivacidad,
   onEditarTx,
   onAbrirPapelera,
-}: MovimientosRecientesProps) {
+}: AccionesRecientesProps) {
   const visibles = actividades.slice(0, maxItems);
 
   const colorPorCategoria = useMemo(() => {
@@ -76,7 +76,7 @@ export default function MovimientosRecientes({
         }}
       >
         <h4 className="panel-title" style={{ fontSize: "0.92rem" }}>
-          Movimientos Recientes
+          Acciones Recientes
         </h4>
         <span style={{ fontSize: "0.74rem", color: "var(--text-muted)" }}>
           {visibles.length} reg.
@@ -170,7 +170,7 @@ export default function MovimientosRecientes({
             padding: "10px 0",
           }}
         >
-          Sin movimientos recientes en este periodo.
+          Sin acciones recientes en este periodo.
         </div>
       )}
     </aside>

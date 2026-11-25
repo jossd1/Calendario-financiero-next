@@ -64,7 +64,7 @@ export default function PinLockScreen() {
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: "2rem", marginBottom: "8px" }}>🔒</div>
           <h1 className="panel-title" style={{ fontSize: "1.2rem" }}>
-            Calendario Financiero (S/)
+            Calendario Financiero
           </h1>
           <p
             style={{

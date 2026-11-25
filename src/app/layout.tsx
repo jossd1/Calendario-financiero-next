@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
-  title: "Calendario Financiero (S/)",
+  title: "Calendario Financiero",
   description: "Gestión financiera personal y corporativa en Soles (S/)",
   icons: {
     icon: "/img/logo.png",

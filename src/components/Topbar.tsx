@@ -14,6 +14,7 @@ interface TopbarProps {
   programadosActivos: boolean;
   modoPrivacidad: boolean;
   paletaSobria: boolean;
+  vistaSimple: boolean;
   mostrarBotonPaletaTopbar: boolean;
   authPinActivo: boolean;
   textos: TextosUI;
@@ -21,6 +22,7 @@ interface TopbarProps {
   onGuardarTexto: (clave: string, valor: string) => void;
   onTogglePrivacidad: () => void;
   onTogglePaletaSobria: () => void;
+  onToggleVistaSimple: () => void;
   onBloquearPin: () => void;
   onCambiarPerfil: (perfilId: number) => void;
   onAbrirCategorias: () => void;
@@ -39,6 +41,7 @@ export default function Topbar({
   programadosActivos,
   modoPrivacidad,
   paletaSobria,
+  vistaSimple,
   mostrarBotonPaletaTopbar,
   authPinActivo,
   textos,
@@ -46,6 +49,7 @@ export default function Topbar({
   onGuardarTexto,
   onTogglePrivacidad,
   onTogglePaletaSobria,
+  onToggleVistaSimple,
   onBloquearPin,
   onCambiarPerfil,
   onAbrirCategorias,
@@ -64,10 +68,13 @@ export default function Topbar({
     };
   });
 
+  const monedaInfo = obtenerMonedaInfo(perfilActual.moneda);
+
   return (
     <header className="topbar">
       <div className="topbar-inner">
         <div className="topbar-left">
+          
           <button
             type="button"
             onClick={() => {
@@ -81,7 +88,14 @@ export default function Topbar({
               textos={textos}
               editMode={editModeTextos}
               onGuardarTexto={onGuardarTexto}
-            />
+            />{" "}
+            <span
+              className="tabular-nums"
+              style={{ color: "var(--text-secondary)", fontWeight: 600 }}
+              title={`Moneda activa: ${monedaInfo.nombre}`}
+            >
+              ({monedaInfo.simbolo})
+            </span>
           </button>
 
           <div className="profile-combo">
@@ -104,34 +118,32 @@ export default function Topbar({
             />
           </div>
 
-          {mostrarBotonPaletaTopbar && (
+          <div className="mode-dual">
+            {mostrarBotonPaletaTopbar && (
+              <button
+                type="button"
+                onClick={onTogglePaletaSobria}
+                className={`mode-dual-btn ${paletaSobria ? "is-active" : ""}`}
+                title={
+                  paletaSobria
+                    ? "Paleta sobria activa (clic para restaurar colores)"
+                    : "Activar paleta sobria oscura"
+                }
+                aria-label="Alternar paleta sobria oscura"
+              >
+                ◐
+              </button>
+            )}
             <button
               type="button"
-              onClick={onTogglePaletaSobria}
-              className={`topbar-palette-btn ${paletaSobria ? "is-active" : ""}`}
-              title={
-                paletaSobria
-                  ? "Paleta sobria activa (clic para restaurar colores)"
-                  : "Activar paleta sobria oscura"
-              }
-              aria-label="Alternar paleta sobria oscura"
+              onClick={onToggleVistaSimple}
+              className={`mode-dual-btn ${vistaSimple ? "is-active" : ""}`}
+              title="Cambiar a Vista Simple estándar"
+              aria-label="Cambiar a Vista Simple estándar"
             >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.9"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
-              </svg>
+              ◫
             </button>
-          )}
+          </div>
         </div>
 
         <div className="topbar-actions">

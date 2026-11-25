@@ -1,4 +1,4 @@
-import { and, between, desc, eq, gt } from "drizzle-orm";
+import { and, between, desc, eq, gt, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { transacciones } from "@/db/schema";
 import { obtenerAjustesApp } from "@/lib/ajustes";
@@ -67,6 +67,7 @@ export async function compilarEstadoDashboard(
   if (params.vista === "dia" || params.vista === "anual") vista = params.vista;
   else if (params.vista === "semana" && ajustes.vistaSemanal) vista = "semana";
   else if (params.vista === "general" && ajustes.vistaGeneral) vista = "general";
+  if (ajustes.vistaSimple) vista = "mensual";
 
   const rawFechaRef = esFechaISOValida(params.fecha) ? params.fecha : hoyIso;
   const fechaRef = limitarFechaAnios(rawFechaRef, ajustes.limitarAniosCalendario);
@@ -128,6 +129,30 @@ export async function compilarEstadoDashboard(
     .filter((tx) => tx.tipo === "egreso")
     .reduce((acc, tx) => acc + tx.monto, 0);
   const balanceNeto = totalIngresos - totalEgresos;
+  const condicionesSaldo = [
+    eq(transacciones.perfil_id, perfilActual.id),
+    eq(transacciones.eliminado, false),
+    gt(transacciones.monto, "0"),
+  ];
+  if (ajustes.programadosActivos && !ajustes.sumarProgramadosEnKpi) {
+    condicionesSaldo.push(eq(transacciones.estado, "pagado"));
+  }
+  const filasSaldoGeneral = await db
+    .select({
+      tipo: transacciones.tipo,
+      total: sql<string>`COALESCE(SUM(${transacciones.monto}), 0)`,
+    })
+    .from(transacciones)
+    .where(and(...condicionesSaldo))
+    .groupBy(transacciones.tipo);
+
+  let ingGeneral = 0;
+  let egrGeneral = 0;
+  for (const row of filasSaldoGeneral) {
+    if (row.tipo === "ingreso") ingGeneral += Number(row.total);
+    else egrGeneral += Number(row.total);
+  }
+  const balanceGeneralNeto = ingGeneral - egrGeneral;
 
   const topEgresoKpi = ajustes.kpiTopEgreso
     ? calcularTopEgresoKpi(txPeriodo, totalEgresos, todas, moneda)
@@ -285,6 +310,7 @@ export async function compilarEstadoDashboard(
     total_ingresos: Number(totalIngresos.toFixed(2)),
     total_egresos: Number(totalEgresos.toFixed(2)),
     balance_neto: Number(balanceNeto.toFixed(2)),
+    balance_general_neto: Number(balanceGeneralNeto.toFixed(2)),
     comparativa_kpi: comparativaKpi,
     top_egreso_kpi: topEgresoKpi,
     categorias: todas,

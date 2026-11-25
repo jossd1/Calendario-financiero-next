@@ -21,6 +21,8 @@ export interface AjustesAppConfig {
   kpiTopEgreso: boolean;
   vistaSemanal: boolean;
   vistaGeneral: boolean;
+  vistaSimple: boolean;
+  barraPreviewRegistro: boolean;
   hoverPreviewDia: boolean;
   mostrarNetoCeldas: boolean;
   limitarAniosCalendario: boolean;
@@ -187,6 +189,7 @@ export interface DashboardEstadoDTO {
   total_ingresos: number;
   total_egresos: number;
   balance_neto: number;
+  balance_general_neto: number;
   comparativa_kpi: ComparativaKpiDTO | null;
   top_egreso_kpi: TopEgresoKpiDTO | null;
   categorias: CategoriaDTO[];

@@ -134,6 +134,16 @@ export default function SeccionApariencia({
           void onActualizarConfig({ mostrarMovimientosRecientes: v })
         }
       />
+
+      <AjustesToggleRow
+        titulo="Barra de Vista Previa en Registro"
+        descripcion="Muestra una barra gris en Modo Completo que se colorea al detectar un atajo válido."
+        badge="Activo"
+        checked={ajustes.barraPreviewRegistro}
+        onChange={(v) =>
+          void onActualizarConfig({ barraPreviewRegistro: v })
+        }
+      />
     </AjustesCard>
   );
 }
