@@ -2,17 +2,17 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAnalisisRango } from "@/hooks/useAnalisisRango";
-import { MAX_ANIO_CALENDARIO, MIN_ANIO_CALENDARIO } from "@/lib/dashboard/periodos";
+import {
+  MAX_ANIO_CALENDARIO,
+  MIN_ANIO_CALENDARIO,
+} from "@/lib/dashboard/periodos";
 import { addDaysISO, buildIsoDate } from "@/lib/format";
 import type {
-  AccionActividad,
-  ActividadRecienteItem,
   AjustesAppConfig,
   DashboardEstadoDTO,
   FlashMensaje,
   ModoAnalisis,
   TextosUI,
-  TransaccionDTO,
   VistaCalendario,
 } from "@/types";
 
@@ -23,9 +23,8 @@ interface QueryState {
   analisisDesde: string;
   analisisHasta: string;
   analisisTipo: "todos" | "ingreso" | "egreso";
-  historialCategoria: string;
-  historialTipo: "todos" | "ingreso" | "egreso";
-  historialBusqueda: string;
+  historialMes: string;
+  historialAnio: string;
   generalConsolidado: boolean;
 }
 
@@ -41,38 +40,29 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
   );
   const [focusPing, setFocusPing] = useState<number>(0);
 
-  const [filtroCategoria, setFiltroCategoria] = useState<string>("todas");
-  const [filtroTipo, setFiltroTipo] = useState<"todos" | "ingreso" | "egreso">(
-    "todos"
+  const [subperfilRegistroId, setSubperfilRegistroId] = useState<number | null>(
+    initialEstado.subperfil_activo_id ?? initialEstado.subperfiles[0]?.id ?? null
   );
-  const [filtroBusqueda, setFiltroBusqueda] = useState<string>("");
+
+  const [historialMes, setHistorialMes] = useState<string>("todos");
+  const [historialAnio, setHistorialAnio] = useState<string>(
+    initialEstado.hoy_iso.slice(0, 4)
+  );
   const [generalConsolidado, setGeneralConsolidado] = useState<boolean>(false);
 
   const [flashes, setFlashes] = useState<FlashMensaje[]>([]);
   const [bottomToasts, setBottomToasts] = useState<BottomToast[]>([]);
-  const [eventosSesion, setEventosSesion] = useState<ActividadRecienteItem[]>(
-    []
-  );
 
-  const registrarActividad = useCallback(
-    (accion: AccionActividad, tx: TransaccionDTO) => {
-      setEventosSesion((prev) => {
-        const filtrado = prev.filter((item) => item.txId !== tx.id);
-        const nuevo: ActividadRecienteItem = {
-          key: `${accion}-${tx.id}-${Date.now()}`,
-          txId: tx.id,
-          accion,
-          tx,
-        };
-        return [nuevo, ...filtrado].slice(0, 20);
-      });
-    },
-    []
-  );
-
-  const limpiarEventosSesion = useCallback(() => {
-    setEventosSesion([]);
-  }, []);
+  useEffect(() => {
+    if (estado.subperfil_activo_id) {
+      setSubperfilRegistroId(estado.subperfil_activo_id);
+      return;
+    }
+    const existe = estado.subperfiles.some((s) => s.id === subperfilRegistroId);
+    if (!existe) {
+      setSubperfilRegistroId(estado.subperfiles[0]?.id ?? null);
+    }
+  }, [estado.subperfil_activo_id, estado.subperfiles, subperfilRegistroId]);
 
   const notificar = useCallback(
     (tipo: "success" | "error", texto: string) => {
@@ -108,9 +98,8 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
     analisisDesde: initialEstado.analisis.desde,
     analisisHasta: initialEstado.analisis.hasta,
     analisisTipo: "todos",
-    historialCategoria: "todas",
-    historialTipo: "todos",
-    historialBusqueda: "",
+    historialMes: "todos",
+    historialAnio: initialEstado.hoy_iso.slice(0, 4),
     generalConsolidado: false,
   });
 
@@ -128,9 +117,8 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
         analisisDesde: next.analisisDesde,
         analisisHasta: next.analisisHasta,
         analisisTipo: next.analisisTipo,
-        historialCategoria: next.historialCategoria,
-        historialTipo: next.historialTipo,
-        historialBusqueda: next.historialBusqueda,
+        historialMes: next.historialMes,
+        historialAnio: next.historialAnio,
         generalConsolidado: next.generalConsolidado ? "1" : "0",
       });
 
@@ -179,9 +167,8 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
       analisisDesde: rango.manualDesde,
       analisisHasta: rango.manualHasta,
       analisisTipo: rango.manualTipo,
-      historialCategoria: filtroCategoria,
-      historialTipo: filtroTipo,
-      historialBusqueda: filtroBusqueda,
+      historialMes,
+      historialAnio,
       generalConsolidado,
     };
   }, [
@@ -191,9 +178,8 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
     rango.manualDesde,
     rango.manualHasta,
     rango.manualTipo,
-    filtroCategoria,
-    filtroTipo,
-    filtroBusqueda,
+    historialMes,
+    historialAnio,
     generalConsolidado,
   ]);
 
@@ -215,9 +201,6 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
           if (parcial.vistaSemanal === false && siguienteVista === "semana") {
             siguienteVista = "mensual";
           }
-          if (parcial.vistaGeneral === false && siguienteVista === "general") {
-            siguienteVista = "mensual";
-          }
           await refrescarEstado({ vista: siguienteVista });
         }
       } catch {
@@ -225,6 +208,20 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
       }
     },
     [lanzarToastSutil, refrescarEstado]
+  );
+
+  const rotarSubperfilRegistro = useCallback(
+    (delta: number) => {
+      const lista = estado.subperfiles;
+      if (lista.length <= 1) return;
+      const idx = lista.findIndex((s) => s.id === subperfilRegistroId);
+      const baseIdx = idx >= 0 ? idx : 0;
+      const nextIdx = (baseIdx + delta + lista.length) % lista.length;
+      const elegido = lista[nextIdx];
+      setSubperfilRegistroId(elegido.id);
+      lanzarToastSutil(`Subperfil: ${elegido.icono} ${elegido.nombre}`);
+    },
+    [estado.subperfiles, subperfilRegistroId, lanzarToastSutil]
   );
 
   const handleClicDia = async (fechaIso: string) => {
@@ -288,6 +285,16 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
       return;
     }
 
+    if (rango.modoClick === "ver_dia") {
+      const mesStr = String(mes).padStart(2, "0");
+      const anioStr = String(anio);
+      setHistorialMes(mesStr);
+      setHistorialAnio(anioStr);
+      await refrescarEstado({ historialMes: mesStr, historialAnio: anioStr });
+      document.getElementById("movimientos")?.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+
     rango.setModoAnalisis("auto");
     await refrescarEstado({
       vista: "mensual",
@@ -310,18 +317,12 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
   };
 
   const handleCambiarFiltrosHistorial = useCallback(
-    async (filtros: {
-      categoria: string;
-      tipo: "todos" | "ingreso" | "egreso";
-      busqueda: string;
-    }) => {
-      setFiltroCategoria(filtros.categoria);
-      setFiltroTipo(filtros.tipo);
-      setFiltroBusqueda(filtros.busqueda);
+    async (filtros: { mes: string; anio: string }) => {
+      setHistorialMes(filtros.mes);
+      setHistorialAnio(filtros.anio);
       await refrescarEstado({
-        historialCategoria: filtros.categoria,
-        historialTipo: filtros.tipo,
-        historialBusqueda: filtros.busqueda,
+        historialMes: filtros.mes,
+        historialAnio: filtros.anio,
       });
     },
     [refrescarEstado]
@@ -332,16 +333,15 @@ export function useDashboardState(initialEstado: DashboardEstadoDTO) {
     diaSeleccionado,
     setDiaSeleccionado,
     focusPing,
+    setFocusPing,
+    subperfilRegistroId,
+    setSubperfilRegistroId,
+    rotarSubperfilRegistro,
     ...rango,
-    filtroCategoria,
-    setFiltroCategoria,
-    filtroTipo,
-    setFiltroTipo,
-    filtroBusqueda,
-    eventosSesion,
-    registrarActividad,
-    limpiarEventosSesion,
-    setFiltroBusqueda,
+    historialMes,
+    setHistorialMes,
+    historialAnio,
+    setHistorialAnio,
     generalConsolidado,
     setGeneralConsolidado,
     flashes,

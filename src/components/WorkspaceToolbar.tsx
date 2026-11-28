@@ -1,6 +1,6 @@
 "use client";
 
-import type { VistaCalendario } from "@/types";
+import type { SubperfilDTO, VistaCalendario } from "@/types";
 
 interface WorkspaceToolbarProps {
   vista: VistaCalendario;
@@ -8,8 +8,10 @@ interface WorkspaceToolbarProps {
   fechaAnterior: string;
   fechaSiguiente: string;
   vistaSemanalActiva: boolean;
-  vistaGeneralActiva: boolean;
+  subperfiles: SubperfilDTO[];
+  subperfilActivoId: number | null;
   onCambiarVista: (vista: VistaCalendario) => void;
+  onCambiarSubperfil: (subperfilId: number | null) => void;
   onNavegarPeriodo: (fecha: string) => void;
   onIrHoy: () => void;
 }
@@ -20,8 +22,10 @@ export default function WorkspaceToolbar({
   fechaAnterior,
   fechaSiguiente,
   vistaSemanalActiva,
-  vistaGeneralActiva,
+  subperfiles,
+  subperfilActivoId,
   onCambiarVista,
+  onCambiarSubperfil,
   onNavegarPeriodo,
   onIrHoy,
 }: WorkspaceToolbarProps) {
@@ -68,15 +72,40 @@ export default function WorkspaceToolbar({
           </button>
         </div>
 
-        {vistaGeneralActiva && (
-          <button
-            type="button"
-            className={`view-tab-general ${vista === "general" ? "active" : ""}`}
-            onClick={() => onCambiarVista("general")}
-            title="Resumen histórico completo de todo tu historial"
-          >
-            🌐 General
-          </button>
+        <button
+          type="button"
+          className={`view-tab-general ${vista === "general" ? "active" : ""}`}
+          onClick={() => onCambiarVista("general")}
+          title="Resumen histórico completo de todo tu historial"
+        >
+          🌐 General
+        </button>
+
+        {subperfiles.length > 0 && (
+          <div className="mode-pill-group" role="group" aria-label="Filtrar subperfil">
+            <button
+              type="button"
+              onClick={() => onCambiarSubperfil(null)}
+              className={`mode-pill-btn ${
+                subperfilActivoId === null ? "active-fecha" : ""
+              }`}
+            >
+              Todos
+            </button>
+            {subperfiles.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => onCambiarSubperfil(s.id)}
+                className={`mode-pill-btn ${
+                  subperfilActivoId === s.id ? "active-ver-dia" : ""
+                }`}
+                title={`Filtrar por ${s.nombre} (atajo: ${s.atajo})`}
+              >
+                {s.icono} {s.nombre}
+              </button>
+            ))}
+          </div>
         )}
       </div>
 

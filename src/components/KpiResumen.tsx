@@ -37,7 +37,7 @@ export default function KpiResumen({
   onGuardarTexto,
 }: KpiResumenProps) {
   const mostrarCuartoKpi = Boolean(mostrarTopEgreso && topEgresoKpi);
-  const balanceColor = balanceNeto >= 0 ? "#38bdf8" : "#ef4444";
+  const balanceColor = balanceNeto >= 0 ? "var(--neutral-color)" : "var(--expense-color)";
 
   const renderDeltaPct = (delta: number | null, invertirColores = false) => {
     if (delta === null) {
@@ -77,8 +77,8 @@ export default function KpiResumen({
             className="kpi-icon-badge"
             style={{
               color: "var(--income-color)",
-              backgroundColor: "rgba(16, 185, 129, 0.12)",
-              borderColor: "rgba(16, 185, 129, 0.28)",
+              backgroundColor: "var(--income-soft)",
+              borderColor: "rgba(16, 185, 129, 0.25)",
             }}
             aria-hidden="true"
           >
@@ -125,8 +125,8 @@ export default function KpiResumen({
             className="kpi-icon-badge"
             style={{
               color: "var(--expense-color)",
-              backgroundColor: "rgba(239, 68, 68, 0.12)",
-              borderColor: "rgba(239, 68, 68, 0.28)",
+              backgroundColor: "var(--expense-soft)",
+              borderColor: "rgba(239, 68, 68, 0.25)",
             }}
             aria-hidden="true"
           >
@@ -175,12 +175,9 @@ export default function KpiResumen({
               color: balanceColor,
               backgroundColor:
                 balanceNeto >= 0
-                  ? "rgba(56, 189, 248, 0.12)"
-                  : "rgba(239, 68, 68, 0.12)",
-              borderColor:
-                balanceNeto >= 0
-                  ? "rgba(56, 189, 248, 0.28)"
-                  : "rgba(239, 68, 68, 0.28)",
+                  ? "var(--accent-soft)"
+                  : "var(--expense-soft)",
+              borderColor: "rgba(148, 163, 184, 0.25)",
             }}
             aria-hidden="true"
           >
@@ -222,6 +219,7 @@ export default function KpiResumen({
           </div>
         )}
         <span className="kpi-meta">
+          {tituloPeriodo} ·{" "}
           <EditableText
             clave="kpiBalanceSub"
             textos={textos}
@@ -233,8 +231,13 @@ export default function KpiResumen({
 
       {mostrarCuartoKpi && topEgresoKpi && (
         <article
-          className="kpi-card"
-          style={{ "--kpi-top-accent": topEgresoKpi.color } as CSSProperties}
+          className="kpi-card kpi-top-egreso-card"
+          style={
+            {
+              "--kpi-top-accent": topEgresoKpi.color,
+              "--kpi-cat-color": topEgresoKpi.color,
+            } as CSSProperties
+          }
         >
           <div className="kpi-card-top">
             <span
@@ -242,8 +245,8 @@ export default function KpiResumen({
               style={{ display: "inline-flex", alignItems: "center", gap: "7px" }}
             >
               <span
-                className="cat-color-dot"
-                style={{ backgroundColor: topEgresoKpi.color }}
+                className="cat-color-dot kpi-top-dot"
+                style={{ backgroundColor: "var(--kpi-cat-color)" }}
               />
               <EditableText
                 clave="kpiTopEgresoTitulo"
@@ -252,33 +255,19 @@ export default function KpiResumen({
                 onGuardarTexto={onGuardarTexto}
               />
             </span>
-            <span
-              className="kpi-icon-badge"
-              style={{
-                color: topEgresoKpi.color,
-                backgroundColor: `${topEgresoKpi.color}20`,
-                borderColor: `${topEgresoKpi.color}45`,
-              }}
-              aria-hidden="true"
-            >
+            <span className="kpi-icon-badge kpi-top-badge" aria-hidden="true">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 2c.5 4-3 6-3 10a4 4 0 0 0 8 0c0-2.5-1.5-4.5-2-6-1.5 1.5-2 3-3 4 0-3 1-5.5 0-8z" />
               </svg>
             </span>
           </div>
-          <strong
-            className="kpi-value"
-            style={{
-              fontSize: "1.45rem",
-              color: topEgresoKpi.color,
-              lineHeight: 1.2,
-            }}
-          >
+          <strong className="kpi-value kpi-top-cat-name">
             {topEgresoKpi.categoria}
           </strong>
           <div
-            className={`tabular-nums ${modoPrivacidad ? "privacy-dots" : ""}`}
-            style={{ fontSize: "0.85rem", fontWeight: 600, color: "#f87171" }}
+            className={`tabular-nums kpi-top-amount ${
+              modoPrivacidad ? "privacy-dots" : ""
+            }`}
           >
             {mostrarMontoMoneda(topEgresoKpi.monto_fmt, modoPrivacidad, moneda)} (
             {topEgresoKpi.porcentaje}%)

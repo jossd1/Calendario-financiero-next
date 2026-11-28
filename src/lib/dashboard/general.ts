@@ -15,7 +15,8 @@ import type {
 export async function compilarDatosGenerales(
   perfilId: number,
   monedaPerfil: string,
-  consolidado: boolean
+  consolidado: boolean,
+  subperfilId: number | null = null
 ): Promise<DatosGeneralDTO> {
   const moneda = obtenerMonedaInfo(monedaPerfil).codigo;
   let perfilIdsIncluidos = [perfilId];
@@ -33,6 +34,15 @@ export async function compilarDatosGenerales(
     perfilesOmitidos = Math.max(0, todosPerfiles.length - perfilIdsIncluidos.length);
   }
 
+  const condicionPerfil = consolidado
+    ? inArray(transacciones.perfil_id, perfilIdsIncluidos)
+    : subperfilId
+    ? and(
+        eq(transacciones.perfil_id, perfilId),
+        eq(transacciones.subperfil_id, subperfilId)
+      )
+    : eq(transacciones.perfil_id, perfilId);
+
   const filasTx = await db
     .select()
     .from(transacciones)
@@ -40,9 +50,7 @@ export async function compilarDatosGenerales(
       and(
         eq(transacciones.eliminado, false),
         gt(transacciones.monto, "0"),
-        consolidado
-          ? inArray(transacciones.perfil_id, perfilIdsIncluidos)
-          : eq(transacciones.perfil_id, perfilId)
+        condicionPerfil
       )
     )
     .orderBy(asc(transacciones.fecha), asc(transacciones.id));

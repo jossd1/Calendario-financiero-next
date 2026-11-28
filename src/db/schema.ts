@@ -22,8 +22,27 @@ export const perfiles = pgTable("perfiles", {
     "Cuenta principal en Soles (S/)"
   ),
   moneda: varchar("moneda", { length: 10 }).default("PEN"),
+  orden: integer("orden").notNull().default(0),
   creado_en: timestamp("creado_en").defaultNow(),
 });
+
+export const subperfiles = pgTable(
+  "subperfiles",
+  {
+    id: serial("id").primaryKey(),
+    perfil_id: integer("perfil_id")
+      .notNull()
+      .references(() => perfiles.id, { onDelete: "cascade" }),
+    nombre: varchar("nombre", { length: 40 }).notNull(),
+    atajo: varchar("atajo", { length: 10 }).notNull(),
+    icono: varchar("icono", { length: 10 }).notNull().default("💳"),
+    orden: integer("orden").notNull().default(0),
+  },
+  (table) => [
+    unique("subperfiles_perfil_id_nombre_key").on(table.perfil_id, table.nombre),
+    index("idx_subperf_perfil").on(table.perfil_id),
+  ]
+);
 
 export const categorias = pgTable(
   "categorias",
@@ -51,6 +70,9 @@ export const transacciones = pgTable(
     perfil_id: integer("perfil_id")
       .notNull()
       .references(() => perfiles.id, { onDelete: "cascade" }),
+    subperfil_id: integer("subperfil_id").references(() => subperfiles.id, {
+      onDelete: "set null",
+    }),
     tipo: varchar("tipo", { length: 10 }).notNull(),
     monto: numeric("monto", { precision: 12, scale: 2 }).notNull(),
     categoria: varchar("categoria", { length: 60 }).notNull(),

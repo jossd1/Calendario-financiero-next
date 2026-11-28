@@ -5,16 +5,18 @@ import EditableText from "@/components/EditableText";
 import CamposCompletosRegistro from "@/components/registro/CamposCompletosRegistro";
 import { analizarEntradaMonto } from "@/lib/atajos";
 import { formatearFechaDMY } from "@/lib/format";
-import { formatoMoneda, obtenerMonedaInfo } from "@/lib/monedas";
+import { obtenerMonedaInfo } from "@/lib/monedas";
 import type {
   CategoriaDTO,
+  SubperfilDTO,
   TextosUI,
   TipoMovimiento,
-  TransaccionDTO,
 } from "@/types";
 
 interface FormularioRegistroProps {
   moneda: string;
+  subperfiles: SubperfilDTO[];
+  subperfilId: number | null;
   categoriasEgreso: CategoriaDTO[];
   categoriasIngreso: CategoriaDTO[];
   categoriaPredeterminada: string;
@@ -28,14 +30,17 @@ interface FormularioRegistroProps {
   onGuardarTexto: (clave: string, valor: string) => void;
   onCambiarFechaSeleccionada: (fecha: string) => void;
   onMoverDiaFlecha: (deltaDias: number) => void;
-  onModoSimpleChange: (activo: boolean) => void;
-  onRegistrarExito: (fechaTx: string, txCreada: TransaccionDTO) => Promise<void>;
+  onCambiarSubperfil: (id: number) => void;
+  onRotarSubperfil: (delta: number) => void;
+  onRegistrarExito: (fechaTx: string) => Promise<void>;
   onNotificar: (tipo: "success" | "error", texto: string) => void;
   onToastSutil: (texto: string) => void;
 }
 
 export default function FormularioRegistro({
   moneda,
+  subperfiles,
+  subperfilId,
   categoriasEgreso,
   categoriasIngreso,
   categoriaPredeterminada,
@@ -49,7 +54,8 @@ export default function FormularioRegistro({
   onGuardarTexto,
   onCambiarFechaSeleccionada,
   onMoverDiaFlecha,
-  onModoSimpleChange,
+  onCambiarSubperfil,
+  onRotarSubperfil,
   onRegistrarExito,
   onNotificar,
   onToastSutil,
@@ -64,7 +70,7 @@ export default function FormularioRegistro({
     categoriasEgreso[0] ??
     categoriasIngreso[0];
 
-  const [modoSimple, setModoSimple] = useState(false);
+  const [modoSimple, setModoSimple] = useState(true);
   const [tipo, setTipo] = useState<TipoMovimiento>(catInicial?.tipo ?? "egreso");
   const [montoTexto, setMontoTexto] = useState("");
   const [categoria, setCategoria] = useState<string>(catInicial?.nombre ?? "");
@@ -80,18 +86,23 @@ export default function FormularioRegistro({
   const monedaInfo = obtenerMonedaInfo(moneda);
 
   useEffect(() => {
-    const guardado = window.localStorage.getItem("cf_modo_simple") === "1";
-    setModoSimple(guardado);
-    onModoSimpleChange(guardado);
-  }, [onModoSimpleChange]);
+    const raw = window.localStorage.getItem("cf_modo_simple");
+    setModoSimple(raw !== "0");
+  }, []);
+
+  const restaurarFoco = () => {
+    requestAnimationFrame(() => {
+      if (!modoSimpleRef.current && ultimoCampoActivoRef.current === "descripcion") {
+        inputDescRef.current?.focus();
+      } else {
+        inputMontoRef.current?.focus();
+      }
+    });
+  };
 
   useEffect(() => {
     if (focusPing <= 0) return;
-    if (!modoSimpleRef.current && ultimoCampoActivoRef.current === "descripcion") {
-      inputDescRef.current?.focus();
-    } else {
-      inputMontoRef.current?.focus();
-    }
+    restaurarFoco();
   }, [focusPing]);
 
   useEffect(() => {
@@ -117,25 +128,34 @@ export default function FormularioRegistro({
   }, [categoriaPredeterminada, todasCategorias]);
 
   const analisisEntrada = useMemo(
-    () => analizarEntradaMonto(montoTexto, todasCategorias),
-    [montoTexto, todasCategorias]
+    () => analizarEntradaMonto(montoTexto, todasCategorias, subperfiles),
+    [montoTexto, todasCategorias, subperfiles]
   );
 
   const toggleModoSimple = () => {
     const siguiente = !modoSimple;
     setModoSimple(siguiente);
-    onModoSimpleChange(siguiente);
     if (siguiente) ultimoCampoActivoRef.current = "monto";
     window.localStorage.setItem("cf_modo_simple", siguiente ? "1" : "0");
     requestAnimationFrame(() => inputMontoRef.current?.focus());
   };
 
   const handleMontoKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (montoTexto.trim() !== "") return;
-    if (e.key === "ArrowLeft") { e.preventDefault(); onMoverDiaFlecha(-1); }
-    else if (e.key === "ArrowRight") { e.preventDefault(); onMoverDiaFlecha(1); }
-    else if (e.key === "ArrowUp") { e.preventDefault(); onMoverDiaFlecha(-7); }
-    else if (e.key === "ArrowDown") { e.preventDefault(); onMoverDiaFlecha(7); }
+    if (montoTexto.trim() === "") {
+      if (e.key === "ArrowLeft") { e.preventDefault(); onMoverDiaFlecha(-1); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); onMoverDiaFlecha(1); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); onMoverDiaFlecha(-7); }
+      else if (e.key === "ArrowDown") { e.preventDefault(); onMoverDiaFlecha(7); }
+      return;
+    }
+
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      onRotarSubperfil(-1);
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      onRotarSubperfil(1);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -148,6 +168,13 @@ export default function FormularioRegistro({
     if (!analisisEntrada || !analisisEntrada.monto || Number(analisisEntrada.monto) <= 0) {
       setMontoTexto("");
       onToastSutil("Entrada inválida. Se limpió el campo.");
+      inputMontoRef.current?.focus();
+      return;
+    }
+
+    if (analisisEntrada.subperfilInvalido) {
+      setMontoTexto("");
+      onToastSutil(`Subperfil "${analisisEntrada.subperfilInvalido}" no encontrado.`);
       inputMontoRef.current?.focus();
       return;
     }
@@ -169,6 +196,8 @@ export default function FormularioRegistro({
       setCategoria(categoriaFinal);
     }
 
+    const subFinalId = analisisEntrada.subperfil?.id ?? subperfilId;
+
     setEnviando(true);
     try {
       const res = await fetch("/api/transacciones", {
@@ -178,6 +207,7 @@ export default function FormularioRegistro({
           tipo: tipoFinal,
           monto: analisisEntrada.monto,
           categoria: categoriaFinal,
+          subperfil_id: subFinalId,
           descripcion: modoSimple ? "" : descripcion,
           fecha: fechaSeleccionada,
           estado: "pagado",
@@ -189,26 +219,10 @@ export default function FormularioRegistro({
         return;
       }
 
-      const montoNum = Number(analisisEntrada.monto);
-      const txCreada: TransaccionDTO = {
-        id: Number(data.id),
-        perfil_id: 0,
-        tipo: tipoFinal,
-        monto: montoNum,
-        monto_fmt: formatoMoneda(montoNum, moneda),
-        categoria: categoriaFinal,
-        descripcion: modoSimple ? "" : descripcion,
-        fecha_iso: data.fecha_tx,
-        fecha_fmt: formatearFechaDMY(data.fecha_tx),
-        hora_fmt: "",
-        estado: "pagado",
-        eliminado: false,
-      };
-
       setMontoTexto("");
       setDescripcion("");
       onNotificar("success", data.mensaje ?? "Registrado con éxito.");
-      await onRegistrarExito(data.fecha_tx, txCreada);
+      await onRegistrarExito(data.fecha_tx);
       inputMontoRef.current?.focus();
     } catch {
       onNotificar("error", "Error de red al guardar la transacción.");
@@ -219,6 +233,11 @@ export default function FormularioRegistro({
 
   const usaBarraPreview = !modoSimple && barraPreviewRegistro;
   const atajoDetectado = analisisEntrada?.cat ?? null;
+  const subActivo =
+    analisisEntrada?.subperfil ??
+    subperfiles.find((s) => s.id === subperfilId) ??
+    subperfiles[0] ??
+    null;
 
   const claseBarra = atajoDetectado
     ? atajoDetectado.tipo === "ingreso"
@@ -257,6 +276,29 @@ export default function FormularioRegistro({
       </div>
 
       <form onSubmit={handleSubmit} className="form-stack">
+        {subperfiles.length > 0 && (
+          <div className="subperfil-strip" title="Usa ↑ / ↓ con texto en Monto o clic para cambiar">
+            {subperfiles.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  onCambiarSubperfil(s.id);
+                  restaurarFoco();
+                }}
+                className={`subperfil-chip ${
+                  subActivo?.id === s.id ? "is-active" : ""
+                }`}
+              >
+                <span>{s.icono}</span>
+                <span>{s.nombre}</span>
+                <code>[{s.atajo}]</code>
+              </button>
+            ))}
+          </div>
+        )}
+
         {usaBarraPreview && (
           <div className={claseBarra}>
             <div className="reg-preview-left">
@@ -326,7 +368,7 @@ export default function FormularioRegistro({
                   onGuardarTexto={onGuardarTexto}
                 />
               </label>
-              <div style={{ display: "flex", gap: "6px" }}>
+              <div className="date-hoy-combo">
                 <input
                   id="fecha_tx"
                   name="fecha"
@@ -335,13 +377,17 @@ export default function FormularioRegistro({
                   max={limitarAnios ? "3000-12-31" : undefined}
                   value={fechaSeleccionada}
                   onChange={(e) => onCambiarFechaSeleccionada(e.target.value)}
-                  className="input-control tabular-nums"
+                  className="date-hoy-input tabular-nums"
                   required
                 />
                 <button
                   type="button"
-                  onClick={() => onCambiarFechaSeleccionada(hoyIso)}
-                  className="btn btn-secondary btn-sm"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    onCambiarFechaSeleccionada(hoyIso);
+                    restaurarFoco();
+                  }}
+                  className="date-hoy-btn"
                   title="Ir a hoy"
                 >
                   Hoy
@@ -351,12 +397,14 @@ export default function FormularioRegistro({
           )}
         </div>
 
-        {(!usaBarraPreview && (analisisEntrada?.cat || analisisEntrada?.sufijo || modoSimple)) && (
+        {(!usaBarraPreview && (analisisEntrada?.cat || analisisEntrada?.sufijo || analisisEntrada?.subperfilInvalido || modoSimple)) && (
           <small
             style={{
               fontSize: "0.72rem",
               marginTop: "-6px",
-              color: analisisEntrada?.cat
+              color: analisisEntrada?.subperfilInvalido
+                ? "var(--range-end-color)"
+                : analisisEntrada?.cat
                 ? analisisEntrada.cat.tipo === "ingreso"
                   ? "var(--income-color)"
                   : "var(--expense-color)"
@@ -365,11 +413,13 @@ export default function FormularioRegistro({
                 : "var(--text-secondary)",
             }}
           >
-            {analisisEntrada?.cat
-              ? `⚡ Atajo literal: [${analisisEntrada.cat.atajo}] -> ${analisisEntrada.cat.nombre}`
+            {analisisEntrada?.subperfilInvalido
+              ? `Subperfil "${analisisEntrada.subperfilInvalido}" no encontrado`
+              : analisisEntrada?.cat
+              ? `⚡ [${analisisEntrada.cat.atajo}] → ${analisisEntrada.cat.nombre}${subActivo ? ` · ${subActivo.icono} ${subActivo.nombre}` : ""}`
               : analisisEntrada?.sufijo
               ? `Sin coincidencia literal para "${analisisEntrada.sufijo}"`
-              : `📅 ${formatearFechaDMY(fechaSeleccionada)}`}
+              : `📅 ${formatearFechaDMY(fechaSeleccionada)}${subActivo ? ` · ${subActivo.icono} ${subActivo.nombre}` : ""}`}
           </small>
         )}
 

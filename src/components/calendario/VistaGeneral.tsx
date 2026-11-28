@@ -177,7 +177,9 @@ export default function VistaGeneral({
                 evolucion={datos.evolucion_mensual}
                 moneda={moneda}
                 modoPrivacidad={ajustes.modoPrivacidad}
+                paletaSobria={ajustes.paletaSobria}
               />
+              
             </div>
           )}
 

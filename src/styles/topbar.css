@@ -178,4 +178,30 @@
     display: inline-block;
     vertical-align: middle;
   }
+
+  .profile-quick-arrows {
+    display: inline-flex;
+    align-items: stretch;
+    border-left: 1px solid var(--border-hairline);
+  }
+
+  .profile-quick-arrows button {
+    width: 24px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.95rem;
+    line-height: 1;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  .profile-quick-arrows button + button {
+    border-left: 1px solid var(--border-hairline);
+  }
+
+  .profile-quick-arrows button:hover {
+    background-color: var(--bg-surface-hover);
+    color: var(--text-primary);
+  }
 }

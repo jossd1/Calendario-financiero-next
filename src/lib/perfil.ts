@@ -3,6 +3,7 @@ import { and, asc, count, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { categorias, perfiles, transacciones } from "@/db/schema";
 import { CATEGORIAS_DEFECTO } from "@/lib/format";
+import { asegurarSubperfilesPerfil } from "@/lib/subperfiles";
 import type { CategoriaDTO, PerfilDTO, TipoMovimiento } from "@/types";
 
 export const PERFIL_COOKIE_NAME = "perfil_id";
@@ -24,6 +25,7 @@ function mapearPerfil(row: typeof perfiles.$inferSelect): PerfilDTO {
     nombre: row.nombre,
     descripcion: row.descripcion ?? "",
     moneda: row.moneda ?? "PEN",
+    orden: row.orden ?? 0,
     creado_en: row.creado_en ? row.creado_en.toISOString() : "",
   };
 }
@@ -102,7 +104,7 @@ export async function obtenerPerfilActivo(): Promise<{
   let listaPerfiles = await db
     .select()
     .from(perfiles)
-    .orderBy(asc(perfiles.id));
+    .orderBy(asc(perfiles.orden), asc(perfiles.id));
 
   if (listaPerfiles.length === 0) {
     const [creado] = await db
@@ -111,6 +113,7 @@ export async function obtenerPerfilActivo(): Promise<{
         nombre: "Principal",
         descripcion: "Cuenta principal en Soles (S/)",
         moneda: "PEN",
+        orden: 0,
       })
       .returning();
     listaPerfiles = [creado];
@@ -128,6 +131,7 @@ export async function obtenerPerfilActivo(): Promise<{
   const perfilActualRow = encontrado ?? listaPerfiles[0];
 
   await asegurarCategoriasPerfil(perfilActualRow.id);
+  await asegurarSubperfilesPerfil(perfilActualRow.id);
 
   return {
     perfiles: listaPerfiles.map(mapearPerfil),

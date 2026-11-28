@@ -17,8 +17,6 @@ interface VistaMensualProps {
   rangoMax: string | null;
   rangoDesde: string | null;
   rangoHasta: string | null;
-  hoverPreviewDia: boolean;
-  mostrarNetoCeldas: boolean;
   alertaTopeDiario: number;
   colorPorCategoria: Map<string, string>;
   modoPrivacidad: boolean;
@@ -34,8 +32,6 @@ export default function VistaMensual({
   rangoMax,
   rangoDesde,
   rangoHasta,
-  hoverPreviewDia,
-  mostrarNetoCeldas,
   alertaTopeDiario,
   colorPorCategoria,
   modoPrivacidad,
@@ -147,8 +143,7 @@ export default function VistaMensual({
                     )}
                   </span>
                 )}
-                {mostrarNetoCeldas &&
-                  (celda.ingresos > 0 || celda.egresos > 0) && (
+                {(celda.ingresos > 0 || celda.egresos > 0) && (
                     <span
                       style={{
                         color:
@@ -166,7 +161,7 @@ export default function VistaMensual({
                   )}
               </div>
 
-              {hoverPreviewDia && celda.cantidad > 0 && (
+              {celda.cantidad > 0 && (              
                 <div className="day-hover-popover">
                   <div
                     style={{

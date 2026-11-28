@@ -5,11 +5,11 @@ import { compilarEstadoDashboard } from "@/lib/dashboard";
 export async function GET(request: NextRequest) {
   try {
     if (await estaAppBloqueada()) {
-  return NextResponse.json(
-    { ok: false, error: "Sesión bloqueada por PIN." },
-    { status: 401 }
-  );
-}
+      return NextResponse.json(
+        { ok: false, error: "Sesión bloqueada por PIN." },
+        { status: 401 }
+      );
+    }
     const sp = request.nextUrl.searchParams;
     const estado = await compilarEstadoDashboard({
       vista: sp.get("vista"),
@@ -21,6 +21,8 @@ export async function GET(request: NextRequest) {
       historialCategoria: sp.get("historialCategoria"),
       historialTipo: sp.get("historialTipo"),
       historialBusqueda: sp.get("historialBusqueda"),
+      historialMes: sp.get("historialMes"),
+      historialAnio: sp.get("historialAnio"),
       generalConsolidado: sp.get("generalConsolidado"),
     });
 

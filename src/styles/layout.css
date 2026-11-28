@@ -394,4 +394,57 @@
   .recent-action-ref.act-restaurado { color: #fbbf24; }
   .recent-action-ref.act-pagado { color: #60a5fa; }
   .recent-action-ref.act-registrado { color: var(--text-muted); }
+
+  .btn-celeste {
+    background-color: rgba(56, 189, 248, 0.16);
+    border-color: rgba(56, 189, 248, 0.42);
+    color: #7dd3fc;
+  }
+
+  .btn-celeste:hover:not(:disabled) {
+    background-color: rgba(56, 189, 248, 0.26);
+    border-color: rgba(125, 211, 252, 0.7);
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+
+  .day-movements-card {
+    padding: 16px 18px;
+  }
+
+  .day-movements-scroll {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    max-height: 250px;
+    overflow-y: auto;
+  }
+
+  .day-movement-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 9px;
+    background-color: rgba(6, 9, 17, 0.74);
+  }
+
+  .kpi-top-badge {
+    color: var(--kpi-cat-color, var(--range-end-color));
+    background-color: color-mix(in srgb, var(--kpi-cat-color, #f59e0b) 14%, transparent);
+    border-color: color-mix(in srgb, var(--kpi-cat-color, #f59e0b) 32%, transparent);
+  }
+
+  .kpi-top-cat-name {
+    font-size: 1.45rem;
+    color: var(--kpi-cat-color, var(--range-end-color));
+    line-height: 1.2;
+  }
+
+  .kpi-top-amount {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--expense-color);
+  }
 }

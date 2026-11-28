@@ -59,34 +59,54 @@ export default function SeccionApariencia({
         onChange={(v) => void onActualizarConfig({ vistaSemanal: v })}
       />
       <AjustesToggleRow
-        titulo="Vista General Histórica"
-        descripcion="Habilita el botón 🌐 General con resumen histórico total."
-        badge="Activo"
-        checked={ajustes.vistaGeneral}
-        onChange={(v) => void onActualizarConfig({ vistaGeneral: v })}
-      />
-      <AjustesToggleRow
-        titulo="Hover Preview en Días"
-        descripcion="Muestra un resumen flotante al pasar el cursor por un día."
-        badge="Activo"
-        checked={ajustes.hoverPreviewDia}
-        onChange={(v) => void onActualizarConfig({ hoverPreviewDia: v })}
-      />
-      <AjustesToggleRow
-        titulo="Mostrar Neto Diario en Celdas"
-        descripcion="Muestra una tercera línea con el balance neto en cada día del mes."
-        badge="Activo"
-        checked={ajustes.mostrarNetoCeldas}
-        onChange={(v) => void onActualizarConfig({ mostrarNetoCeldas: v })}
-      />
-      <AjustesToggleRow
         titulo="Limitar Años del Calendario (2000–3000)"
-        descripcion="Evita saltar a años fuera del rango 2000–3000. Desactívalo si necesitas fechas fuera de ese rango."
+        descripcion="Evita saltar a años fuera del rango 2000–3000. Desactívalo si necesitas otras fechas."
         badge="Activo"
         checked={ajustes.limitarAniosCalendario}
         onChange={(v) =>
           void onActualizarConfig({ limitarAniosCalendario: v })
         }
+      />
+      <AjustesToggleRow
+        titulo="Paleta Sobria Oscura"
+        descripcion="Tema suave sin fatiga visual para toda la aplicación y gráficos."
+        badge="Activo"
+        checked={ajustes.paletaSobria}
+        onChange={(v) => void onActualizarConfig({ paletaSobria: v })}
+      />
+      <AjustesToggleRow
+        titulo="Botón Rápido de Paleta en Topbar"
+        descripcion="Muestra u oculta el acceso directo junto al selector de perfil."
+        badge="Activo"
+        checked={ajustes.mostrarBotonPaletaTopbar}
+        onChange={(v) =>
+          void onActualizarConfig({ mostrarBotonPaletaTopbar: v })
+        }
+      />
+      <AjustesToggleRow
+        titulo="Barra de Vista Previa en Registro"
+        descripcion="Muestra la barra de atajo en Modo Completo que se colorea al detectar un atajo."
+        badge="Activo"
+        checked={ajustes.barraPreviewRegistro}
+        onChange={(v) =>
+          void onActualizarConfig({ barraPreviewRegistro: v })
+        }
+      />
+      <AjustesToggleRow
+        titulo="Tarjeta de Movimientos del Día"
+        descripcion="Muestra los movimientos del día seleccionado debajo del registro rápido."
+        badge="Activo"
+        checked={ajustes.mostrarMovimientosDia}
+        onChange={(v) =>
+          void onActualizarConfig({ mostrarMovimientosDia: v })
+        }
+      />
+      <AjustesToggleRow
+        titulo="Historial Completo sin Límite de Altura"
+        descripcion="Despliega todos los registros en la página principal sin caja de scroll."
+        badge="Activo"
+        checked={ajustes.sinLimiteHistorial}
+        onChange={(v) => void onActualizarConfig({ sinLimiteHistorial: v })}
       />
       <AjustesActionRow
         titulo={`Alerta de Tope Diario (${simbolo})`}
@@ -108,42 +128,6 @@ export default function SeccionApariencia({
           style={{ width: "110px", padding: "6px 10px", fontSize: "0.82rem" }}
         />
       </AjustesActionRow>
-
-      <AjustesToggleRow
-        titulo="Paleta Sobria Oscura"
-        descripcion="Reduce la saturación de colores manteniendo el tema oscuro para mayor descanso visual."
-        badge="Activo"
-        checked={ajustes.paletaSobria}
-        onChange={(v) => void onActualizarConfig({ paletaSobria: v })}
-      />
-      <AjustesToggleRow
-        titulo="Botón Rápido de Paleta en Topbar"
-        descripcion="Muestra u oculta el acceso directo junto al selector de perfil."
-        badge="Activo"
-        checked={ajustes.mostrarBotonPaletaTopbar}
-        onChange={(v) =>
-          void onActualizarConfig({ mostrarBotonPaletaTopbar: v })
-        }
-      />
-      <AjustesToggleRow
-        titulo="Widget de Movimientos Recientes"
-        descripcion="Muestra el resumen de actividad reciente debajo del formulario de registro."
-        badge="Activo"
-        checked={ajustes.mostrarMovimientosRecientes}
-        onChange={(v) =>
-          void onActualizarConfig({ mostrarMovimientosRecientes: v })
-        }
-      />
-
-      <AjustesToggleRow
-        titulo="Barra de Vista Previa en Registro"
-        descripcion="Muestra una barra gris en Modo Completo que se colorea al detectar un atajo válido."
-        badge="Activo"
-        checked={ajustes.barraPreviewRegistro}
-        onChange={(v) =>
-          void onActualizarConfig({ barraPreviewRegistro: v })
-        }
-      />
     </AjustesCard>
   );
 }

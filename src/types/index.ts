@@ -6,14 +6,6 @@ export type VistaCalendario = "dia" | "semana" | "mensual" | "anual" | "general"
 export type ModoCalendarioClick = "precargar" | "ver_dia" | "analizar_dia";
 export type ModoAnalisis = "auto" | "manual";
 
-export type AccionActividad =
-  | "Agregado"
-  | "Editado"
-  | "Eliminado"
-  | "Restaurado"
-  | "Pagado"
-  | "Registrado";
-
 export interface AjustesAppConfig {
   configVersion?: number;
   modoPrivacidad: boolean;
@@ -21,12 +13,10 @@ export interface AjustesAppConfig {
   kpiTopEgreso: boolean;
   vistaSemanal: boolean;
   vistaGeneral: boolean;
-  vistaSimple: boolean;
-  barraPreviewRegistro: boolean;
-  hoverPreviewDia: boolean;
-  mostrarNetoCeldas: boolean;
   limitarAniosCalendario: boolean;
-  mostrarMovimientosRecientes: boolean;
+  mostrarMovimientosDia: boolean;
+  sinLimiteHistorial: boolean;
+  barraPreviewRegistro: boolean;
   paletaSobria: boolean;
   mostrarBotonPaletaTopbar: boolean;
   categoriaPredeterminada: string;
@@ -52,7 +42,17 @@ export interface PerfilDTO {
   nombre: string;
   descripcion: string;
   moneda: string;
+  orden: number;
   creado_en: string;
+}
+
+export interface SubperfilDTO {
+  id: number;
+  perfil_id: number;
+  nombre: string;
+  atajo: string;
+  icono: string;
+  orden: number;
 }
 
 export interface CategoriaDTO {
@@ -67,6 +67,8 @@ export interface CategoriaDTO {
 export interface TransaccionDTO {
   id: number;
   perfil_id: number;
+  subperfil_id: number | null;
+  subperfil_nombre: string | null;
   tipo: TipoMovimiento;
   monto: number;
   monto_fmt: string;
@@ -77,13 +79,6 @@ export interface TransaccionDTO {
   hora_fmt: string;
   estado: EstadoMovimiento;
   eliminado: boolean;
-}
-
-export interface ActividadRecienteItem {
-  key: string;
-  txId: number;
-  accion: AccionActividad;
-  tx: TransaccionDTO;
 }
 
 export interface PresupuestoItemDTO {
@@ -178,6 +173,8 @@ export interface AnalisisResultadoDTO {
 export interface DashboardEstadoDTO {
   perfiles: PerfilDTO[];
   perfil_actual: PerfilDTO;
+  subperfiles: SubperfilDTO[];
+  subperfil_activo_id: number | null;
   vista: VistaCalendario;
   fecha_ref: string;
   fecha_anterior: string;
@@ -189,7 +186,6 @@ export interface DashboardEstadoDTO {
   total_ingresos: number;
   total_egresos: number;
   balance_neto: number;
-  balance_general_neto: number;
   comparativa_kpi: ComparativaKpiDTO | null;
   top_egreso_kpi: TopEgresoKpiDTO | null;
   categorias: CategoriaDTO[];
@@ -200,6 +196,7 @@ export interface DashboardEstadoDTO {
   meses_anual: MesAnual[] | null;
   datos_general: DatosGeneralDTO | null;
   transacciones_dia: TransaccionDTO[];
+  movimientos_periodo: TransaccionDTO[];
   transacciones_historial: TransaccionDTO[];
   hay_mas_historial: boolean;
   analisis: AnalisisResultadoDTO;

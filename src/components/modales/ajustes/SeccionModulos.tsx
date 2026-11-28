@@ -31,22 +31,21 @@ export default function SeccionModulos({
           titulo="Modo de Presupuestos"
           descripcion="Elige si los límites aplican cada mes o se configuran por mes puntual."
         >
-          <div style={{ width: "165px" }}>
-            <CustomSelect
-              ariaLabel="Modo de Presupuestos"
-              menuAlign="right"
-              value={ajustes.modoPresupuesto}
-              options={[
-                { value: "base_mensual", label: "Base mensual" },
-                { value: "por_mes", label: "Por mes exacto" },
-              ]}
-              onChange={(v) =>
-                void onActualizarConfig({
-                  modoPresupuesto: v as "base_mensual" | "por_mes",
-                })
-              }
-            />
-          </div>
+          <CustomSelect
+            ariaLabel="Modo de presupuestos"
+            className="compact"
+            menuAlign="right"
+            value={ajustes.modoPresupuesto}
+            options={[
+              { value: "base_mensual", label: "Base mensual" },
+              { value: "por_mes", label: "Por mes exacto" },
+            ]}
+            onChange={(val) =>
+              void onActualizarConfig({
+                modoPresupuesto: val as "base_mensual" | "por_mes",
+              })
+            }
+          />
         </AjustesActionRow>
       )}
       <AjustesToggleRow
@@ -59,7 +58,7 @@ export default function SeccionModulos({
       {ajustes.programadosActivos && (
         <AjustesToggleRow
           titulo="Incluir Pendientes en KPIs"
-          descripcion="Si se desactiva, los pendientes quedan aparte como proyectado."
+          descripcion="Si se desactiva, los pendientes quedan aparte como proyección sin alterar tu saldo real."
           badge="Activo"
           checked={ajustes.sumarProgramadosEnKpi}
           onChange={(v) =>
@@ -76,7 +75,7 @@ export default function SeccionModulos({
       />
       <AjustesToggleRow
         titulo="Vista General: Gráfico de Evolución"
-        descripcion="Gráfico histórico de saldo acumulado y ahorro neto mes a mes."
+        descripcion="Gráfico histórico estilo bolsa y comparativa mensual."
         badge="Activo"
         checked={ajustes.generalMostrarEvolucion}
         onChange={(v) =>
@@ -99,7 +98,7 @@ export default function SeccionModulos({
       />
       <AjustesToggleRow
         titulo="Vista General: Consolidado Multi-Perfil"
-        descripcion="Habilita el selector para ver el total sumado de todos tus perfiles."
+        descripcion="Habilita el selector para ver el total sumado de perfiles con la misma moneda."
         badge="Activo"
         checked={ajustes.generalPermitirConsolidado}
         onChange={(v) =>

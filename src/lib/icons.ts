@@ -2,7 +2,9 @@ export type AppIconName =
   | "ajustes"
   | "perfilEngranaje"
   | "categorias"
-  | "papelera";
+  | "papelera"
+  | "revertir"
+  | "resumen";
 
 export interface AppIconDef {
   src: string;
@@ -10,10 +12,6 @@ export interface AppIconDef {
   alt: string;
 }
 
-/**
- * Coloca tus archivos .svg dentro de: public/icons/
- * Si usas otros nombres de archivo, solo cambia la ruta `src` aquí.
- */
 export const APP_ICONS: Record<AppIconName, AppIconDef> = {
   ajustes: {
     src: "/icons/ajustes.svg",
@@ -34,5 +32,15 @@ export const APP_ICONS: Record<AppIconName, AppIconDef> = {
     src: "/icons/papelera.svg",
     fallback: "🗑️",
     alt: "Papelera",
+  },
+  revertir: {
+    src: "/icons/revertir.svg",
+    fallback: "♻️",
+    alt: "Revertir",
+  },
+  resumen: {
+    src: "/icons/resumen.svg",
+    fallback: "📋",
+    alt: "Resumen",
   },
 };

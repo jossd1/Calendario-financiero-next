@@ -1,4 +1,4 @@
-import { and, between, desc, eq, gt, sql } from "drizzle-orm";
+import { and, between, desc, eq, gt } from "drizzle-orm";
 import { db } from "@/db";
 import { transacciones } from "@/db/schema";
 import { obtenerAjustesApp } from "@/lib/ajustes";
@@ -33,6 +33,7 @@ import {
 } from "@/lib/format";
 import { obtenerMonedaInfo } from "@/lib/monedas";
 import { obtenerCategoriasPerfil, obtenerPerfilActivo } from "@/lib/perfil";
+import { obtenerSubperfilesPerfil } from "@/lib/subperfiles";
 import type {
   ComparativaKpiDTO,
   DashboardEstadoDTO,
@@ -54,6 +55,8 @@ export interface CompilarDashboardParams {
   historialCategoria?: string | null;
   historialTipo?: string | null;
   historialBusqueda?: string | null;
+  historialMes?: string | null;
+  historialAnio?: string | null;
   generalConsolidado?: string | null;
 }
 
@@ -64,14 +67,18 @@ export async function compilarEstadoDashboard(
   const { config: ajustes, textos } = await obtenerAjustesApp();
 
   let vista: VistaCalendario = "mensual";
-  if (params.vista === "dia" || params.vista === "anual") vista = params.vista;
-  else if (params.vista === "semana" && ajustes.vistaSemanal) vista = "semana";
-  else if (params.vista === "general" && ajustes.vistaGeneral) vista = "general";
-  if (ajustes.vistaSimple) vista = "mensual";
+  if (params.vista === "dia" || params.vista === "anual" || params.vista === "general") {
+    vista = params.vista;
+  } else if (params.vista === "semana" && ajustes.vistaSemanal) {
+    vista = "semana";
+  }
 
   const rawFechaRef = esFechaISOValida(params.fecha) ? params.fecha : hoyIso;
   const fechaRef = limitarFechaAnios(rawFechaRef, ajustes.limitarAniosCalendario);
   const { perfiles, perfilActual } = await obtenerPerfilActivo();
+  const { lista: subperfilesLista, subperfilActivoId } =
+    await obtenerSubperfilesPerfil(perfilActual.id);
+  const subperfilMap = new Map(subperfilesLista.map((s) => [s.id, s]));
   const moneda = obtenerMonedaInfo(perfilActual.moneda).codigo;
   const { todas, egresos, ingresos } = await obtenerCategoriasPerfil(
     perfilActual.id
@@ -100,20 +107,25 @@ export async function compilarEstadoDashboard(
     finConsultaGrid = addDaysISO(fin, 6 - ultimoDiaSemana);
   }
 
+  const condGrid = [
+    eq(transacciones.perfil_id, perfilActual.id),
+    eq(transacciones.eliminado, false),
+    between(transacciones.fecha, inicioConsultaGrid, finConsultaGrid),
+    gt(transacciones.monto, "0"),
+  ];
+  if (subperfilActivoId) {
+    condGrid.push(eq(transacciones.subperfil_id, subperfilActivoId));
+  }
+
   const filasGrid = await db
     .select()
     .from(transacciones)
-    .where(
-      and(
-        eq(transacciones.perfil_id, perfilActual.id),
-        eq(transacciones.eliminado, false),
-        between(transacciones.fecha, inicioConsultaGrid, finConsultaGrid),
-        gt(transacciones.monto, "0")
-      )
-    )
+    .where(and(...condGrid))
     .orderBy(desc(transacciones.fecha), desc(transacciones.id));
 
-  const txGrid = filasGrid.map((r) => mapearTransaccion(r, moneda));
+  const txGrid = filasGrid.map((r) =>
+    mapearTransaccion(r, moneda, subperfilMap)
+  );
   const txPeriodoTodos = txGrid.filter(
     (tx) => tx.fecha_iso >= inicio && tx.fecha_iso <= fin
   );
@@ -129,30 +141,6 @@ export async function compilarEstadoDashboard(
     .filter((tx) => tx.tipo === "egreso")
     .reduce((acc, tx) => acc + tx.monto, 0);
   const balanceNeto = totalIngresos - totalEgresos;
-  const condicionesSaldo = [
-    eq(transacciones.perfil_id, perfilActual.id),
-    eq(transacciones.eliminado, false),
-    gt(transacciones.monto, "0"),
-  ];
-  if (ajustes.programadosActivos && !ajustes.sumarProgramadosEnKpi) {
-    condicionesSaldo.push(eq(transacciones.estado, "pagado"));
-  }
-  const filasSaldoGeneral = await db
-    .select({
-      tipo: transacciones.tipo,
-      total: sql<string>`COALESCE(SUM(${transacciones.monto}), 0)`,
-    })
-    .from(transacciones)
-    .where(and(...condicionesSaldo))
-    .groupBy(transacciones.tipo);
-
-  let ingGeneral = 0;
-  let egrGeneral = 0;
-  for (const row of filasSaldoGeneral) {
-    if (row.tipo === "ingreso") ingGeneral += Number(row.total);
-    else egrGeneral += Number(row.total);
-  }
-  const balanceGeneralNeto = ingGeneral - egrGeneral;
 
   const topEgresoKpi = ajustes.kpiTopEgreso
     ? calcularTopEgresoKpi(txPeriodo, totalEgresos, todas, moneda)
@@ -166,17 +154,19 @@ export async function compilarEstadoDashboard(
       inicio,
       fin
     );
+    const condPrev = [
+      eq(transacciones.perfil_id, perfilActual.id),
+      eq(transacciones.eliminado, false),
+      between(transacciones.fecha, prevInicio, prevFin),
+      gt(transacciones.monto, "0"),
+    ];
+    if (subperfilActivoId) {
+      condPrev.push(eq(transacciones.subperfil_id, subperfilActivoId));
+    }
     const filasPrev = await db
       .select({ tipo: transacciones.tipo, monto: transacciones.monto })
       .from(transacciones)
-      .where(
-        and(
-          eq(transacciones.perfil_id, perfilActual.id),
-          eq(transacciones.eliminado, false),
-          between(transacciones.fecha, prevInicio, prevFin),
-          gt(transacciones.monto, "0")
-        )
-      );
+      .where(and(...condPrev));
 
     let ingPrev = 0;
     let egrPrev = 0;
@@ -210,7 +200,8 @@ export async function compilarEstadoDashboard(
           perfilActual.id,
           moneda,
           params.generalConsolidado === "1" &&
-            ajustes.generalPermitirConsolidado
+            ajustes.generalPermitirConsolidado,
+          subperfilActivoId
         )
       : null;
 
@@ -254,6 +245,9 @@ export async function compilarEstadoDashboard(
       between(transacciones.fecha, analisisDesde, analisisHasta),
       gt(transacciones.monto, "0"),
     ];
+    if (subperfilActivoId) {
+      condicionesAnalisis.push(eq(transacciones.subperfil_id, subperfilActivoId));
+    }
     if (params.analisisTipo === "ingreso" || params.analisisTipo === "egreso") {
       condicionesAnalisis.push(eq(transacciones.tipo, params.analisisTipo));
     }
@@ -263,7 +257,9 @@ export async function compilarEstadoDashboard(
       .from(transacciones)
       .where(and(...condicionesAnalisis))
       .orderBy(desc(transacciones.fecha), desc(transacciones.id));
-    txParaAnalisis = filasAnalisis.map((r) => mapearTransaccion(r, moneda));
+    txParaAnalisis = filasAnalisis.map((r) =>
+      mapearTransaccion(r, moneda, subperfilMap)
+    );
   }
 
   const analisis = compilarAnalisis(
@@ -287,9 +283,14 @@ export async function compilarEstadoDashboard(
 
   const historial = await obtenerHistorialYPapelera({
     perfilId: perfilActual.id,
+    subperfilId: subperfilActivoId,
+    subperfilMap,
     moneda,
     inicio,
     fin,
+    historialMes: params.historialMes,
+    historialAnio: params.historialAnio,
+    sinLimiteHistorial: ajustes.sinLimiteHistorial,
     categoria: params.historialCategoria,
     tipo: params.historialTipo,
     busqueda: params.historialBusqueda,
@@ -299,6 +300,8 @@ export async function compilarEstadoDashboard(
   return {
     perfiles,
     perfil_actual: perfilActual,
+    subperfiles: subperfilesLista,
+    subperfil_activo_id: subperfilActivoId,
     vista,
     fecha_ref: fechaRef,
     fecha_anterior: fechaAnterior,
@@ -310,7 +313,6 @@ export async function compilarEstadoDashboard(
     total_ingresos: Number(totalIngresos.toFixed(2)),
     total_egresos: Number(totalEgresos.toFixed(2)),
     balance_neto: Number(balanceNeto.toFixed(2)),
-    balance_general_neto: Number(balanceGeneralNeto.toFixed(2)),
     comparativa_kpi: comparativaKpi,
     top_egreso_kpi: topEgresoKpi,
     categorias: todas,
@@ -321,6 +323,7 @@ export async function compilarEstadoDashboard(
     meses_anual: mesesAnual,
     datos_general: datosGeneral,
     transacciones_dia: vista === "dia" ? txPeriodo : [],
+    movimientos_periodo: txPeriodo,
     transacciones_historial: historial.transacciones_historial,
     hay_mas_historial: historial.hay_mas_historial,
     analisis,

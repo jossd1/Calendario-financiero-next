@@ -6,12 +6,13 @@ import { mapearTransaccion } from "@/lib/dashboard";
 import { esFechaISOValida, obtenerHoyPeruISO } from "@/lib/format";
 import { obtenerMonedaInfo } from "@/lib/monedas";
 import { obtenerPerfilActivo } from "@/lib/perfil";
+import { obtenerSubperfilesPerfil } from "@/lib/subperfiles";
 
 export async function GET(request: NextRequest) {
   try {
     const sp = request.nextUrl.searchParams;
     const offset = Math.max(0, Number(sp.get("offset") ?? "0") || 0);
-    const limit = Math.min(50, Math.max(1, Number(sp.get("limit") ?? "30") || 30));
+    const limit = Math.min(200, Math.max(1, Number(sp.get("limit") ?? "30") || 30));
     const desde = sp.get("desde");
     const hasta = sp.get("hasta");
     const tipo = sp.get("tipo");
@@ -19,6 +20,10 @@ export async function GET(request: NextRequest) {
     const q = (sp.get("q") ?? "").trim();
 
     const { perfilActual } = await obtenerPerfilActivo();
+    const { lista, subperfilActivoId } = await obtenerSubperfilesPerfil(
+      perfilActual.id
+    );
+    const subperfilMap = new Map(lista.map((s) => [s.id, s]));
     const moneda = obtenerMonedaInfo(perfilActual.moneda).codigo;
 
     const condiciones = [
@@ -26,6 +31,10 @@ export async function GET(request: NextRequest) {
       eq(transacciones.eliminado, false),
       gt(transacciones.monto, "0"),
     ];
+
+    if (subperfilActivoId) {
+      condiciones.push(eq(transacciones.subperfil_id, subperfilActivoId));
+    }
 
     if (esFechaISOValida(desde) && esFechaISOValida(hasta)) {
       const d1 = desde <= hasta ? desde : hasta;
@@ -59,7 +68,9 @@ export async function GET(request: NextRequest) {
       .offset(offset);
 
     const hasMore = filas.length > limit;
-    const items = filas.slice(0, limit).map((r) => mapearTransaccion(r, moneda));
+    const items = filas
+      .slice(0, limit)
+      .map((r) => mapearTransaccion(r, moneda, subperfilMap));
 
     return NextResponse.json({
       ok: true,
@@ -89,6 +100,14 @@ export async function POST(request: NextRequest) {
         : "pagado";
     const montoRaw = String(body.monto ?? "0").replace(",", ".");
     const montoNum = Number(montoRaw);
+    const rawSubId =
+      body.subperfil_id === null || body.subperfil_id === undefined
+        ? null
+        : Number(body.subperfil_id);
+    const subperfilId =
+      rawSubId !== null && Number.isInteger(rawSubId) && rawSubId > 0
+        ? rawSubId
+        : null;
 
     if (
       (tipo !== "ingreso" && tipo !== "egreso") ||
@@ -110,6 +129,7 @@ export async function POST(request: NextRequest) {
       .insert(transacciones)
       .values({
         perfil_id: perfilActual.id,
+        subperfil_id: subperfilId,
         tipo,
         monto: montoFormateado,
         categoria,

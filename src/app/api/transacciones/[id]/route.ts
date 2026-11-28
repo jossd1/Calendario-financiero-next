@@ -31,6 +31,14 @@ export async function PUT(
         : "pagado";
     const montoRaw = String(body.monto ?? "0").replace(",", ".");
     const montoNum = Number(montoRaw);
+    const rawSubId =
+      body.subperfil_id === null || body.subperfil_id === undefined
+        ? null
+        : Number(body.subperfil_id);
+    const subperfilId =
+      rawSubId !== null && Number.isInteger(rawSubId) && rawSubId > 0
+        ? rawSubId
+        : null;
 
     if (
       (tipo !== "ingreso" && tipo !== "egreso") ||
@@ -52,6 +60,7 @@ export async function PUT(
       .set({
         tipo,
         estado,
+        subperfil_id: subperfilId,
         monto: montoNum.toFixed(2),
         categoria,
         descripcion,

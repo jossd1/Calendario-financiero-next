@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import EditableText from "@/components/EditableText";
 import GraficosFinancieros from "@/components/analisis/GraficosFinancieros";
-import ResumenCategoriasTabla from "@/components/analisis/ResumenCategoriasTabla";
 import type {
   AnalisisResultadoDTO,
   CategoriaDTO,
@@ -20,6 +19,7 @@ interface PanelAnalisisProps {
   manualHasta: string;
   manualTipo: "todos" | "ingreso" | "egreso";
   modoPrivacidad: boolean;
+  paletaSobria: boolean;
   textos: TextosUI;
   editModeTextos: boolean;
   onGuardarTexto: (clave: string, valor: string) => void;
@@ -41,6 +41,7 @@ export default function PanelAnalisis({
   manualHasta,
   manualTipo,
   modoPrivacidad,
+  paletaSobria,
   textos,
   editModeTextos,
   onGuardarTexto,
@@ -160,19 +161,11 @@ export default function PanelAnalisis({
 
       <GraficosFinancieros
         chartData={analisis.chart_data}
-        moneda={moneda}
-        colorPorCategoria={colorPorCategoria}
-        modoPrivacidad={modoPrivacidad}
-        textos={textos}
-        editModeTextos={editModeTextos}
-        onGuardarTexto={onGuardarTexto}
-      />
-
-      <ResumenCategoriasTabla
         desgloseEgresos={analisis.desglose_egresos_pct}
         moneda={moneda}
         colorPorCategoria={colorPorCategoria}
         modoPrivacidad={modoPrivacidad}
+        paletaSobria={paletaSobria}
         textos={textos}
         editModeTextos={editModeTextos}
         onGuardarTexto={onGuardarTexto}

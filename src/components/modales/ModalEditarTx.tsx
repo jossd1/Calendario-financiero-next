@@ -4,13 +4,19 @@ import { useEffect, useMemo, useState } from "react";
 import CustomSelect, { type CustomSelectOption } from "@/components/CustomSelect";
 import { formatearFechaDMY } from "@/lib/format";
 import { formatoMoneda, obtenerMonedaInfo } from "@/lib/monedas";
-import type { CategoriaDTO, TipoMovimiento, TransaccionDTO } from "@/types";
+import type {
+  CategoriaDTO,
+  SubperfilDTO,
+  TipoMovimiento,
+  TransaccionDTO,
+} from "@/types";
 
 interface ModalEditarTxProps {
   tx: TransaccionDTO | null;
   moneda: string;
   categoriasEgreso: CategoriaDTO[];
   categoriasIngreso: CategoriaDTO[];
+  subperfiles: SubperfilDTO[];
   programadosActivos: boolean;
   onCerrar: () => void;
   onGuardado: (txActualizada: TransaccionDTO) => Promise<void>;
@@ -22,6 +28,7 @@ export default function ModalEditarTx({
   moneda,
   categoriasEgreso,
   categoriasIngreso,
+  subperfiles,
   programadosActivos,
   onCerrar,
   onGuardado,
@@ -30,6 +37,7 @@ export default function ModalEditarTx({
   const [tipo, setTipo] = useState<TipoMovimiento>("egreso");
   const [monto, setMonto] = useState("");
   const [categoria, setCategoria] = useState("");
+  const [subperfilId, setSubperfilId] = useState<string>("");
   const [fecha, setFecha] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [estado, setEstado] = useState<"pagado" | "pendiente" | "programado">("pagado");
@@ -47,6 +55,7 @@ export default function ModalEditarTx({
     setTipo(tx.tipo);
     setMonto(tx.monto.toFixed(2));
     setCategoria(tx.categoria);
+    setSubperfilId(tx.subperfil_id ? String(tx.subperfil_id) : "");
     setFecha(tx.fecha_iso);
     setDescripcion(tx.descripcion);
     setEstado(tx.estado ?? "pagado");
@@ -93,6 +102,7 @@ export default function ModalEditarTx({
           tipo,
           monto,
           categoria,
+          subperfil_id: subperfilId ? Number(subperfilId) : null,
           fecha,
           descripcion,
           estado: programadosActivos ? estado : tx.estado,
@@ -221,6 +231,26 @@ export default function ModalEditarTx({
                 onChange={setCategoria}
               />
             </div>
+
+            {subperfiles.length > 0 && (
+              <div className="form-field">
+                <label htmlFor="edit-subperfil">Subperfil / Entorno</label>
+                <CustomSelect
+                  id="edit-subperfil"
+                  ariaLabel="Subperfil"
+                  value={subperfilId}
+                  options={[
+                    { value: "", label: "Sin asignar (General)" },
+                    ...subperfiles.map((s) => ({
+                      value: String(s.id),
+                      label: `${s.icono} ${s.nombre}`,
+                      hint: `[${s.atajo}]`,
+                    })),
+                  ]}
+                  onChange={setSubperfilId}
+                />
+              </div>
+            )}
 
             <div className="form-field">
               <label htmlFor="edit-descripcion">Descripción</label>

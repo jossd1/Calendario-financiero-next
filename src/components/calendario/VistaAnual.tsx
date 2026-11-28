@@ -104,8 +104,14 @@ export default function VistaAnual({
               <span style={{ color: "var(--text-secondary)" }}>Neto</span>
               <span
                 className={`tabular-nums ${
-                  m.neto >= 0 ? "amt-in" : "amt-out"
-                } ${modoPrivacidad ? "privacy-dots" : ""}`}
+                  modoPrivacidad ? "privacy-dots" : ""
+                }`}
+                style={{
+                  color:
+                    m.neto >= 0
+                      ? "var(--neutral-color)"
+                      : "var(--range-end-color)",
+                }}
               >
                 {mostrarMontoMoneda(
                   formatoMoneda(m.neto, moneda),

@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 import CustomSelect, { type CustomSelectOption } from "@/components/CustomSelect";
-import { formatearFechaDMY } from "@/lib/format";
-import { formatoMoneda, obtenerMonedaInfo } from "@/lib/monedas";
-import type { CategoriaDTO, TipoMovimiento, TransaccionDTO } from "@/types";
+import { obtenerMonedaInfo } from "@/lib/monedas";
+import type { CategoriaDTO, TipoMovimiento } from "@/types";
 
 interface ProgramadosCreateFormProps {
   moneda: string;
@@ -12,7 +11,7 @@ interface ProgramadosCreateFormProps {
   categoriasIngreso: CategoriaDTO[];
   hoyIso: string;
   limitarAnios: boolean;
-  onCreado: (txCreada: TransaccionDTO) => Promise<void>;
+  onCreado: () => Promise<void>;
   onNotificar: (tipo: "success" | "error", texto: string) => void;
 }
 
@@ -88,27 +87,13 @@ export default function ProgramadosCreateForm({
         onNotificar("error", data.error ?? "No se pudo guardar.");
         return;
       }
-      const descLimpiada = descripcion;
       setMonto("");
       setDescripcion("");
       onNotificar(
         "success",
         `${estadoNuevo === "programado" ? "Programado" : "Pendiente"} registrado.`
       );
-      await onCreado({
-        id: Number(data.id),
-        perfil_id: 0,
-        tipo,
-        monto: montoNum,
-        monto_fmt: formatoMoneda(montoNum, moneda),
-        categoria,
-        descripcion: descLimpiada,
-        fecha_iso: fecha,
-        fecha_fmt: formatearFechaDMY(fecha),
-        hora_fmt: "",
-        estado: estadoNuevo,
-        eliminado: false,
-      });
+      await onCreado();
     } catch {
       onNotificar("error", "Error de red al guardar pendiente/programado.");
     } finally {

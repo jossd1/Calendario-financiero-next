@@ -14,7 +14,6 @@ interface TopbarProps {
   programadosActivos: boolean;
   modoPrivacidad: boolean;
   paletaSobria: boolean;
-  vistaSimple: boolean;
   mostrarBotonPaletaTopbar: boolean;
   authPinActivo: boolean;
   textos: TextosUI;
@@ -22,9 +21,9 @@ interface TopbarProps {
   onGuardarTexto: (clave: string, valor: string) => void;
   onTogglePrivacidad: () => void;
   onTogglePaletaSobria: () => void;
-  onToggleVistaSimple: () => void;
   onBloquearPin: () => void;
   onCambiarPerfil: (perfilId: number) => void;
+  onRotarPerfil: (delta: number) => void;
   onAbrirCategorias: () => void;
   onAbrirPerfiles: () => void;
   onAbrirPapelera: () => void;
@@ -41,7 +40,6 @@ export default function Topbar({
   programadosActivos,
   modoPrivacidad,
   paletaSobria,
-  vistaSimple,
   mostrarBotonPaletaTopbar,
   authPinActivo,
   textos,
@@ -49,9 +47,9 @@ export default function Topbar({
   onGuardarTexto,
   onTogglePrivacidad,
   onTogglePaletaSobria,
-  onToggleVistaSimple,
   onBloquearPin,
   onCambiarPerfil,
+  onRotarPerfil,
   onAbrirCategorias,
   onAbrirPerfiles,
   onAbrirPapelera,
@@ -59,6 +57,7 @@ export default function Topbar({
   onAbrirAjustes,
   onResetInicio,
 }: TopbarProps) {
+  const monedaInfo = obtenerMonedaInfo(perfilActual.moneda);
   const opcionesPerfiles = perfiles.map((p) => {
     const m = obtenerMonedaInfo(p.moneda);
     return {
@@ -68,13 +67,10 @@ export default function Topbar({
     };
   });
 
-  const monedaInfo = obtenerMonedaInfo(perfilActual.moneda);
-
   return (
     <header className="topbar">
       <div className="topbar-inner">
         <div className="topbar-left">
-          
           <button
             type="button"
             onClick={() => {
@@ -103,8 +99,8 @@ export default function Topbar({
               type="button"
               onClick={onAbrirPerfiles}
               className="profile-gear-btn"
-              title="Administrar perfiles"
-              aria-label="Administrar perfiles"
+              title="Administrar perfiles y subperfiles"
+              aria-label="Administrar perfiles y subperfiles"
             >
               <AppIcon name="perfilEngranaje" size={17} />
             </button>
@@ -116,34 +112,46 @@ export default function Topbar({
               options={opcionesPerfiles}
               onChange={(val) => onCambiarPerfil(Number(val))}
             />
+            {perfiles.length > 1 && (
+              <div className="profile-quick-arrows">
+                <button
+                  type="button"
+                  onClick={() => onRotarPerfil(-1)}
+                  title="Perfil anterior"
+                  aria-label="Perfil anterior"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onRotarPerfil(1)}
+                  title="Siguiente perfil"
+                  aria-label="Siguiente perfil"
+                >
+                  ›
+                </button>
+              </div>
+            )}
           </div>
 
-          <div className="mode-dual">
-            {mostrarBotonPaletaTopbar && (
-              <button
-                type="button"
-                onClick={onTogglePaletaSobria}
-                className={`mode-dual-btn ${paletaSobria ? "is-active" : ""}`}
-                title={
-                  paletaSobria
-                    ? "Paleta sobria activa (clic para restaurar colores)"
-                    : "Activar paleta sobria oscura"
-                }
-                aria-label="Alternar paleta sobria oscura"
-              >
-                ◐
-              </button>
-            )}
+          {mostrarBotonPaletaTopbar && (
             <button
               type="button"
-              onClick={onToggleVistaSimple}
-              className={`mode-dual-btn ${vistaSimple ? "is-active" : ""}`}
-              title="Cambiar a Vista Simple estándar"
-              aria-label="Cambiar a Vista Simple estándar"
+              onClick={onTogglePaletaSobria}
+              className={`topbar-palette-btn ${paletaSobria ? "is-active" : ""}`}
+              title={
+                paletaSobria
+                  ? "Paleta sobria activa (clic para restaurar colores)"
+                  : "Activar paleta sobria oscura"
+              }
+              aria-label="Alternar paleta sobria oscura"
             >
-              ◫
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+              </svg>
             </button>
-          </div>
+          )}
         </div>
 
         <div className="topbar-actions">
@@ -188,11 +196,7 @@ export default function Topbar({
             type="button"
             className="btn btn-secondary btn-topbar-tool btn-topbar-icon"
             onClick={onTogglePrivacidad}
-            title={
-              modoPrivacidad
-                ? "Mostrar montos en pantalla"
-                : "Ocultar montos"
-            }
+            title={modoPrivacidad ? "Mostrar montos en pantalla" : "Ocultar montos"}
             aria-label="Alternar privacidad de montos"
           >
             <span style={{ fontSize: "1.02rem", lineHeight: 1 }}>

@@ -63,15 +63,7 @@ export default function SeccionPrivacidad({
   };
 
   return (
-    <AjustesCard titulo="Privacidad y Acceso Local">
-      <AjustesToggleRow
-        titulo="Modo Privacidad (S/ •••)"
-        descripcion="Oculta los montos en pantalla reemplazándolos por puntos centrados."
-        badge="Activo"
-        checked={ajustes.modoPrivacidad}
-        onChange={(v) => void onActualizarConfig({ modoPrivacidad: v })}
-      />
-
+    <AjustesCard titulo="Acceso Local">
       <div>
         <AjustesToggleRow
           titulo="Bloqueo por PIN Numérico"

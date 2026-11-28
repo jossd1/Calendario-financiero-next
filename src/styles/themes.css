@@ -25,6 +25,33 @@
     --expense-soft: rgba(217, 112, 112, 0.1);
   }
 
+  .theme-sobrio .kpi-top-egreso-card::after {
+    background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.4), transparent);
+  }
+
+  .theme-sobrio .kpi-top-cat-name {
+    color: #cbd5e1;
+  }
+
+  .theme-sobrio .kpi-top-dot {
+    background-color: #94a3b8 !important;
+  }
+
+  .theme-sobrio .kpi-top-badge {
+    color: #cbd5e1;
+    background-color: rgba(148, 163, 184, 0.14);
+    border-color: rgba(148, 163, 184, 0.28);
+  }
+
+  .theme-sobrio .mode-pill-btn.active-ver-mes,
+  .theme-sobrio .subperfil-chip.is-active,
+  .theme-sobrio .btn-celeste {
+    background-color: rgba(148, 163, 184, 0.16);
+    border-color: rgba(148, 163, 184, 0.34);
+    color: #e2e8f0;
+    box-shadow: none;
+  }
+
   .theme-sobrio .btn-primary {
     background: #1e293b;
     border-color: rgba(148, 163, 184, 0.32);

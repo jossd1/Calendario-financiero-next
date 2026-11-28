@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import ProgramadosCreateForm from "@/components/modales/ProgramadosCreateForm";
 import { formatoMoneda, mostrarMontoMoneda } from "@/lib/monedas";
-import type { AccionActividad, CategoriaDTO, TransaccionDTO } from "@/types";
+import type { CategoriaDTO, TransaccionDTO } from "@/types";
 
 interface ModalProgramadosProps {
   abierto: boolean;
@@ -16,7 +16,7 @@ interface ModalProgramadosProps {
   sumarEnKpi: boolean;
   modoPrivacidad: boolean;
   onCerrar: () => void;
-  onActividad?: (accion: AccionActividad, tx: TransaccionDTO) => void;
+  onToggleSumarEnKpi: (val: boolean) => Promise<void>;
   onActualizado: () => Promise<void>;
   onEditarTx: (tx: TransaccionDTO) => void;
   onNotificar: (tipo: "success" | "error", texto: string) => void;
@@ -33,7 +33,7 @@ export default function ModalProgramados({
   sumarEnKpi,
   modoPrivacidad,
   onCerrar,
-  onActividad,
+  onToggleSumarEnKpi,
   onActualizado,
   onEditarTx,
   onNotificar,
@@ -69,6 +69,7 @@ export default function ModalProgramados({
           categoria: tx.categoria,
           descripcion: tx.descripcion,
           fecha: tx.fecha_iso,
+          subperfil_id: tx.subperfil_id,
           estado: "pagado",
         }),
       });
@@ -77,7 +78,6 @@ export default function ModalProgramados({
         onNotificar("error", data.error ?? "No se pudo confirmar.");
         return;
       }
-      onActividad?.("Pagado", { ...tx, estado: "pagado" });
       onNotificar("success", "Movimiento confirmado como Pagado.");
       await onActualizado();
     } catch {
@@ -136,16 +136,41 @@ export default function ModalProgramados({
             categoriasIngreso={categoriasIngreso}
             hoyIso={hoyIso}
             limitarAnios={limitarAnios}
-            onCreado={async (txCreada) => {
-              onActividad?.("Agregado", txCreada);
-              await onActualizado();
-            }}
+            onCreado={onActualizado}
             onNotificar={onNotificar}
           />
 
           <div
+            className="settings-row clickable"
             style={{
-              maxHeight: "260px",
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid var(--border-hairline)",
+              borderRadius: "10px",
+              padding: "8px 12px",
+              marginBottom: "10px",
+            }}
+            onClick={() => void onToggleSumarEnKpi(!sumarEnKpi)}
+          >
+            <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+              Incluir pendientes y programados en el cálculo de KPIs
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={sumarEnKpi}
+              className={`settings-switch ${sumarEnKpi ? "on" : ""}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                void onToggleSumarEnKpi(!sumarEnKpi);
+              }}
+            >
+              <span className="settings-switch-thumb" />
+            </button>
+          </div>
+
+          <div
+            style={{
+              maxHeight: "240px",
               overflowY: "auto",
               display: "flex",
               flexDirection: "column",

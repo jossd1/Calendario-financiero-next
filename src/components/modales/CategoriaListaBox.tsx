@@ -23,15 +23,20 @@ export default function CategoriaListaBox({
   return (
     <div
       style={{
-        background: "rgba(255, 255, 255, 0.02)",
+        background: "linear-gradient(180deg, #111a2e 0%, #0a101d 100%)",
+        border: "1px solid rgba(56, 189, 248, 0.22)",
         padding: "0.75rem",
-        borderRadius: "8px",
+        borderRadius: "12px",
       }}
     >
       <h4
         style={{
-          fontSize: "0.85rem",
-          marginBottom: "0.5rem",
+          fontSize: "0.74rem",
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+          marginBottom: "0.55rem",
+          paddingLeft: "6px",
           color: colorTitulo,
         }}
       >
@@ -44,7 +49,7 @@ export default function CategoriaListaBox({
           margin: 0,
           display: "flex",
           flexDirection: "column",
-          gap: "0.4rem",
+          gap: "0.3rem",
         }}
       >
         {lista.map((cat) => (
@@ -54,34 +59,44 @@ export default function CategoriaListaBox({
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              background: "rgba(255,255,255,0.03)",
-              padding: "4px 8px",
-              borderRadius: "4px",
-              fontSize: "0.8rem",
+              background: "rgba(255, 255, 255, 0.025)",
+              padding: "6px 9px",
+              borderRadius: "8px",
+              fontSize: "0.82rem",
+              color: "#e2e8f0",
             }}
           >
             <span
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "6px",
+                gap: "8px",
+                minWidth: 0,
               }}
             >
               <span
                 className="cat-color-dot"
                 style={{ backgroundColor: cat.color || "#3b82f6" }}
               />
-              {cat.nombre}{" "}
-              <code style={{ color: "var(--accent-primary)" }}>
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {cat.nombre}
+              </span>
+              <code
+                className="tabular-nums"
+                style={{
+                  fontSize: "0.72rem",
+                  color: "var(--text-muted)",
+                }}
+              >
                 [{cat.atajo}]
               </code>
             </span>
-            <div style={{ display: "flex", gap: "4px" }}>
+            <div style={{ display: "flex", gap: "4px", flexShrink: 0 }}>
               <button
                 type="button"
                 className="btn btn-secondary btn-sm"
                 onClick={() => onIniciarEdicion(cat)}
-                style={{ padding: "1px 5px", fontSize: "0.7rem" }}
+                style={{ padding: "2px 6px", fontSize: "0.72rem" }}
                 title="Editar"
               >
                 ✏️
@@ -92,11 +107,11 @@ export default function CategoriaListaBox({
                   armadoNombre === cat.nombre ? "btn-danger-armed" : ""
                 }`}
                 onClick={() => void onEliminar(cat.nombre)}
-                style={{ padding: "1px 5px", fontSize: "0.7rem" }}
+                style={{ padding: "2px 6px", fontSize: "0.72rem" }}
                 title="Eliminar"
               >
                 {armadoNombre === cat.nombre ? (
-                  "⚠️ ¿Seguro?"
+                  "⚠️"
                 ) : (
                   <AppIcon name="papelera" size={13} />
                 )}

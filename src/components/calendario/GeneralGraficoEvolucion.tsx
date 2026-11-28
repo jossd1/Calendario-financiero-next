@@ -14,7 +14,9 @@ import {
   Tooltip,
 } from "chart.js";
 import { Chart } from "react-chartjs-2";
+import GeneralGraficoBolsa from "@/components/calendario/GeneralGraficoBolsa";
 import { buildGeneralChartConfig } from "@/components/calendario/GeneralChartConfig";
+import { formatoMoneda, mostrarMontoMoneda } from "@/lib/monedas";
 import type { EvolucionMensualItem } from "@/types/general";
 
 ChartJS.register(
@@ -33,18 +35,19 @@ interface GeneralGraficoEvolucionProps {
   evolucion: EvolucionMensualItem[];
   moneda: string;
   modoPrivacidad: boolean;
+  paletaSobria: boolean;
 }
 
 export default function GeneralGraficoEvolucion({
   evolucion,
   moneda,
   modoPrivacidad,
+  paletaSobria,
 }: GeneralGraficoEvolucionProps) {
-  const [modoVista, setModoVista] = useState<"flujo" | "neto">("flujo");
+  const [modoVista, setModoVista] = useState<"bolsa" | "flujo">("bolsa");
   const [mostrarSaldo, setMostrarSaldo] = useState(true);
   const [mostrarIngresos, setMostrarIngresos] = useState(true);
   const [mostrarEgresos, setMostrarEgresos] = useState(true);
-  const [mostrarNeto, setMostrarNeto] = useState(true);
 
   if (evolucion.length === 0) {
     return (
@@ -54,13 +57,15 @@ export default function GeneralGraficoEvolucion({
     );
   }
 
+  const ultimoAcumulado = evolucion[evolucion.length - 1]?.acumulado ?? 0;
+
   const { data, options } = buildGeneralChartConfig({
     evolucion,
-    modoVista,
+    modoVista: "flujo",
     mostrarSaldo,
     mostrarIngresos,
     mostrarEgresos,
-    mostrarNeto,
+    mostrarNeto: false,
     modoPrivacidad,
     moneda,
   });
@@ -107,100 +112,74 @@ export default function GeneralGraficoEvolucion({
             📈 Evolución Histórica Mensual y Saldo Acumulado
           </h4>
 
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: "6px",
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => setMostrarSaldo((v) => !v)}
-              aria-pressed={mostrarSaldo}
-              style={pillStyle(mostrarSaldo)}
+          {modoVista === "bolsa" ? (
+            <span
+              className={`tabular-nums ${
+                ultimoAcumulado >= 0 ? "amt-in" : "amt-out"
+              } ${modoPrivacidad ? "privacy-dots" : ""}`}
+              style={{
+                fontSize: "0.8rem",
+                fontWeight: 700,
+                padding: "2px 9px",
+                borderRadius: "6px",
+                background: "rgba(255, 255, 255, 0.04)",
+              }}
             >
-              <span
-                style={{
-                  width: "13px",
-                  height: "0",
-                  borderTop: "2px dashed #cbd5e1",
-                  display: "inline-block",
-                }}
-              />
-              <span>Saldo Acumulado</span>
-            </button>
-
-            {modoVista === "flujo" ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setMostrarIngresos((v) => !v)}
-                  aria-pressed={mostrarIngresos}
-                  style={pillStyle(mostrarIngresos)}
-                >
-                  <span
-                    className="cat-color-dot"
-                    style={{ backgroundColor: "#10b981" }}
-                  />
-                  <span>Ingresos</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMostrarEgresos((v) => !v)}
-                  aria-pressed={mostrarEgresos}
-                  style={pillStyle(mostrarEgresos)}
-                >
-                  <span
-                    className="cat-color-dot"
-                    style={{ backgroundColor: "#ef4444" }}
-                  />
-                  <span>Egresos</span>
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setMostrarNeto((v) => !v)}
-                aria-pressed={mostrarNeto}
-                style={pillStyle(mostrarNeto)}
-              >
-                <span
-                  className="cat-color-dot"
-                  style={{ backgroundColor: "#10b981" }}
-                />
-                <span>Ahorro Neto</span>
+              Actual:{" "}
+              {mostrarMontoMoneda(
+                formatoMoneda(ultimoAcumulado, moneda),
+                modoPrivacidad,
+                moneda
+              )}
+            </span>
+          ) : (
+            <div style={{ display: "inline-flex", alignItems: "center", flexWrap: "wrap", gap: "6px" }}>
+              <button type="button" onClick={() => setMostrarSaldo((v) => !v)} style={pillStyle(mostrarSaldo)}>
+                <span style={{ width: "13px", borderTop: "2px dashed #cbd5e1", display: "inline-block" }} />
+                <span>Saldo Acumulado</span>
               </button>
-            )}
-          </div>
+              <button type="button" onClick={() => setMostrarIngresos((v) => !v)} style={pillStyle(mostrarIngresos)}>
+                <span className="cat-color-dot" style={{ backgroundColor: "#10b981" }} />
+                <span>Ingresos</span>
+              </button>
+              <button type="button" onClick={() => setMostrarEgresos((v) => !v)} style={pillStyle(mostrarEgresos)}>
+                <span className="cat-color-dot" style={{ backgroundColor: "#ef4444" }} />
+                <span>Egresos</span>
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="mode-pill-group">
           <button
             type="button"
-            onClick={() => setModoVista("flujo")}
-            className={`mode-pill-btn ${
-              modoVista === "flujo" ? "active-ver-dia" : ""
-            }`}
+            onClick={() => setModoVista("bolsa")}
+            className={`mode-pill-btn ${modoVista === "bolsa" ? "active-ver-dia" : ""}`}
           >
-            Ingresos vs Egresos
+            Evolución
           </button>
           <button
             type="button"
-            onClick={() => setModoVista("neto")}
-            className={`mode-pill-btn ${
-              modoVista === "neto" ? "active-ver-dia" : ""
-            }`}
+            onClick={() => setModoVista("flujo")}
+            className={`mode-pill-btn ${modoVista === "flujo" ? "active-ver-dia" : ""}`}
           >
-            Ahorro Neto
+            Ingresos vs Egresos
           </button>
         </div>
       </div>
 
-      <div className="chart-wrapper">
-        <Chart type="bar" data={data} options={options} />
-      </div>
+      {modoVista === "bolsa" ? (
+        <GeneralGraficoBolsa
+          evolucion={evolucion}
+          moneda={moneda}
+          modoPrivacidad={modoPrivacidad}
+          paletaSobria={paletaSobria}
+        />
+      ) : (
+        <div className="chart-wrapper">
+          <Chart type="bar" data={data} options={options} />
+        </div>
+      )}
     </div>
   );
 }

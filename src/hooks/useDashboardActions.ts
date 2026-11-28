@@ -4,28 +4,23 @@ import { useCallback } from "react";
 import { formatearFechaDMY } from "@/lib/format";
 import { formatoMoneda } from "@/lib/monedas";
 import type {
-  AccionActividad,
   DashboardEstadoDTO,
   ModoAnalisis,
   ModoCalendarioClick,
-  TransaccionDTO,
 } from "@/types";
 
 interface UseDashboardActionsParams {
   estado: DashboardEstadoDTO;
   notificar: (tipo: "success" | "error", texto: string) => void;
   lanzarToastSutil: (texto: string) => void;
-  registrarActividad: (accion: AccionActividad, tx: TransaccionDTO) => void;
-  limpiarEventosSesion: () => void;
   setDiaSeleccionado: (f: string) => void;
   setModoClick: (m: ModoCalendarioClick) => void;
   setPrimerToque: (p: { inicio: string; fin: string } | null) => void;
   setRangoDesde: (r: string | null) => void;
   setRangoHasta: (r: string | null) => void;
   setModoAnalisis: (m: ModoAnalisis) => void;
-  setFiltroCategoria: (c: string) => void;
-  setFiltroTipo: (t: "todos" | "ingreso" | "egreso") => void;
-  setFiltroBusqueda: (b: string) => void;
+  setHistorialMes: (m: string) => void;
+  setHistorialAnio: (a: string) => void;
   refrescarEstado: (overrides?: Record<string, unknown>) => Promise<DashboardEstadoDTO | null>;
 }
 
@@ -34,17 +29,14 @@ export function useDashboardActions(params: UseDashboardActionsParams) {
     estado,
     notificar,
     lanzarToastSutil,
-    registrarActividad,
-    limpiarEventosSesion,
     setDiaSeleccionado,
     setModoClick,
     setPrimerToque,
     setRangoDesde,
     setRangoHasta,
     setModoAnalisis,
-    setFiltroCategoria,
-    setFiltroTipo,
-    setFiltroBusqueda,
+    setHistorialMes,
+    setHistorialAnio,
     refrescarEstado,
   } = params;
 
@@ -58,24 +50,54 @@ export function useDashboardActions(params: UseDashboardActionsParams) {
         });
         const data = await res.json();
         if (data.ok) {
-          limpiarEventosSesion();
-          setFiltroCategoria("todas");
-          await refrescarEstado({ historialCategoria: "todas" });
+          setHistorialMes("todos");
+          await refrescarEstado({ historialMes: "todos" });
         }
       } catch {
         notificar("error", "No se pudo cambiar de perfil.");
       }
     },
-    [limpiarEventosSesion, notificar, refrescarEstado, setFiltroCategoria]
+    [notificar, refrescarEstado, setHistorialMes]
+  );
+
+  const handleRotarPerfil = useCallback(
+    async (delta: number) => {
+      if (estado.perfiles.length <= 1) return;
+      const idx = estado.perfiles.findIndex(
+        (p) => p.id === estado.perfil_actual.id
+      );
+      const base = idx >= 0 ? idx : 0;
+      const next =
+        estado.perfiles[(base + delta + estado.perfiles.length) % estado.perfiles.length];
+      await handleCambiarPerfil(next.id);
+    },
+    [estado.perfiles, estado.perfil_actual.id, handleCambiarPerfil]
+  );
+
+  const handleCambiarSubperfil = useCallback(
+    async (subperfilId: number | null) => {
+      try {
+        const res = await fetch("/api/subperfiles", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "seleccionar",
+            subperfil_id: subperfilId,
+          }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          await refrescarEstado();
+        }
+      } catch {
+        notificar("error", "No se pudo cambiar de subperfil.");
+      }
+    },
+    [notificar, refrescarEstado]
   );
 
   const handleEliminarTx = useCallback(
     async (txId: number) => {
-      const txObjetivo =
-        estado.transacciones_historial.find((t) => t.id === txId) ??
-        estado.transacciones_dia.find((t) => t.id === txId) ??
-        null;
-
       try {
         const res = await fetch(`/api/transacciones/${txId}`, {
           method: "DELETE",
@@ -85,49 +107,38 @@ export function useDashboardActions(params: UseDashboardActionsParams) {
           notificar("error", data.error ?? "No se pudo eliminar.");
           return;
         }
-        if (txObjetivo) {
-          registrarActividad("Eliminado", txObjetivo);
-        }
         notificar("success", data.mensaje ?? "Movimiento enviado a papelera.");
         await refrescarEstado();
       } catch {
         notificar("error", "Error de red al eliminar la transacción.");
       }
     },
-    [
-      estado.transacciones_dia,
-      estado.transacciones_historial,
-      notificar,
-      refrescarEstado,
-      registrarActividad,
-    ]
+    [notificar, refrescarEstado]
   );
 
   const handleResetInicio = useCallback(async () => {
+    const anioHoy = estado.hoy_iso.slice(0, 4);
     setDiaSeleccionado(estado.hoy_iso);
     setModoClick("precargar");
     setPrimerToque(null);
     setRangoDesde(null);
     setRangoHasta(null);
     setModoAnalisis("auto");
-    setFiltroCategoria("todas");
-    setFiltroTipo("todos");
-    setFiltroBusqueda("");
+    setHistorialMes("todos");
+    setHistorialAnio(anioHoy);
     await refrescarEstado({
       vista: "mensual",
       fecha: estado.hoy_iso,
       analisisModo: "auto",
-      historialCategoria: "todas",
-      historialTipo: "todos",
-      historialBusqueda: "",
+      historialMes: "todos",
+      historialAnio: anioHoy,
     });
   }, [
     estado.hoy_iso,
     refrescarEstado,
     setDiaSeleccionado,
-    setFiltroBusqueda,
-    setFiltroCategoria,
-    setFiltroTipo,
+    setHistorialAnio,
+    setHistorialMes,
     setModoAnalisis,
     setModoClick,
     setPrimerToque,
@@ -170,6 +181,8 @@ export function useDashboardActions(params: UseDashboardActionsParams) {
 
   return {
     handleCambiarPerfil,
+    handleRotarPerfil,
+    handleCambiarSubperfil,
     handleEliminarTx,
     handleResetInicio,
     verificarAlertaTope,

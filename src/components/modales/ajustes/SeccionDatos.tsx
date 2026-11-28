@@ -17,28 +17,24 @@ export default function SeccionDatos({
   return (
     <AjustesCard titulo="Exportación y Respaldo">
       <AjustesActionRow
-        titulo="Exportar Historial en CSV"
-        descripcion="Descarga todos los movimientos activos del perfil en formato compatible con Excel."
+        titulo="Exportar mis Datos"
+        descripcion="Descarga el historial activo en formato CSV o una copia de seguridad completa en JSON."
       >
-        <a href="/api/exportar/csv" className="btn btn-secondary btn-sm">
-          ⬇ Descargar .CSV
-        </a>
-      </AjustesActionRow>
-
-      <AjustesActionRow
-        titulo="Backup Completo en JSON"
-        descripcion="Descarga perfil, categorías, presupuestos, ajustes y movimientos."
-      >
-        <a href="/api/exportar/json" className="btn btn-secondary btn-sm">
-          ⬇ Descargar .JSON
-        </a>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          <a href="/api/exportar/csv" className="btn btn-secondary btn-sm">
+            ⬇ Descargar .CSV
+          </a>
+          <a href="/api/exportar/json" className="btn btn-secondary btn-sm">
+            ⬇ Descargar .JSON
+          </a>
+        </div>
       </AjustesActionRow>
 
       <AjustesActionRow
         titulo="Importar Movimientos (.CSV)"
         descripcion="Carga movimientos desde CSV (Fecha, Tipo, Categoría, Descripción, Monto)."
       >
-        <label className="btn btn-primary btn-sm" style={{ cursor: "pointer" }}>
+        <label className="btn btn-celeste btn-sm" style={{ cursor: "pointer" }}>
           ⬆ Subir .CSV
           <input
             type="file"
@@ -69,10 +65,7 @@ export default function SeccionDatos({
         titulo="Restaurar Backup (.JSON)"
         descripcion="Restaura categorías, presupuestos y movimientos en el perfil activo."
       >
-        <label
-          className="btn btn-secondary btn-sm"
-          style={{ cursor: "pointer" }}
-        >
+        <label className="btn btn-celeste btn-sm" style={{ cursor: "pointer" }}>
           ⬆ Restaurar .JSON
           <input
             type="file"

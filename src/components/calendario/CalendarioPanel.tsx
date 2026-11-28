@@ -31,8 +31,6 @@ interface CalendarioPanelProps {
   mesesAnual: MesAnual[] | null;
   transaccionesDia: TransaccionDTO[];
   categorias: CategoriaDTO[];
-  hoverPreviewDia: boolean;
-  mostrarNetoCeldas: boolean;
   alertaTopeDiario: number;
   modoPrivacidad: boolean;
   textos: TextosUI;
@@ -61,8 +59,6 @@ export default function CalendarioPanel({
   mesesAnual,
   transaccionesDia,
   categorias,
-  hoverPreviewDia,
-  mostrarNetoCeldas,
   alertaTopeDiario,
   modoPrivacidad,
   textos,
@@ -210,11 +206,15 @@ export default function CalendarioPanel({
                   if (!editModeTextos) onCambiarModoClick("ver_dia");
                 }}
                 className={`mode-pill-btn ${
-                  modoClick === "ver_dia" ? "active-ver-dia" : ""
+                  modoClick === "ver_dia"
+                    ? vista === "anual"
+                      ? "active-ver-mes"
+                      : "active-ver-dia"
+                    : ""
                 }`}
               >
                 <EditableText
-                  clave="modoVerDia"
+                  clave={vista === "anual" ? "modoVerMes" : "modoVerDia"}
                   textos={textos}
                   editMode={editModeTextos}
                   onGuardarTexto={onGuardarTexto}
@@ -282,8 +282,6 @@ export default function CalendarioPanel({
           rangoMax={rangoMax}
           rangoDesde={rangoDesde}
           rangoHasta={rangoHasta}
-          hoverPreviewDia={hoverPreviewDia}
-          mostrarNetoCeldas={mostrarNetoCeldas}
           alertaTopeDiario={alertaTopeDiario}
           colorPorCategoria={colorPorCategoria}
           modoPrivacidad={modoPrivacidad}

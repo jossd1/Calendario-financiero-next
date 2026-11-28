@@ -32,7 +32,8 @@ export default function VistaDia({
     return () => clearTimeout(timer);
   }, [armadoTxId]);
 
-  const filtradas = transaccionesDia.filter((tx) => {
+  const ordenadas = [...transaccionesDia].reverse();
+  const filtradas = ordenadas.filter((tx) => {
     if (!busquedaDia.trim()) return true;
     const q = busquedaDia.trim().toLowerCase();
     return (
@@ -82,6 +83,7 @@ export default function VistaDia({
         <table className="tx-table">
           <thead>
             <tr>
+              <th style={{ width: "34px" }}></th>
               <th>Hora</th>
               <th>Tipo</th>
               <th>Categoría</th>
@@ -92,8 +94,14 @@ export default function VistaDia({
           </thead>
           <tbody>
             {filtradas.length > 0 ? (
-              filtradas.map((tx) => (
+              filtradas.map((tx, idx) => (
                 <tr key={tx.id}>
+                  <td
+                    className="tabular-nums"
+                    style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}
+                  >
+                    {idx + 1}
+                  </td>
                   <td
                     className="tabular-nums"
                     style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}
@@ -174,7 +182,7 @@ export default function VistaDia({
               ))
             ) : (
               <tr>
-                <td colSpan={6}>
+                <td colSpan={7}>
                   <div className="empty-state">
                     No hay movimientos registrados en este día.
                   </div>

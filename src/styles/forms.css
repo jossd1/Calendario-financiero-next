@@ -259,4 +259,117 @@
   .tx-table th.num, .tx-table td.num { text-align: right; }
   .row-actions { display: inline-flex; align-items: center; gap: 8px; }
   .empty-state { padding: 36px 20px; text-align: center; color: var(--text-secondary); font-size: 0.9rem; }
+
+  .subperfil-strip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .subperfil-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-hairline);
+    background-color: rgba(6, 9, 17, 0.72);
+    color: var(--text-secondary);
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .subperfil-chip:hover {
+    color: var(--text-primary);
+    border-color: var(--border-strong);
+  }
+
+  .subperfil-chip.is-active {
+    background-color: rgba(56, 189, 248, 0.14);
+    border-color: rgba(56, 189, 248, 0.42);
+    color: var(--neutral-color);
+  }
+
+  .subperfil-chip code {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    opacity: 0.75;
+  }
+
+  .date-hoy-combo {
+    display: flex;
+    align-items: stretch;
+    background-color: rgba(6, 9, 17, 0.88);
+    border: 1px solid transparent;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .date-hoy-combo:focus-within {
+    border-color: var(--neutral-color);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.14);
+  }
+
+  .date-hoy-input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    padding: 9px 10px;
+    font-size: 0.86rem;
+    color: var(--text-primary);
+  }
+
+  .date-hoy-input:focus {
+    outline: none;
+  }
+
+  .date-hoy-btn {
+    border: none;
+    border-left: 1px solid var(--border-hairline);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-secondary);
+    padding: 0 11px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  .date-hoy-btn:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+  }
+
+  .dona-resumen-split {
+    display: grid;
+    grid-template-columns: minmax(170px, 0.9fr) minmax(0, 1.1fr);
+    gap: 16px;
+    align-items: center;
+  }
+
+  .dona-resumen-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  .dona-resumen-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  @media (max-width: 640px) {
+    .dona-resumen-split {
+      grid-template-columns: 1fr;
+    }
+  }
 }

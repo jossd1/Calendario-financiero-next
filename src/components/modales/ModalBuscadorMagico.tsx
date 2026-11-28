@@ -33,8 +33,7 @@ export default function ModalBuscadorMagico({
   useEffect(() => {
     if (!abierto) return;
     const savedDia = window.localStorage.getItem("cf_buscador_dia") === "1";
-    const savedAnioRaw = window.localStorage.getItem("cf_buscador_anio");
-    const savedAnio = savedAnioRaw !== "0";
+    const savedAnio = window.localStorage.getItem("cf_buscador_anio") !== "0";
 
     setIncluirDia(savedDia);
     setIncluirAnio(savedAnio);
@@ -66,18 +65,22 @@ export default function ModalBuscadorMagico({
       ? MESES_ES[mesNum]
       : "";
 
-  const toggleIncluirDia = (activo: boolean) => {
+  const toggleIncluirDia = () => {
+    const activo = !incluirDia;
     setIncluirDia(activo);
     window.localStorage.setItem("cf_buscador_dia", activo ? "1" : "0");
-    setPaso(activo ? "dia" : "mes");
-    setDiaTexto("");
-    setMesTexto("");
-    setAnioDosDigitos("");
+    if (activo) {
+      setPaso("dia");
+    } else {
+      setDiaTexto("");
+      if (paso === "dia") setPaso("mes");
+    }
     setErrorCampo(false);
     setTimeout(() => inputRef.current?.focus(), 20);
   };
 
-  const toggleIncluirAnio = (activo: boolean) => {
+  const toggleIncluirAnio = () => {
+    const activo = !incluirAnio;
     setIncluirAnio(activo);
     window.localStorage.setItem("cf_buscador_anio", activo ? "1" : "0");
     if (!activo && paso === "anio") {
@@ -181,54 +184,7 @@ export default function ModalBuscadorMagico({
         aria-modal="true"
       >
         <div className="magic-modal-box">
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "10px",
-            }}
-          >
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "14px" }}>
-              <label
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  fontSize: "0.78rem",
-                  color: "var(--text-secondary)",
-                  cursor: "pointer",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={incluirDia}
-                  onChange={(e) => toggleIncluirDia(e.target.checked)}
-                  style={{ width: "14px", height: "14px", cursor: "pointer" }}
-                />
-                Día
-              </label>
-
-              <label
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  fontSize: "0.78rem",
-                  color: "var(--text-secondary)",
-                  cursor: "pointer",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={incluirAnio}
-                  onChange={(e) => toggleIncluirAnio(e.target.checked)}
-                  style={{ width: "14px", height: "14px", cursor: "pointer" }}
-                />
-                Año {!incluirAnio ? `(${anioVista})` : ""}
-              </label>
-            </div>
-
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "6px" }}>
             <button
               type="button"
               onClick={onCerrar}
@@ -250,6 +206,43 @@ export default function ModalBuscadorMagico({
               : paso === "mes"
               ? "Mes"
               : "Año"}
+          </div>
+
+          <div className="magic-steps-row">
+            <button
+              type="button"
+              onClick={toggleIncluirDia}
+              className={`magic-step-pill ${
+                !incluirDia ? "is-off" : paso === "dia" ? "is-current" : ""
+              }`}
+              title={incluirDia ? "Clic para omitir Día" : "Clic para incluir Día"}
+            >
+              Día{incluirDia && diaTexto ? ` (${diaTexto})` : ""}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setPaso("mes");
+                inputRef.current?.focus();
+              }}
+              className={`magic-step-pill ${paso === "mes" ? "is-current" : ""}`}
+            >
+              Mes{mesTexto ? ` (${mesTexto})` : ""}
+            </button>
+
+            <button
+              type="button"
+              onClick={toggleIncluirAnio}
+              className={`magic-step-pill ${
+                !incluirAnio ? "is-off" : paso === "anio" ? "is-current" : ""
+              }`}
+              title={incluirAnio ? "Clic para usar año actual" : "Clic para digitar año"}
+            >
+              {incluirAnio
+                ? `Año${anioDosDigitos ? ` (20${anioDosDigitos})` : ""}`
+                : `Año ${anioVista}`}
+            </button>
           </div>
 
           <div
@@ -278,7 +271,6 @@ export default function ModalBuscadorMagico({
               justifyContent: "center",
               alignItems: "center",
               minHeight: "32px",
-              marginBottom: "8px",
             }}
           >
             {errorCampo ? (
@@ -302,16 +294,6 @@ export default function ModalBuscadorMagico({
                   : "Digita el mes (1–12) · Enter"}
               </span>
             )}
-          </div>
-
-          <div
-            style={{
-              textAlign: "center",
-              fontSize: "0.7rem",
-              color: "var(--text-muted)",
-            }}
-          >
-            Espacio = Cancelar · Backspace = Atrás
           </div>
         </div>
       </div>
